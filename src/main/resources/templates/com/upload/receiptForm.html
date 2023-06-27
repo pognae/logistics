@@ -1,0 +1,221 @@
+<html>
+<head>
+	<!-- jqueryPrint 라이브러리 -->
+	<script type="text/javascript" src="/vender/jquery/jquery-2.2.4.min.js"></script>
+	<script type="text/javascript" src="/vender/printThis/printThis.js"></script>
+	<script type="text/javascript" src="/vender/qr/jquery.qrcode.js"></script>
+	<script type="text/javascript" src="/vender/qr/qrcode.js"></script>
+	
+	<script>
+	$(function(){
+		$(".qr-code").qrcode({   //qrcode 시작        
+			render : "canvas",      //table, canvas 형식 두 종류가 있다.         
+			width : 150,            //넓이 조절        
+			height : 150,           //높이 조절        
+			text   : "http://www.naver.com"
+		});
+	});
+	function recieptPrint(){
+		$("body").printThis({
+			beforePrint:function(){
+				$("button").hide();
+			},
+			afterPrint:function(){
+				$("button").show();
+			}
+		});
+	}
+	</script>
+	<style>
+		@import url(//fonts.googleapis.com/earlyaccess/nanumgothic.css);
+
+		* {
+		 font-family: 'Nanum Gothic', sans-serif; margin:0;
+		}
+
+		body{}
+		/* receipt Common */
+		.wd-50{width:50%;}
+		.vh-3{height:3vh !important;}
+		.vh-4{height:4vh !important;}
+		.vh-5{height:5vh !important;}
+		.layout-double-line{font-size:2vh; text-align:center;}
+		.text-weight-normal{font-weight:normal !important;}
+		.text-left{text-align:left; padding-left:1vw;}
+		.text-center{text-align:center;}
+		.text-right{text-align:right;}
+		table{border-collapse: collapse;}
+		tr{height:100%; line-height:3vh;}
+		
+		
+		.dash-block{border-bottom: 2px dashed #000;}
+		.under-line{border-bottom: 0.2px solid #000;}
+		.layout-roll{max-width:80mm; margin:0 auto;}
+		
+		
+		/* layout-top */
+		.layout-top{height:auto; width:92%; margin:0 auto;}
+		.layout-top .title{width:60%; margin:0 auto; font-size:2vh; font-weight:bold; text-align:center;}
+		.layout-top .info{width:100%;}
+		.layout-top .info div{width:100%; height:2vh;}
+		.layout-top .info div p{display:inline-block;}
+		.layout-top .info div p.left{float:left;}
+		.layout-top .info div p.right{float:right;}
+		.layout-top .info div p.right .time{margin-left:1vh;}
+		.layout-top .info div p .order-name{font-size:2vh; font-weight:bold;}
+
+		/* layout-store */
+		.layout-store{width:92%; margin:0 auto;}
+		.layout-store .qr-code{width:150px; margin:2vh auto;} 
+		
+		.layout-store .store-info-top{width:90%; margin:0 auto;}
+		.layout-store .store-info-top p{text-align:center;}
+		.layout-store .store-info-top p.brand{font-size:2vh; font-weight:bold;}
+		.layout-store .store-info-top p.detail{font-size:1vh; }
+		
+		.layout-store .store-info-middle{width:90%; margin:0 auto; margin-top:3vh;}
+		.layout-store .store-info-middle .center-block{width:83%; margin:0 auto; letter-spacing:-1px;}
+		
+		.layout-store .store-info-bottom{width:90%; margin:0 auto; margin-top:3vh;}
+		.layout-store .store-info-bottom .head-line{margin:2vh auto; text-align:center;}
+		.layout-store .store-info-bottom .center-block{width:90%; margin:0 auto; letter-spacing:-1px;}
+		.layout-store .store-info-bottom .center-block p{margin:1vh auto;}
+		
+		/* layout-price */
+		.layout-price{width:92%; margin:0 auto;}
+		.layout-price .content div{display:inline-block; font-weight:bold; height:3vh; line-height:3vh;}
+		.layout-price .content div.dtw{float:left; width:35%;}
+		.layout-price .content div.dtw .week{margin-left:-5px; }
+		.layout-price .content div.price{text-align:center; width:50%; font-size:2.5vh;}
+		.layout-price .content div.text{float:right; width:15%;}
+		
+		.layout-sku-table{width:92%; margin:0 auto;}
+		/* layout-sku-info */
+		.layout-sku-info{width:92%; margin:0 auto;}
+		.layout-sku-info{margin-top:3vh;}
+		.layout-sku-info>div{margin-top:2vh;}
+		
+		/* layout-bottom-notice */
+		.layout-bottom-notice{width:92%; margin:0 auto;}
+		.layout-bottom-notice{white-space:pre-line;}
+	</style>
+</head>
+<body>
+	<div class="layout-roll">
+		<div class="layout-top">
+			<div class="title">영수증</div>
+			<div class="info">
+				<div class="orders">
+					<p class="right">
+						<span class="order-name">아세테크</span>
+						<span>귀하</span>
+					</p>
+				</div>
+				<div class="vh-3">
+					<p class="left"><span class="order-num">0009</span></p>
+					<p class="right"><span class="date">2022-06-22</span><span class="week">(금)</span><span class="time">09:10:08</span></p>
+				</div>
+			</div>
+		</div>
+		<div class="layout-double-line">====================</div>
+		<div class="layout-store">
+			<div class="qr-code"></div>
+			<div class="store-info-top">
+				<p class="brand">FRILLMON 프릴몬드</p>
+				<p class="detail">디오트 1층 A-24호</p>
+			</div>
+			<div class="store-info-middle">
+				<div class="center-block">
+					<p>▶TEL 02.2117.4524</p>
+					<p>▶MOB 010.2486.5129</p>
+					<p>KAKAO TALK ID : FRILLMOND5129</p>
+					<p>KAKAO STORY ID : FRILLMOND</p>
+					<p>신상마켓 ID : FRRLLMOND</p>
+					<p>WECHAT ID : FRRLLMOND24</p>
+				</div>
+			</div>
+			<div class="store-info-bottom">
+				<p class="head-line">＜카카오스토리 소식받기♡＞</p>
+				<div class="center-block">
+					<p>▶매장오픈 밤12시 이전 카톡주문시 일찍상품을 준비해드릴수 있어요</p>
+					<p>▶온라인 입금 거래시 필히 '세금계산서' 발행 해주셔야 합니다.</p>
+				</div>
+			</div>
+		</div>
+		<div class="layout-double-line">====================</div>
+		<div class="layout-price">
+			<div class="content">
+				<div class="dtw">
+					<span class="date">22-05-13</span>
+					<span class="week">(금)</span>
+				</div>
+				<div class="price">24,000</div>
+				<div class="text">샘플</div>
+			</div>
+		</div>
+		<div class="layout-double-line">====================</div>
+		<div class="layout-sku-table">
+			<table>
+				<thead>
+					<tr class="dash-block vh-4">
+						<th class="text-left text-weight-normal wd-50">품명</th>
+						<th class="text-weight-normal">단가</th>
+						<th class="text-weight-normal">수량</th>
+						<th class="text-right text-weight-normal">금액</th>
+					</tr>				
+				</thead>
+				<tbody>
+					<tr class="under-line vh-5">
+						<td>리마인더반팔T/군청</td>
+						<td class="text-right">6,000</td>
+						<td class="text-center">1</td>
+						<td class="text-right">5,000</td>
+					</tr>
+					<tr class="under-line vh-5">
+						<td>리마인더반팔T/백색</td>
+						<td class="text-right">6,000</td>
+						<td class="text-center">1</td>
+						<td class="text-right">5,000</td>
+					</tr>
+					<tr class="under-line vh-5">
+						<td>리마인더반팔T/연노랑</td>
+						<td class="text-right">6,000</td>
+						<td class="text-center">1</td>
+						<td class="text-right">5,000</td>
+					</tr>
+					<tr class="under-line vh-5">
+						<td>리마인더반팔T연보라</td>
+						<td class="text-right">6,000</td>
+						<td class="text-center">1</td>
+						<td class="text-right">5,000</td>
+					</tr>
+					<tr class="sumery under-line vh-5">
+						<td>--- 샘플소계 ---</td>
+						<td class="text-right"><span>4</span><span>건</span></td>
+						<td class="text-center">4</td>
+						<td class="text-right">24,000</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="layout-sku-info">
+			<div class="sku-composion">
+				<div class="title">[혼용률정보]</div>
+				<div class="data">*리마인더반팔T[면100]</div>
+			</div>
+			<div class="sku-detail-info">
+				<div class="title">[동일상품 칼라/사이즈 정보]</div>
+				<div class="data">*리마인더반팔T 칼라 - 군청, 백색, 연노랑, 연보라</div>
+			</div>
+		</div>
+		<div class="layout-double-line">====================</div>
+		<div class="layout-bottom-notice">
+		* 입금처 : 신한은행 100-031-217379 (주)몬드 
+		* 통장입금시 꼭 세금계산서 발행해야 합니다.
+		* 전자세금계산서 매월 10일 마감(VAT 선입금)
+		* 상기금액은 부가세 별도 금액입니다.
+		</div>
+	</div>
+</body>
+<button type="button" onclick="recieptPrint();">전표 출력</button>
+</html>

@@ -1,0 +1,113 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">  			
+	    		<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+	  		<div class="header-right">
+	  			<button type="button" class="btn default-btn" id="syw2_search"  th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+	  		</div>
+	  	</div>
+	  	<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+			  	<div class="form-group row col">
+					<label for="syw2_useract" class="col-md-5 col-xl-2 col-form-label">[[#{sy.supahi.useract}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.supahi.useract')}" id="syw2_useract"/>
+					</div>
+					<label for="syw2_menunam" class="col-md-5 col-xl-2 col-form-label">[[#{sy.supahi.menunam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.supahi.menunam')}" id="syw2_menunam"/>
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label class="col-md-5 col-xl-2 col-form-label">[[#{sy.supahi.acclgdt}]]</label>
+					<div class="col-md-7 col-xl-4 date-group">
+						<input type="date" max="2999-12-31" class="form-control" id="syw2_acclgdt_from" onkeyup="setInputDateDel(this)"/>
+						<span>~</span>
+						<input type="date" max="2999-12-31" class="form-control" id="syw2_acclgdt_to" onkeyup="setInputDateDel(this)"/>
+					</div>
+					<label class="col-md-5 col-xl-2 col-form-label">[[#{sy.supahi.acclgtm}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="time" class="form-control" id="syw2_acclgtm"/>
+					</div>
+				</div>
+			</div>
+	  	</div>
+	  	<div class="content-inner">
+		 	<div class="grid-1">
+		 		<div class="grid-container">
+		 			<div id="syw2_grid"></div>
+		 		</div>
+		 	</div>
+		 </div>
+	</div>
+	
+<script>
+$(function(){
+	//============================================================	
+	//검색 화면 이벤트
+	//============================================================
+	$('#syw2_acclgdt_from').val(moment().subtract(1, "d").format("YYYY-MM-DD"));	// 1일전
+	$('#syw2_acclgdt_to').val(moment().format("YYYY-MM-DD"));
+		
+	$("#syw2_search").click(function () {
+		if(!$('#syw2_acclgdt_from').val() || !$('#syw2_acclgdt_to').val()){
+			alert("[[#{sy.supahi.acclgdt}]]" + "[[#{ms.choiceValue}]]");
+			return;
+		}
+		
+		var grid = pq.grid("#syw2_grid");
+		var data = { 
+			useract : $('#syw2_useract').val()
+		  , menunam : $('#syw2_menunam').val()
+		  , acclgdtfrom : $('#syw2_acclgdt_from').val()
+		  , acclgdtto : $('#syw2_acclgdt_to').val()
+		  , acclgtm : $('#syw2_acclgtm').val()
+		};
+		
+		grid.showLoading();
+		var aul = new AjaxUtil_Order("/sy/selectSyw2List.do", data, "GET");
+		aul.setCallbackSuccess(function (data){
+			if(data.list.length == 0){
+				alert("[[#{ms.getDataZero}]]");
+			}
+			grid.option( "dataModel", { data: data.list } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		});
+		aul.send();
+	});
+	
+	var syw2_gridCM = [
+       	{ title: "[[#{sy.supahi.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden: true},
+    	{ title: "[[#{sy.supahi.usrpgsq}]]", dataType: "string", dataIndx: "usrpgsq", editable: false},	//프로그램사용이력일련번호
+    	{ title: "[[#{sy.supahi.useract}]]", dataType: "string", dataIndx: "useract", editable: false},	//User Account ID
+    	{ title: "[[#{sy.supahi.progrid}]]", dataType: "string", dataIndx: "progrid", editable: false},	//프로그램 ID
+    	{ title: "[[#{sy.supahi.menunam}]]", dataType: "string", dataIndx: "menunam", editable: false},	//메뉴명
+    	{ title: "[[#{sy.supahi.themety}]]", dataType: "string", dataIndx: "themety", editable: false},	//Main테마타입
+    	{ title: "[[#{sy.supahi.acclgdt}]]", dataType: "string", dataIndx: "acclgdt", editable: false},	//접속로그생성일자
+    	{ title: "[[#{sy.supahi.acclgtm}]]", dataType: "string", dataIndx: "acclgtm", editable: false},	//접속로그생성시간
+    	{ title: "[[#{sy.supahi.credate}]]", dataType: "string", dataIndx: "credate", editable: false},
+		{ title: "[[#{sy.supahi.cretime}]]", dataType: "string", dataIndx: "cretime", editable: false},
+		{ title: "[[#{sy.supahi.creuser}]]", dataType: "string", dataIndx: "creuser", editable: false},
+		{ title: "[[#{sy.supahi.lmodate}]]", dataType: "string", dataIndx: "lmodate", editable: false},
+		{ title: "[[#{sy.supahi.lmotime}]]", dataType: "string", dataIndx: "lmotime", editable: false},
+		{ title: "[[#{sy.supahi.lmouser}]]", dataType: "string", dataIndx: "lmouser", editable: false}
+	];
+	
+	var syw2_grid = new GridUtil(syw2_gridCM, '[[${gprogrid}]]', 'syw2_grid');
+	syw2_grid.setFind();
+	syw2_grid.open();
+});
+		
+</script>
+
+</div>
+</html>

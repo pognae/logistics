@@ -1,0 +1,47 @@
+<html lagn="ko" xmlns:th="http://www.thymeleaf.org">
+	<div th:fragment="fragments-mainContent" id="content" class="content">
+	<!--  mainConten 시작 -->
+		<!-- tab buttons -->
+		<div class="tabs-container">
+			<ul id="tabs" class="tabs">
+				<li class="tab-home"><a class="tab" id="Home" href="#"><i class="fa-solid fa-house"></i></a></li>
+			</ul>
+			<button class="tab-prev"><i class="fa-solid fa-chevron-left"></i></button>
+			<button class="tab-close"><i class='fa fa-close'></i></button>
+			<button class="tab-next"><i class="fa-solid fa-chevron-right"></i></button>
+		</div> 
+		
+	 	<!--  dashboard 시작 -->
+		<px id="Home_content" class="tab-content"  disabled="disabled" style="display:' ';">
+	
+			<th:block th:if="${session.usertyp == 'BINBLUR'}"> 
+					<div id="dashboard">
+						<th:block th:replace="/com/dashboard/binblur.html :: fragments-dashboard"></th:block>
+					</div>
+			</th:block>
+				
+			<th:block th:if="${session.usertyp == 'OWNER'}"> 
+		        <div id="dashboard">
+		        	<th:block th:replace="/com/dashboard/owner.html :: fragments-dashboard"></th:block>
+		        </div>
+			</th:block>
+			
+			<th:block th:if="${session.usertyp == 'CUSTOMER'}"> 
+		        <div id="dashboard">
+		        	<th:block th:replace="/com/dashboard/wholesale.html :: fragments-dashboard"></th:block>
+		        </div>
+			</th:block>
+	
+			<th:block th:if="${session.usertyp == 'VENDER'}"> 
+		        <div id="dashboard">
+		        	<th:block th:replace="/com/dashboard/vender.html :: fragments-dashboard"></th:block>
+		        </div>
+			</th:block>
+					
+		</px>
+		<!--  dashboard 종료 -->
+				   
+
+	<!--  mainConten 종료 -->	 
+	</div>
+</html>

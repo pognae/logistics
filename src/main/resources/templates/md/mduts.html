@@ -1,0 +1,816 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<!--  mainContent 시작 -->
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+			</div>
+			<div class="header-right">
+				<button type="button" class="btn default-btn" id="mdutsSave"
+					th:if="${userRole.getGetactv() == 'Y'}">
+					<i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span>
+				</button>
+				<button type="button" class="btn default-btn" id="mdutsSearch"
+					th:if="${userRole.getPosactv() == 'Y'}">
+					<i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span>
+				</button>
+				<button type="button"
+					th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}"
+					th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);">
+					<i class="fa-solid fa-star"></i>
+				</button>
+			</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdutsWarekey" class="col-md-5 col-xl-2 col-form-label">[[#{md.mskuwc.warekey}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<select class="custom-select" id="mdutsWarekey"></select>
+					</div>
+					<label for="mdutsOwnerky" class="col-md-5 col-xl-2 col-form-label">[[#{md.mskuwc.ownerky}]]</label>
+					<div class="col-md-7 col-xl-4" th:switch="${session.usertyp}">
+						<select class="custom-select" id="mdutsOwnerky" th:case="BINBLUR">
+						</select> <input type="text" class="form-control"
+							th:placeholder="${#messages.msg('md.mskuwc.ownerky')}"
+							id="mdutsOwnerky" th:case="*" th:value="${session.ownerky}"
+							disabled />
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label class="col-md-5 col-xl-2 col-form-label"
+						for="inputGroupSelect01">매장</label>
+					<div class="col-md-7 col-xl-4">
+						<select class="form-control" id="mdutsCustkey" name="mdutsCustkey">
+						</select>
+					</div>
+					<label for="mdutsSkudesc" class="col-md-5 col-xl-2 col-form-label">[[#{md.mskuwc.skudesc}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="search" class="form-control"
+							th:placeholder="${#messages.msg('md.mskuwc.skudesc')}"
+							id="mdutsSkudesc"
+							th:value="${gprodata != 'undefined' ? gprodata : ''}">
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label for="mdutsSkumkey" class="col-md-5 col-xl-2 col-form-label">[[#{md.mskuwc.skumkey}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="search" class="form-control"
+							th:placeholder="${#messages.msg('md.mskuwc.skumkey')}"
+							id="mdutsSkumkey">
+					</div>
+					<label for="mdutsVendnam" class="col-md-5 col-xl-2 col-form-label">[[#{md.mskuwc.vendnam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="search" class="form-control"
+							th:placeholder="${#messages.msg('md.mskuwc.vendnam')}"
+							id="mdutsVendnam">
+					</div>
+				</div>
+			</div>
+			<!-- 토글버튼 -->
+			<div class="btn-fold-wrap">
+				<button class="btn-fold" onclick="onSearchExpand(this)">
+					<i class="fa-solid fa-angle-down"></i>
+				</button>
+			</div>
+		</div>
+		<div class="row">
+			<div class="grid-col col-md-12">
+				<div class="content-inner">
+					<div class="grid-item grid-1">
+						<div class="grid-container">
+							<div id="mdutsGrid" style="height: 400px;"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+$(function(){
+	let gridSearchListData = null; // MSKUWC 검색 데이터의 리스트
+	let gridTotalListData = null; // MSKUWC DB전체 리스트
+	let skumkeyListData = null; // skumkeyList
+	initMdutsData(); // 초기화
+	
+	let generateParam = function(params){
+		if(!params){
+			return '';
+		}
+		const keys = Object.keys(params);
+		let URI = '?';
+		
+		for(key of keys){
+			URI += '&' + key + '=' + params[key]; 
+		}
+		return URI;
+	} // param 만들기
+	
+	async function initMdutsData(){
+		const data = await getMdutsInitData();
+		await setSearchComboData(data);
+	} // 초기 데이터 생성
+	
+	async function setMdutsGridComboData(gridName){
+		const data = await getMdutsInitData();
+		await comboCreateData(gridName, 'warekey', data.warekeyList, {combovl : 'combonm', combonm : 'combovl'});
+		await comboCreateData(gridName, 'ownerky', data.ownerkyList, {combovl : 'ownamlc', combonm : 'ownerky'});
+		await comboCreateData(gridName, 'skudesc', data.skumkeyList, {combovl : 'combovl', combonm : 'combonm'});
+		skumkeyListData = data.skumkeyList;
+		
+		Combo(gridName, 'skustat', {comcdky : 'SKUSTAT'}, '/md/mdc7code.do');
+		Combo(gridName, 'suomkey', {uodelyn : 'N'}, '/md/unitSelectBox.do');
+		Combo(gridName, 'truntyp', {trdelyn : 'N'}, '/md/mtutSelectBox.do');
+		Combo(gridName, 'packkey', {pkdelyn : 'N'}, '/md/mpakmaSelectPackBox.do');
+		Combo(gridName, 'vendkey', {comcdky : 'SKUSTAT'}, '/md/mdp2SelectBox.do');
+		Combo(gridName, 'tollvd1', {comcdky : 'SKUSTAT'}, '/md/mdp2SelectBox.do');
+		Combo(gridName, 'tollvd2', {comcdky : 'SKUSTAT'}, '/md/mdp2SelectBox.do');
+		Combo(gridName, 'tollvd3', {comcdky : 'SKUSTAT'}, '/md/mdp2SelectBox.do');
+		Combo(gridName, 'tollvd4', {comcdky : 'SKUSTAT'}, '/md/mdp2SelectBox.do');
+		Combo(gridName, 'brandcd', {comcdky : 'BRANDCD', custtyp : 'WHOLESALE', cudelyn : 'N'}, '/md/customerSelectBox.do');
+		Combo(gridName, 'skugr05', {comcdky : 'SKUGR05'}, '/md/mdc7code.do');
+		Combo(gridName, 'skuat01', {useract : '[[${session.useract}]]'}, '/sy/findDesigner.do');
+	}
+	
+	async function setSearchComboData(data){
+		await comboCreateData(null, 'mdutsWarekey', data.warekeyList, {combovl : 'combovl', combonm : 'combonm'});
+		await comboCreateData(null, 'mdutsOwnerky', data.ownerkyList, {combovl : 'ownerky', combonm : 'ownamlc'});
+		await comboCreateData(null, 'mdutsCustkey', data.custkeyList, {combovl : 'combovl', combonm : 'combonm'});		
+	} // 검색창 콤보박스 데이터
+	
+	var colModel = [
+		{ title: '', dataType: 'String',  dataIndx: 'state', type: 'checkBoxSelection'
+			, align: 'center'
+			, maxWidth:'30', maxHeight:'30'
+			, menuIcon: false
+			, cls: 'ui-state-default', sortable: false, editor: false,
+			cb: {all: false, header: false, check:'Y', uncheck:'N'}
+		},
+		{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true , editable: false},
+		{ title: '[[#{md.mskuwc.compkey}]]', dataType: 'string', dataIndx: 'compkey', editable: false, hidden:true },
+		{ title: '[[#{md.mskuwc.warekey}]]', dataType: 'string', dataIndx: 'warekey',
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+        },
+		{ title: '[[#{md.mskuwc.ownerky}]]', dataType: 'string', dataIndx: 'ownerky',
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+        },
+        { title: '[[#{md.mskuwc.skudesc}]]', dataType: 'string', dataIndx: 'skudesc',
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+	            options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            },
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 60, msg: '[[#{ms.validations.maxLenLength(60)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skumkey}]]', dataType: 'string', dataIndx: 'skumkey'},
+		{ title: '[[#{md.mskuwc.skutkey}]]', dataType: 'string', dataIndx: 'skutkey', editable: false },
+		{ title: '[[#{md.mskuwc.skutype}]]', dataType: 'string', dataIndx: 'skutype', hidden:true ,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 10, msg: '[[#{ms.validations.maxLenLength(10)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.vendnam}]]', dataType: 'string', dataIndx: 'vendkey' ,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: '[[#{md.mskuwc.vndfday}]]', dataType: 'integer' , dataIndx: 'vndfday', format: '#,###', 
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0, warn: true }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},																							
+		{ title: '[[#{md.mskuwc.truntyp}]]', dataType: 'string', dataIndx: 'truntyp',
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: '[[#{md.mskuwc.packkey}]]', width: 100, dataType: 'string', dataIndx: 'packkey',
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                init: function (ui) {
+                	ui.$cell.find('select').pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find('select').pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: '[[#{md.mskuwc.eancode}]]', dataType: 'string', dataIndx: 'eancode' , 
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.upccode}]]', dataType: 'string', dataIndx: 'upccode' , 
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.brandcd}]]', dataType: 'string', dataIndx: 'brandcd' ,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }		
+		},	//브랜드
+		{ title: '[[#{md.mskuwc.roinqty}]]', dataType: 'integer', dataIndx: 'roinqty', format: '###,###,###,###',
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},	//1절수량
+		{ title: '[[#{md.mskuwc.miniqty}]]', dataType: 'integer', dataIndx: 'miniqty', format: '#,###', 
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},	//최소발주수량
+		{ title: '[[#{md.mskuwc.mixrato}]]', dataType: 'string', dataIndx: 'mixrato' ,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 60, msg: '[[#{ms.validations.maxLenLength(60)}]]' }]
+		},	//혼용률
+		{ title: '[[#{md.mskuwc.skugr01}]]', dataType: 'string', dataIndx: 'skugr01',		//SKU Group 1
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: '[[#{md.mskuwc.skugr02}]]', dataType: 'string', dataIndx: 'skugr02',		//SKU Group 2 Season 
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skugr03}]]', dataType: 'string', dataIndx: 'skugr03', 			//SKU Group 3 Size 
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+	    },
+		{ title: '[[#{md.mskuwc.skugr04}]]', dataType: 'string', dataIndx: 'skugr04', 			//SKU Group 4 Color 
+	    	styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+	    	validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+	    },
+		{ title: '[[#{md.mskuwc.skugr05}]]', dataType: 'string', dataIndx: 'skugr05',		//SKU Group 5 원단종류
+	    	styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+	    	editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+	    },
+		{ title: '[[#{md.mskuwc.skualt1}]]', dataType: 'string', dataIndx: 'skualt1', hidden:true,
+	    	styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+	    	editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+	   	},
+		{ title: '[[#{md.mskuwc.skualt2}]]', dataType: 'string', dataIndx: 'skualt2', hidden:true,
+	    	styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+	   		validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 50, msg: '[[#{ms.validations.maxLenLength(50)}]]' }]
+	   	},
+		{ title: '[[#{md.mskuwc.skualt3}]]', dataType: 'string', dataIndx: 'skualt3', hidden:true,
+		    styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+		    validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 50, msg: '[[#{ms.validations.maxLenLength(50)}]]' }]
+	    },
+		{ title: '[[#{md.mskuwc.skuat01}]]', dataType: 'string', dataIndx: 'skuat01',		//SKU Attribute1 디자이너
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: '[[#{md.mskuwc.skuat02}]]', dataType: 'string', dataIndx: 'skuat02',		//SKU Attribute2
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: '[[#{ms.validations.maxLenLength(10)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skuat03}]]', dataType: 'string', dataIndx: 'skuat03',		//SKU Attribute3
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: '[[#{ms.validations.maxLenLength(10)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skuat04}]]', dataType: 'string', dataIndx: 'skuat04',		//SKU Attribute4
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: '[[#{ms.validations.maxLenLength(10)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skuat05}]]', dataType: 'string', dataIndx: 'skuat05',		//SKU Attribute5
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: '[[#{ms.validations.maxLenLength(10)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.sgrweig}]]', dataType: 'integer' , dataIndx: 'sgrweig', hidden:true,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' }
+		},
+		{ title: '[[#{md.mskuwc.sneweig}]]', dataType: 'integer' , dataIndx: 'sneweig', 	//Net weight
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skuleng}]]', dataType: 'integer' , dataIndx: 'skuleng', hidden:true,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skuwidh}]]', dataType: 'integer' , dataIndx: 'skuwidh', hidden:true,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skuheig}]]', dataType: 'integer' , dataIndx: 'skuheig', hidden:true,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skucubi}]]', dataType: 'float' , dataIndx: 'skucubi', format: '###,###,###,###,###.0000000000', hidden:true ,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+		},
+		{ title: '[[#{md.mskuwc.suomkey}]]', dataType: 'string', dataIndx: 'suomkey',		//Default unit of measure
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+	    },
+		{ title: '[[#{md.mskuwc.skuwabc}]]', dataType: 'string', dataIndx: 'skuwabc', editable :false,	//WH SKU ABC analyzed value
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: '[[#{ms.validations.maxLenLength(10)}]]' }]
+	    },
+		{ title: '[[#{md.mskuwc.sputzon}]]', dataType: 'string', dataIndx: 'sputzon',		//*기본 적치 Zone
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.sputloc}]]', dataType: 'string', dataIndx: 'sputloc',		//*기본 적치 Location 
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+       	{ title: '[[#{md.mskuwc.itmcost}]]', dataType: 'integer' , dataIndx: 'itmcost', format: '###,###,###,###', 	//단가
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.selpric}]]', dataType: 'integer' , dataIndx: 'selpric', format: '###,###,###,###', 	
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.sproprc}]]', dataType: 'integer' , dataIndx: 'sproprc', format: '###,###,###,###', 
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.spronte}]]', dataType: 'string' , dataIndx: 'spronte', 	
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.retexky}]]', dataType: 'string' , dataIndx: 'retexky', 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skudcex}]]', dataType: 'string' , dataIndx: 'skudcex',	
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: 'center', type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: 'Y', uncheck: 'N' },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: '[[#{md.mskuwc.cuspric}]]', dataType: 'integer' , dataIndx: 'cuspric', format: '###,###,###,###',	
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.rtspric}]]', dataType: 'integer' , dataIndx: 'rtspric', format: '###,###,###,###',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.skunote}]]', dataType: 'string' , dataIndx: 'skunote', 	
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]
+		},
+       	{ title: '[[#{md.mskuwc.skustat}]]', dataType: 'string', dataIndx: 'skustat',		//*SKU상태
+	    	styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+	    	editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: '[[#{md.mskuwc.itemnt1}]]', dataType: 'string', dataIndx: 'itemnt1', 	//상품비고1
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]
+	    },
+	    { title: '[[#{md.mskuwc.itemnt2}]]', dataType: 'string', dataIndx: 'itemnt2', 	//상품비고2
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]
+	    },
+	    { title: '[[#{md.mskuwc.tollvd1}]]', dataType: 'string', dataIndx: 'tollvd1' ,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: '[[#{md.mskuwc.tollvd2}]]', dataType: 'string', dataIndx: 'tollvd2' ,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: '[[#{md.mskuwc.tollvd3}]]', dataType: 'string', dataIndx: 'tollvd3' ,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: '[[#{md.mskuwc.tollvd4}]]', dataType: 'string', dataIndx: 'tollvd4' ,
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: 'select',
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: '[[#{md.mskuwc.tollfe1}]]', dataType: 'integer' , dataIndx: 'tollfe1', format: '###,###,###,###',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.tollfe2}]]', dataType: 'integer' , dataIndx: 'tollfe2', format: '###,###,###,###',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.tollfe3}]]', dataType: 'integer' , dataIndx: 'tollfe3', format: '###,###,###,###',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.tollfe4}]]', dataType: 'integer' , dataIndx: 'tollfe4', format: '###,###,###,###',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			summary: { type: 'sum' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mskuwc.tollnt1}]]', dataType: 'string', dataIndx: 'tollnt1', 	//임가공비고1
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]
+	    },
+	    { title: '[[#{md.mskuwc.tollnt2}]]', dataType: 'string', dataIndx: 'tollnt2', 	//임가공비고2
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]																												 
+	    },
+	    { title: '[[#{md.mskuwc.tollnt3}]]', dataType: 'string', dataIndx: 'tollnt3', 	//임가공비고3
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]																										 
+	    },
+	    { title: '[[#{md.mskuwc.tollnt4}]]', dataType: 'string', dataIndx: 'tollnt4', 	//임가공비고4
+			styleHead: { 'background':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]																									 
+	    },
+		{ title: '[[#{md.mskuwc.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+		{ title: '[[#{md.mskuwc.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+		{ title: '[[#{md.mskuwc.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+		{ title: '[[#{md.mskuwc.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+		{ title: '[[#{md.mskuwc.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+		{ title: '[[#{md.mskuwc.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false }
+	];
+	
+	const gul = new GridUtil(colModel, '[[${gprogrid}]]', 'mdutsGrid');
+	
+	gul.setFind();
+	gul.setReset();
+	gul.setTitle('박태신 - 과제3 연습');	
+	
+	gul.setCreate(async function (evt, ui) {
+		setMdutsGridComboData('mdutsGrid');
+
+		gridTotalListData = await getMdutsListData();
+		let grid = pq.grid('#mdutsGrid');
+		grid.option( 'dataModel', { data: gridTotalListData.list, recIndx: 'rowkey' } );
+		grid.refreshDataAndView();
+	});
+	
+	gul.setAdd(function(evt, ui){ // row 추가버튼 이벤트
+    	var rowIndx = this.addRow({ rowData: { state : 'Y' }, checkEditable: false });
+		// state 체크박스, codelyn 기본값
+    	this.goToPage({ rowIndx: rowIndx }); // 마지막 row로 이동
+    	this.editCell({ rowIndx : rowIndx , dataIndx : 'warekey'});
+	});
+	
+	gul.setChange(async function (evt, ui) { // 변경리스트 추가 이벤트
+    	if(ui.source === 'edit'){ // 그리드 내부 데이터를 수정했을 때 작동 		
+    		for(i=0; i<ui.updateList.length; i++){
+                var newRow = ui.updateList[i].newRow;
+                var oldRow = ui.updateList[i].oldRow;
+               	   
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : {state : 'Y'},
+        		    checkEditable: false
+        		});
+    			
+    			 if(newRow.hasOwnProperty('skudesc')){
+                       this.updateRow({
+                          rowIndx : ui.updateList[i].rowIndx,
+                          newRow : {skumkey : skumkeyListData.find(function(obj){
+                        	  return obj.combovl === ui.updateList[i].newRow.skudesc                    	  
+                          }).combovl
+                          },
+                       })   
+
+                  }
+    		}
+  		
+    	} else if(ui.source === 'paste'){ // 그리드에 데이터를 붙여넣기 했을 때 작동(ctrl+v) 
+    		for(i=0; i<ui.updateList.length; i++){
+    			// 필수값 체크 추가 필요
+    			var newRow = {state : 'Y'};
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : newRow,
+        		    checkEditable: false
+        		});
+    		}
+    		for(i=0; i<ui.addList.length; i++){
+    			ui.addList[i].newRow.state = 'Y';
+    		}
+    		
+    	} else if(ui.source === 'checkbox'){  // 체크박스 체크했을 때 작동함
+    		//필수값 체크 추가 필요
+    		for(i=0; i<ui.updateList.length; i++){
+    			let chkNewRow = ui.updateList[i].newRow;
+    			if(chkNewRow.hasOwnProperty('warekey') && chkNewRow.hasOwnProperty('ownerky') &&  chkNewRow.hasOwnProperty('skumkey')){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : 'Y' },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+   		}
+    });
+	
+	gul.open();
+	
+	$('#mdutsSearch').click(function(){
+		searchMdutsList();
+	});
+	
+	$('#mdutsSave').click(async function(){
+		let grid = pq.grid('#mdots_grid');
+		let gridCheck = grid.Checkbox('state').getCheckedNodes();
+		//grid = 생성 및 할당, gridCheck = 체크박스가 체크 상태인 node들 가져옴 
+		if(gridCheck.length > 0){ // 업로드할 데이터가 있으면(체크된 데이터)
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+			for(i=0; i< gridCheck.length; i++){
+/* 	    	  	if(!gridCheck[i].compkey){
+	    	  		alert((gridCheck[i].pq_ri + 1) + ' Row ' + '[[#{ms.requiredValue}]]');	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: 'compkey' } );
+	    	  		return false;
+	    	  	} */
+	    	  	if(!gridCheck[i].warekey){
+					alert((gridCheck[i].pq_ri + 1) + ' Row ' + '[[#{ms.requiredValue}]]');	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: 'warekey' } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].ownerky){
+	    	  		alert((gridCheck[i].pq_ri + 1) + ' Row ' + '[[#{ms.requiredValue}]]');	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: 'ownerky' } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].skumkey){
+	    	  		alert((gridCheck[i].pq_ri + 1) + ' Row ' + '[[#{ms.requiredValue}]]');	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: 'skumkey' } );
+	    	  		return false;
+	    	  	}
+			}
+			//============================================================	 
+	    	//체크된 데이터 중복 체크
+	    	//============================================================	
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < gridTotalListData.length; j++){
+					if(gridCheck[i].pq_ri != gridTotalListData[j]){ // 체크된 데이터와 그리드 전체 데이터 비교
+						if(gridCheck[i].compkey === gridTotalListData[j].compkey && gridCheck[i].warekey === gridTotalListData[j].warekey
+								&& gridCheck[i].ownerky === gridTotalListData[j].ownerky   && gridCheck[i].skumkey === gridTotalListData[j].skumkey){
+			      			alert((gridCheck[i].pq_ri + 1) + '[[#{ms.rowDataDuplication}]]'); // 중복이면 alert
+							return false;
+						}
+					}
+				}
+			}
+		}
+		await initMdutsData();
+	});
+	
+	$('#mdutsWarekey, #mdutsOwnerky, #mdutsCustkey').change(async function(){ // 검색값이 바뀔때마다 재검색
+		if($(this).attr('id') === 'mdutsOwnerky'){
+			const params ={ownerky : $(this).val(), custtyp : 'WHOLESALE', cudelyn : 'N'};
+			const res = await fetch('/md/customerSelectBox.do' + generateParam(params));
+			const custData = await res.json();
+/* 			var data = {ownerky : $(this).val(), custtyp : 'WHOLESALE', cudelyn : 'N'}
+			var custData = callAjax('data', 'GET', '/md/customerSelectBox.do', data); */
+			comboCreateData(null, 'mdutsCustkey', custData.item, {combovl : 'combovl', combonm : 'combonm'});
+		}
+		searchMdutsList();
+	});
+	
+	async function searchMdutsList(){
+		let grid = pq.grid('#mdutsGrid');
+		let params = {
+				warekey : $('#mdutsWarekey option:selected').val(),
+				ownerky : $('#mdutsOwnerky').val(),
+				custkey : $('#mdutsCustkey').val(),
+				skumkey : $('#mdutsSkumkey').val(),
+				skudesc : $('#mdutsSkudesc').val(),
+				vendnam : $('#mdutsVendnam').val()
+		}
+		
+		if(params.ownerky !== ''){
+			grid.showLoading();
+			const mdutsList = await getMdutsListData(params);
+			const mdutsTotalList = await getMdutsListData();
+			gridSearchListData = mdutsList; // 갱신
+			gridTotalListData = mdutsTotalList; // 갱신
+			grid.hideLoading();	
+			
+			grid.option( 'dataModel', { data: mdutsList.list, recIndx: 'rowkey' } );
+			grid.refreshDataAndView();
+			
+			if(mdutsList.list.length === 0){
+				alert('[[#{ms.getDataZero}]]');
+			}
+		} else {
+			grid.option( 'dataModel', { data: [], recIndx: 'rowkey' } );
+			grid.refreshDataAndView();
+		}
+	}
+
+	async function getMdutsInitData(){
+		try{
+			const rData = await fetch('/md/mdutsInitData.do');
+			const res = await rData.json();
+			return res;
+		}catch(e){
+			throw e;
+		}
+	} // 초기 콤보박스 데이터 ajax통신(동기)
+	
+	async function getMdutsListData(params){
+		const URI = await generateParam(params);
+		
+		try{
+			const mdutsReq = await fetch('/md/mdu2List.do' + URI);
+			const mdutsList = await mdutsReq.json();
+			return mdutsList;
+		}catch(e){
+			throw e;
+		}
+	} // 초기 리스트 데이터 ajax통신(동기)	
+	
+	async function comboCreateData(gridnm, colnm, obj, mapob, type){ // 콤보박스 데이터 만들기
+		if(!gridnm){
+			$('#' + colnm + ' option').not('[value=""]').remove();	//초기화
+			if(mapob !== null && mapob.combovl !== undefined && mapob.combonm !== undefined){
+				$.each(obj,  function(key, value) {
+					$('#' + colnm) .append($('<option></option>').attr('value',value[mapob.combovl]).text(value[mapob.combonm])); 
+				});
+			}else{
+				$.each(obj, function(key, value) { 
+					$('#' + colnm) .append($('<option></option>').attr('value',value.combovl).text(value.combonm)); 
+				});
+			}
+
+		} else {
+		var grid = pq.grid('#' + gridnm);
+		var column = grid.getColumn({ dataIndx: colnm });
+
+		var options = await obj.map(function(obj){
+        	var rObj = {};
+        	if(mapob != null && mapob.combovl !== undefined && mapob.combonm !== undefined){
+        		rObj[obj[mapob.combovl]] = obj[mapob.combonm];
+        	}else{
+				rObj[obj.combovl] = obj.combonm;
+        	}
+			return rObj;
+		});
+			column.editor.options = options;
+		}
+	}
+
+});
+</script>
+</div>
+</html>

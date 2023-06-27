@@ -1,0 +1,287 @@
+<style>
+@page { size: landscape; }
+</style>
+<div class="modal fade" id="wmpt2ModalLayerPopup" tabindex="-1">
+	<div class="modal-dialog modal-xl">
+		<div class="modal-content">
+			<div class="modal-body">
+				<div class="modal-top-btn-area">
+		      		<button type="button" id="wmpt2ModalLayerPopupPrintBtn" class="btn btn-primary"><i class="fa-solid fa-print"></i></button>
+					<button type="button" id="wmpt2ModalLayerPopupCloseBtn" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+	      		</div>
+				<div class="wmpt2-wrap">
+					<div class="layout-a4" id="wmpt2_print_wrap">
+						<div class="wmpt2-contents-wrap">
+							<div class="wmpt2-header">
+								<div class="wmpt2-title">
+									<span id="wmpt2_brandnm"></span>
+									<span id="wmpt2_spronam"></span>
+									<span id="wmpt2_sprotyp"></span>
+									<span>작업지시서</span>
+								</div>
+							</div>
+							<div class="wmpt2-middle">
+								<div class="wmpt2-content">
+									<div class="wmpt2-content-left">
+										<div class="wmpt2-content-lt">
+											<ul>
+												<li>
+													<p class="p-title">상품명</p>
+													<p class="p-content" id="wmpt2_skudesc"></p>
+												</li>
+												<li>
+													<p class="p-title">공장</p>
+													<p class="p-content" id="wmpt2_sprofac"></p>
+												</li>
+												<li>
+													<p class="p-title">도수</p>
+													<p class="p-content" id="wmpt2_sprdosu"></p>
+												</li>
+												<li>
+													<p class="p-title">공임</p>
+													<p class="p-content" id="wmpt2_sproprc"></p>
+												</li>
+											</ul>
+										</div>
+										<div class="wmpt2-content-lb">
+											<ul>
+												<li class="ht-20">
+													<p class="p-title">사이즈</p>
+													<p class="p-content" id="wmpt2_sprosiz"></p>
+												</li>
+												<li>
+													<p class="p-title">요청 사항</p>
+													<p class="p-content" id="wmpt2_sproreq"></p>
+												</li>
+											</ul>
+										</div>
+									</div>
+									<div class="wmpt2-content-right">
+										<div class="wmpt2-content-r-title">
+											<ul>
+												<li class="r-top">
+													<p>스와치</p>
+												</li>
+												<li class="r-middle">
+													<p>완성이미지</p>
+												</li>
+												<li class="r-bottom">
+													<p>칼라</p>
+												</li>
+											</ul>
+										</div>
+										<div class="wmpt2-content-data" id="wmpt2_content_data_list">
+											
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="wmpt2-footer">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script th:inline="javascript">
+$(function(){
+	var pageId = "wmpt2";
+	
+	var parentParam = /*[[${params}]]*/ null;
+	    
+	var wmpt2ModalOBject = $("#wmpt2ModalLayerPopup");
+	wmpt2ModalOBject.modal("show");
+	
+	initData(parentParam);
+	
+	function initDate(){
+		var today = new Date();
+		var date = today.getFullYear()+'.'+(today.getMonth()+1).toString().padStart(2,"0")+'.'+today.getDate().toString().padStart(2,"0");
+		var time = today.getHours().toString().padStart(2,"0")+':'+today.getMinutes().toString().padStart(2,"0")+':'+today.getSeconds().toString().padStart(2,"0");
+		$(".wmpt2-print-date-span").text(date);
+		$(".wmpt2-print-time-span").text(time);
+	}
+	
+		
+	function qrCreate(url){
+		var urlText = url ? url : "http://www.naver.com"; 
+		$(".qr-code").children().remove();
+		$(".qr-code").qrcode({   //qrcode 시작        
+			render : "canvas",      //table, canvas 형식 두 종류가 있다.         
+			width : 150,            //넓이 조절        
+			height : 150,           //높이 조절        
+			text   : urlText
+		});
+	}
+	
+	function initData(param){
+		
+		var rData = callAjax("data", "GET", "/wm/wmpt2List.do", param);
+
+		initInfoTable(rData.item);
+		initInfoMskupiTable(rData.item);
+	}
+
+	
+	function initInfoTable(data){
+		var mskuspData = data.mskuspData[0];
+		var mskupcData = data.mskupcData[0];
+		
+		$("#"+pageId+"_brandnm").text(mskuspData.brandnm);
+		$("#"+pageId+"_spronam").text(mskupcData.spronam);
+		$("#"+pageId+"_sprotyp").text(mskupcData.sprotyp);
+		$("#"+pageId+"_skudesc").text(mskuspData.skudesc);
+		//$("#"+pageId+"_credate").text(mskuspData.credate);
+		
+		$("#"+pageId+"_sprofac").text(mskupcData.sprofac);
+		$("#"+pageId+"_sprdosu").text(mskupcData.sprdosu);
+		$("#"+pageId+"_sproprc").text(mskupcData.sproprc);
+		
+		$("#"+pageId+"_sprosiz").text(mskupcData.sprosiz);
+		$("#"+pageId+"_sproreq").text(mskupcData.sproreq);
+	}
+	
+	function initInfoMskupiTable(data){
+		
+		var mskupcData = data.mskupcData[0];
+		var mskupiData = data.mskupiData;
+		
+		var listDom = $("#"+pageId+"_content_data_list");
+		
+		//=========================
+		//고정 Row
+		//=========================
+		var ulFixedDom 	= $("<ul></ul>");
+		var liTitleDom 	= $("<li></li>",{
+			"class" : "wmpt2-title-li"
+		});
+		var pTitleDom	= $("<p></p>",{
+			"text" : "위치"
+		});
+		var liImageDom 	= $("<li></li>",{
+			"class" : "wmpt2-image-li"
+		});
+		var pImageDom	= $("<img/>",{
+			"src" : mskupcData.spxyimg
+		});
+		var liSkugr04Dom 	= $("<li></li>",{
+			"class" : "wmpt2-skugr04-li"
+		});
+		var pSkugr04Dom	= $("<p></p>",{
+			"text" : mskupcData.spxytxt
+		});
+		liTitleDom.append(pTitleDom);
+		liImageDom.append(pImageDom);
+		liSkugr04Dom.append(pSkugr04Dom);
+		ulFixedDom.append(liTitleDom, liImageDom, liSkugr04Dom);
+		listDom.append(ulFixedDom);
+		//=========================
+		//변동 Row
+		//=========================
+		
+		for(var i=0; i<mskupiData.length; i++){
+			
+			if(mskupiData[i].spricol != "" && mskupiData[i].spriimg != ""){
+				
+				var ulDom 	= $("<ul></ul>");
+				var liTitleDom 	= $("<li></li>",{
+					"class" : "wmpt2-title-li"
+				});
+				var pTitleDom	= $("<p></p>",{
+					"text" : mskupiData[i].spricol
+				});
+				var liImageDom 	= $("<li></li>",{
+					"class" : "wmpt2-image-li"
+				});
+				var pImageDom	= $("<img/>",{
+					"src" : mskupiData[i].spriimg
+				});
+				var liSkugr04Dom 	= $("<li></li>",{
+					"class" : "wmpt2-skugr04-li"
+				});
+				var pSkugr04Dom	= $("<p></p>",{
+					"text" : mskupiData[i].sprfcol
+				});
+				liTitleDom.append(pTitleDom);
+				liImageDom.append(pImageDom);
+				liSkugr04Dom.append(pSkugr04Dom);
+				ulDom.append(liTitleDom, liImageDom, liSkugr04Dom);
+				listDom.append(ulDom);
+			}
+			
+		}
+	}
+	
+	function dateFunction(type){
+		
+		var result;
+		var today = new Date();
+		
+		switch(type){
+		
+			case "halfdate":
+				var year = today.getFullYear();
+				var month = ('0' + (today.getMonth() + 1)).slice(-2);
+				var day = ('0' + today.getDate()).slice(-2);
+	
+				var dateString = year.toString().substring(2) + '-' + month  + '-' + day;
+				
+				result = dateString;
+			break;
+			
+			case "date":
+				var year = today.getFullYear();
+				var month = ('0' + (today.getMonth() + 1)).slice(-2);
+				var day = ('0' + today.getDate()).slice(-2);
+
+				var dateString = year + '-' + month  + '-' + day;
+				
+				result = dateString;
+			break;
+			
+			case "week":
+				const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+				var week = WEEKDAY[today.getDay()];
+				
+				result = "("+week+")";
+			break;
+			
+			case "time":
+				var hours = ('0' + today.getHours()).slice(-2); 
+				var minutes = ('0' + today.getMinutes()).slice(-2);
+				var seconds = ('0' + today.getSeconds()).slice(-2); 
+
+				var timeString = hours + ':' + minutes  + ':' + seconds;
+				
+				result = timeString;
+			break;
+		}
+		
+		return result;
+	}
+	
+	
+	/*
+	 * Event 영역
+ 	 */
+	$("#wmpt2ModalLayerPopupCloseBtn").click(function(){
+		wmpt2ModalOBject.modal("hide");
+	});
+	
+	$("#wmpt2ModalLayerPopupPrintBtn").click(function(){
+		wmpt2Print();
+	});
+
+	function wmpt2Print(){
+		$(".layout-a4").printThis({
+			//importCSS:false,
+			//loadCSS: "/css/pt/pt.css",
+			//loadCSS : ,
+			//importStyle : true 
+			//'<style media="print">@page {size:80mm; margin:0;}</style>'
+		});
+	}
+});
+</script>

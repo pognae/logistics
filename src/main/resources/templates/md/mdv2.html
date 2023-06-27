@@ -1,0 +1,453 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<div class="tab-inner">
+	 	<div class="content-header">
+			<div class="header-left">
+	    		<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+	  		<div class="header-right">
+				<button type="button" class="btn default-btn" id="mdv2_save"   th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+		  		<button type="button" class="btn default-btn" id="mdv2_search" th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" class="btn main-btn"><i class="fa-solid fa-arrows-rotate"></i></button>
+				<button type="button" class="btn main-btn"><i class="fa-solid fa-print"></i></button>	
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+			</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdv2_shtrtky" class="col-md-5 col-xl-2 col-form-label">[[#{md.mshrhd.shtrtky}]]</label> 
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mshrhd.shtrtky')}" id="mdv2_shtrtky" />
+					</div>
+					<label for="mdv2_shtrtnm" class="col-md-5 col-xl-2 col-form-label">[[#{md.mshrhd.shtrtnm}]]</label> 
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mshrhd.shtrtnm')}" id="mdv2_shtrtnm" />
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="content-inner">
+			<div class="grid-item grid-2">
+		 		<div class="grid-container">
+		 			<div id="mdv2_h_grid" style="height:300px;"></div>
+		 		</div>
+		 	</div>
+		 	<div class="grid-item grid-2">
+		 		<div class="grid-container">
+		 			<div id="mdv2_i_grid" style="height:500px;"></div>
+		 		</div>
+		 	</div>
+		 </div>
+	</div>
+
+<script>
+$(function(){
+	var mdv2_init = mdv2Init();
+	
+	//============================================================	
+	//검색 화면 이벤트
+	//============================================================
+	$("#mdv2_search").click(function () {
+		mdv2List();
+	});
+	
+	//============================================================	
+	//저장 이벤트
+	//============================================================
+	$("#mdv2_save").click(function () {
+		var headGrid = pq.grid("#mdv2_h_grid"), headCheck = headGrid.Checkbox('state').getCheckedNodes();	//선택한 리스트
+		var itemGrid = pq.grid("#mdv2_i_grid"), itemCheck = itemGrid.Checkbox('state').getCheckedNodes();
+		var itemChange = itemGrid.getChanges({all:true});
+		
+		if(headCheck.length > 0){
+			//============================================================	 
+	    	//체크된 head 데이터 필수 값 체크
+	    	//============================================================
+			for(i=0; i< headCheck.length; i++){
+	    	  	if(!headCheck[i].shtrtnm){
+					alert((headCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					headGrid.editCell( { rowIndx: headCheck[i].pq_ri, dataIndx: "shtrtnm" } );
+	    	  		return false;
+	    	  	}
+			}
+			
+			//============================================================	 
+	    	//체크된 item 데이터 중 필수 값 체크
+	    	//============================================================
+			for(i=0; i< itemCheck.length; i++){
+	    	  	if(!itemCheck[i].custkey){
+					alert((itemCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					itemGrid.editCell( { rowIndx: itemCheck[i].pq_ri, dataIndx: "custkey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!itemCheck[i].shtrpty){
+					alert((itemCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					itemGrid.editCell( { rowIndx: itemCheck[i].pq_ri, dataIndx: "shtrpty" } );
+	    	  		return false;
+	    	  	}
+			}
+			
+	      	//itemGrid updateList 체크 데이터 정제
+			for(z=0; z<itemChange.updateList.length; z++){
+				if(itemChange.updateList[z].state != true){
+					itemChange.updateList.splice(z, 1);
+					itemChange.oldList.splice(z, 1);
+				}
+			}
+			
+			//itemGrid addList 체크 데이터 정제
+			for(x=0; x<itemChange.addList.length; x++){
+				if(itemChange.addList[x].state != true){
+					itemChange.addList.splice(x, 1);
+				}
+			}
+		
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { head : headCheck, item : itemChange, shtrtky : $('#mdv2_shtrtky').val(), shtrtnm : $('#mdv2_shtrtnm').val() };
+				headGrid.showLoading();
+	      		itemGrid.showLoading();
+				var aul = new AjaxUtil_Order("/md/mdv2Save.do", data);
+				aul.setCallbackSuccess(function(data) {
+					headGrid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+					headGrid.refreshDataAndView();
+					itemGrid.option( "dataModel", { data: [] } );
+					itemGrid.refreshDataAndView();
+					alert("[[#{ms.saveSuccess}]]");
+				});
+				aul.setComplete(function(data){
+					headGrid.hideLoading();
+					itemGrid.hideLoading();
+				});
+				aul.send();
+			}
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	//============================================================	
+	// Shuttle Routing Head Grid
+	//============================================================
+	var mdv2_h_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: false }
+     	},
+        { title: "rowkey", dataType: "string", dataIndx: "rowkey", editable: false, hidden: true},
+		{ title: "[[#{md.mshrhd.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden: true },
+		{ title: "[[#{md.mshrhd.shtrtky}]]", dataType: "string", dataIndx: "shtrtky", editable: false },	//순회노선키
+		{ title: "[[#{md.mshrhd.shtrtnm}]]", dataType: "string", dataIndx: "shtrtnm",	//순회노선명
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mshrhd.shtcytm}]]", dataType: "integer", dataIndx: "shtcytm",	//셔틀운행주기
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mshrhd.credate}]]", dataType: "string", dataIndx: "credate",  editable: false},
+		{ title: "[[#{md.mshrhd.cretime}]]", dataType: "string", dataIndx: "cretime",  editable: false},
+		{ title: "[[#{md.mshrhd.creuser}]]", dataType: "string", dataIndx: "creuser",  editable: false},
+		{ title: "[[#{md.mshrhd.lmodate}]]", dataType: "string", dataIndx: "lmodate",  editable: false},
+		{ title: "[[#{md.mshrhd.lmotime}]]", dataType: "string", dataIndx: "lmotime",  editable: false},
+		{ title: "[[#{md.mshrhd.lmouser}]]", dataType: "string", dataIndx: "lmouser",  editable: false}
+	];
+	
+	var mdv2_h_grid = new GridUtil(mdv2_h_gridCM, '[[${gprogrid}]]', 'mdv2_h_grid');
+	
+	mdv2_h_grid.setFind();
+	mdv2_h_grid.setReset();
+	
+	mdv2_h_grid.setAdd(function(evt, ui){
+		var rowIndx = this.addRow({ rowData : { state : true, compkey : "[[${session.compkey}]]" }, checkEditable : false }); 
+		this.goToPage({ rowIndx : rowIndx });
+		this.editCell({ rowIndx : rowIndx , dataIndx : "shtrtnm"});
+	});
+	
+	mdv2_h_grid.setDelete(function(evt, ui){
+		var headGrid = this, checkList = headGrid.Checkbox('state').getCheckedNodes();
+		var itemGrid = pq.grid("#mdv2_i_grid");
+		
+		if(checkList.length > 0){
+			setTimeout(function () {
+            	var ans = window.confirm("[[#{ms.choiceRowDelete}]]");	//선택된 행을 모두 삭제하시겠습니까?
+                if (ans) {
+                	if(!checkList[0].rowkey){
+                		headGrid.deleteRow({ rowIndx: checkList[0].pq_ri });
+        			}else{
+        				var data = { data : checkList, shtrtky : $('#mdv2_shtrtky').val(), shtrtnm : $('#mdv2_shtrtnm').val() };
+        				headGrid.showLoading();
+        				itemGrid.showLoading();
+                		var aul = new AjaxUtil_Order("/md/deleteHeadList.do", data, "DELETE");
+            	    	aul.setCallbackSuccess(function (data){
+            	    		headGrid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+            				headGrid.refreshDataAndView();
+            				itemGrid.option( "dataModel", { data: [] } );
+            				itemGrid.refreshDataAndView();
+                        	alert("[[#{ms.deleteSuccess}]]");
+            	    	});
+            	    	aul.setComplete(function(data){
+            	    		headGrid.hideLoading();
+            	    		itemGrid.hideLoading();
+        				});
+            	    	aul.send();
+        			}
+                }
+            });
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+    	}
+	});
+	
+	mdv2_h_grid.setRowDblClick(function(evt,ui){
+		this.Checkbox('state').unCheckAll();
+		this.updateRow( {
+   			rowIndx : ui.rowData.pq_ri,
+   		    newRow : { state : true },
+   		    checkEditable: false
+   		});
+	});
+	
+	mdv2_h_grid.setCheck(function(evt, ui){
+		if(ui.check){
+			this.Checkbox('state').unCheckAll();
+			ui.rowData.state = true;
+			this.refreshRow({ rowIndx: ui.rowData.pq_ri});
+			mdv2_i_grid_List(ui);
+		}
+	});
+	
+	mdv2_h_grid.setChange(function (evt, ui) {
+		if(ui.source === 'edit'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : { state : true },
+        		    checkEditable: false
+        		});
+    		}
+    	}else if(ui.source === 'paste'){
+    		if(ui.addList.length > 0){
+    			for(i=0; i<ui.addList.length; i++){
+        			ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+        		}
+    		}
+    	}
+	});
+	
+	mdv2_h_grid.open();
+	
+ 	//============================================================	
+	// Shuttle Routing Item List 조회
+	//============================================================
+	function mdv2_i_grid_List(ui){
+		var grid = pq.grid("#mdv2_i_grid");
+		if(ui.rowData.rowkey){
+			var data = { compkey : ui.rowData.compkey, shtrtky : ui.rowData.shtrtky };
+			grid.showLoading();
+			var aul = new AjaxUtil_Order("/md/selectMshritList.do", data, "GET");
+			aul.setCallbackSuccess(function (data){
+				if(data.list.length == 0){
+					alert("[[#{ms.getDataZero}]]");
+				}
+				grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+				grid.refreshDataAndView();
+			});
+			aul.setComplete(function(data){
+				grid.hideLoading();
+			});
+			aul.send();
+		}else{
+			grid.option( "dataModel", { data: [] } );
+			grid.refreshDataAndView();
+		}
+	}
+
+	//============================================================	 
+	// Shuttle Routing Item Grid
+	//============================================================
+	var mdv2_i_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: true }
+     	},
+        { title: "rowkey", dataType: "string", dataIndx: "rowkey", editable: false, hidden: true},
+       	{ title: "[[#{md.mshrit.compkey}]]", dataType: "string",  dataIndx: "compkey", editable: false, hidden: true }, 
+		{ title: "[[#{md.mshrit.shtrtky}]]", dataType: "string",  dataIndx: "shtrtky", editable: false },	//셔틀노선키
+		{ title: "[[#{md.mshrit.shtrtit}]]", dataType: "integer", dataIndx: "shtrtit", editable: false }, 	//셔틀노선순번
+		{ title: "[[#{md.mshrit.custkey}]]", dataType: "string",  dataIndx: "custkey",		//Customer Key
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false,singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+        		var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : "";
+            }
+		},
+		{ title: "[[#{md.mshrit.shtrpty}]]", dataType: "string",  dataIndx: "shtrpty",		//보고유형
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false,singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+        		var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : "";
+            }
+		},		
+		{ title: "[[#{md.mshrit.credate}]]", dataType: "string",  dataIndx: "credate",  editable: false},
+		{ title: "[[#{md.mshrit.cretime}]]", dataType: "string",  dataIndx: "cretime",  editable: false},
+		{ title: "[[#{md.mshrit.creuser}]]", dataType: "string",  dataIndx: "creuser",  editable: false},
+		{ title: "[[#{md.mshrit.lmodate}]]", dataType: "string",  dataIndx: "lmodate",  editable: false},
+		{ title: "[[#{md.mshrit.lmotime}]]", dataType: "string",  dataIndx: "lmotime",  editable: false},
+		{ title: "[[#{md.mshrit.lmouser}]]", dataType: "string",  dataIndx: "lmouser",  editable: false}
+	];
+	
+	var mdv2_i_grid = new GridUtil(mdv2_i_gridCM, '[[${gprogrid}]]', 'mdv2_i_grid');
+	mdv2_i_grid.setFind();
+	mdv2_i_grid.setReset();
+	
+	mdv2_i_grid.setAdd(function(evt, ui){
+		var headGrid = pq.grid("#mdv2_h_grid")
+	  	  , headCheck = headGrid.Checkbox('state').getCheckedNodes();	
+		if(headCheck.length > 0){
+			var rowData = { state : true, compkey : "[[${session.compkey}]]" , shtrtky : headCheck[0].shtrtky };
+			var rowIndx = this.addRow({ newRow : rowData , checkEditable : false});
+			this.goToPage({ rowIndx : rowIndx });
+			this.editCell({ rowIndx : rowIndx , dataIndx : "custkey"});
+		}else{
+			alert("[[#{ms.choiceHeadRowZero}]]");
+		}	
+	});
+	
+	mdv2_i_grid.setDelete(function(evt, ui){
+		var itemGrid = this, checkList = itemGrid.Checkbox('state').getCheckedNodes();
+		var headGrid = pq.grid("#mdv2_h_grid");
+		
+		if(checkList.length > 0){
+			setTimeout(function () {
+            	var ans = window.confirm("[[#{ms.choiceRowDelete}]]");	//선택된 행을 모두 삭제하시겠습니까?
+                if (ans) {
+                	if(!checkList[0].rowkey){
+                		itemGrid.deleteRow({ rowIndx: checkList[0].pq_ri });
+        			}else{
+        				var data = { data : checkList, shtrtky : $('#mdv2_shtrtky').val(), shtrtnm : $('#mdv2_shtrtnm').val() };
+        				headGrid.showLoading();
+        				itemGrid.showLoading();
+                		var aul = new AjaxUtil_Order("/md/deleteItemList.do", data, "DELETE");
+            	    	aul.setCallbackSuccess(function (data){
+            	    		headGrid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+            				headGrid.refreshDataAndView();
+            				itemGrid.option( "dataModel", { data: [] } );
+            				itemGrid.refreshDataAndView();
+                        	alert("[[#{ms.deleteSuccess}]]");
+            	    	});
+            	    	aul.setComplete(function(data){
+            	    		headGrid.hideLoading();
+            	    		itemGrid.hideLoading();
+            			});
+            	    	aul.send();
+        			}
+                }
+            });
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+    	}
+	});
+	
+	mdv2_i_grid.setCreate(function (evt, ui) {
+		var keys = Object.keys(mdv2_init);
+		for(key of keys){
+			var gData = mdv2_init[key];
+			var column = this.getColumn({ dataIndx: key });
+			var options = gData.map(function(obj){
+	        	var rObj = {};
+	        	rObj[obj.combovl] = obj.combonm;
+	        	return rObj
+			});
+	    	column.editor.options = options;
+		}
+	});
+		
+	mdv2_i_grid.setChange(function (evt, ui) {
+    	if(ui.source === 'edit'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+           		    newRow : { state : true },
+           		    checkEditable: false
+           		});
+    		}
+    	}else if(ui.source === 'paste'){
+    		if(ui.updateList.length > 0){
+    			for(i=0; i<ui.updateList.length; i++){
+        			this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : {state : true},
+            		    checkEditable: false
+            		});
+        		}
+    		}
+    		if(ui.addList.length > 0){
+    			var headGrid = pq.grid("#mdv2_h_grid"), headCheck = headGrid.Checkbox('state').getCheckedNodes();
+    			for(i=0; i<ui.addList.length; i++){
+        			ui.addList[i].newRow.state = true;
+        			ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+        			ui.addList[i].newRow.shtrtky = headCheck[0].shtrtky;
+        		}
+    		}
+    	}
+	});
+	
+	mdv2_i_grid.open();
+	mdv2List();
+	
+	function mdv2List(){
+		var headGrid = pq.grid("#mdv2_h_grid");
+		var itemGrid = pq.grid("#mdv2_i_grid");
+		headGrid.showLoading();
+		var data = { shtrtky : $('#mdv2_shtrtky').val(), shtrtnm : $('#mdv2_shtrtnm').val() };
+		var aul = new AjaxUtil_Order("/md/selectMshrhdList.do", data, "GET");
+		aul.setCallbackSuccess(function (data){
+			headGrid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+			headGrid.refreshDataAndView();
+			itemGrid.option( "dataModel", { data: [] } );
+			itemGrid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			headGrid.hideLoading();
+		});
+		aul.send();
+	};
+	
+	function mdv2Init(){
+		var initData = callAjax('data', 'GET', "/md/mdv2Init.do" , {});
+		return initData	
+	};
+});
+
+</script>
+
+</div>
+</html>

@@ -1,0 +1,694 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">  			
+	    		<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+	  		<div class="header-right">
+				<button type="button" class="btn default-btn" id="syu1_save"   th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+		  		<button type="button" class="btn default-btn" id="syu1_search" th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+			</div>
+	  	</div>
+	  	<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+			  	<div class="form-group row col">
+					<label for="syu1_useract" class="col-md-5 col-xl-1 col-form-label">[[#{sy.susrma.useract}]]</label>
+					<div class="col-md-7 col-xl-3">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.susrma.useract')}" id="syu1_useract"/>
+					</div>
+					<label for="syu1_usernam" class="col-md-5 col-xl-1 col-form-label">[[#{sy.susrma.usernam}]]</label>
+					<div class="col-md-7 col-xl-3">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.susrma.usernam')}" id="syu1_usernam"/>
+			  		</div>
+			  		<label for="syu1_approyn" class="col-md-5 col-xl-1 col-form-label">[[#{sy.susrma.approyn}]]</label>
+					<div class="col-md-7 col-xl-3">
+						<input type="checkbox" class="form-control" id="syu1_approyn"/>
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label for="syu1_usertyp" class="col-md-5 col-xl-1 col-form-label">[[#{sy.susrma.usertyp}]]</label>
+					<div class="col-md-7 col-xl-3">
+						<select class="custom-select" id="syu1_usertyp">
+							<option value=""></option>
+						</select>
+					</div>
+					<label for="syu1_telphnm" class="col-md-5 col-xl-1 col-form-label">[[#{sy.susrma.telphnm}]]</label>
+					<div class="col-md-7 col-xl-3">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.susrma.telphnm')}" id="syu1_telphnm"/>
+			  		</div>
+			  		<label for="syu1_sotapyn" class="col-md-5 col-xl-1 col-form-label">[[#{sy.susrma.sotapyn}]]</label>
+					<div class="col-md-7 col-xl-3">
+						<input type="checkbox" class="form-control" id="syu1_sotapyn"/>
+					</div>
+				</div>
+			</div>
+	  	</div>
+	  	<div class="content-inner">
+			<div class="grid-1">
+		 		<div class="grid-container">
+		 			<div id="syu1_grid" style="height:500px;"></div>
+		 		</div>
+		 	</div>
+		</div>
+	</div>
+	
+<script>
+$(function(){
+	//============================================================	 
+	//검색 화면 이벤트
+	//============================================================
+	Combo("", "syu1_usertyp", {comcdky : "USERTYP"} );
+	
+	$("#syu1_search").click(function () {
+		var grid = pq.grid("#syu1_grid");
+		grid.showLoading();
+		var data = { 
+			useract : $('#syu1_useract').val()
+		  , usernam : $('#syu1_usernam').val()
+		  , usertyp : $('#syu1_usertyp option:selected').val()  
+		  , telphnm : $('#syu1_telphnm').val()
+		  , approyn : ($('#syu1_approyn').is(':checked') ? "Y" : "N")
+		  , sotapyn : ($('#syu1_sotapyn').is(':checked') ? "Y" : "N")
+		};
+		
+		var aul = new AjaxUtil_Order("/sy/userSelect.do", data, "GET");
+		aul.setCallbackSuccess(function(data){
+			if(data.list.length == 0){
+				alert("[[#{ms.getDataZero}]]");
+			}
+			grid.option( "dataModel", {data: data.list , recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		});
+		aul.send();
+	});
+	
+	$("#syu1_save").click(function () {
+		var grid = pq.grid("#syu1_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		var gridChange = grid.getChanges({all:true});
+		
+		if(gridCheck.length > 0){
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+	        for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].useract){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "useract" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].passwrd){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "passwrd" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].usernam){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "usernam" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].telphnm){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "telphnm" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].emailad){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "emailad" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].usertyp){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "usertyp" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].rolgkey){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "rolgkey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].themety){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "themety" } );
+	    	  		return false;
+	    	  	}
+	    	}
+			
+			//============================================================	 
+	    	//체크된 데이터 충복 체크
+	    	//============================================================
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){
+						if(gridCheck[i].useract === grid.getData()[j].useract){
+			      			alert((grid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+			//updateList 체크 데이터 정제
+			for(z=0; z<gridChange.updateList.length; z++){
+				if(gridChange.updateList[z].state != true){
+					gridChange.updateList.splice(z, 1);
+					gridChange.oldList.splice(z, 1);
+				}
+			}
+			
+			//addList 체크 데이터 정제
+			for(x=0; x<gridChange.addList.length; x++){
+				if(gridChange.addList[x].state != true){
+					gridChange.addList.splice(x, 1);
+				}
+			}
+	    	
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { 
+					data : gridChange
+				  ,	useract : $('#syu1_useract').val()
+				  , usernam : $('#syu1_usernam').val()
+				  , usertyp : $('#syu1_usertyp option:selected').val()  
+				  , telphnm : $('#syu1_telphnm').val()
+				  , approyn : ($('#syu1_approyn').is(':checked') ? "Y" : "N")
+				  , sotapyn : ($('#syu1_sotapyn').is(':checked') ? "Y" : "N") 
+				};
+				grid.showLoading();
+		    	var aul = new AjaxUtil_Order("/sy/userSave.do", data);
+		    	aul.setCallbackSuccess(function(data){
+		    		grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+			   		grid.refreshDataAndView();
+			        alert("[[#{ms.saveSuccess}]]");
+		    	});
+		    	aul.setComplete(function(data){
+					grid.hideLoading();
+				});
+		    	aul.send();
+			}
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	var syu1_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+             cb: { all: false, header: true }
+     	},
+    	{ title: "rowkey", dataType: "string", dataIndx: "rowkey", hidden: true, editable: false},
+    	{ title: "[[#{sy.susrma.compkey}]]", dataType: "string", dataIndx: "compkey", hidden: true, editable: false},
+		{ title: "[[#{sy.susrma.useract}]]", dataType: "string", dataIndx: "useract", 	//계정ID
+    		styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+    		render: function (ui) {                            
+    			if(ui.rowData.rowkey != undefined){
+    				ui.rowData.disabled = true;
+    			}else{
+    				ui.rowData.disabled = false;
+    			}
+            },
+    		editable: function (ui) {
+    			if(ui.rowData){
+    				return !ui.rowData.disabled;
+    			}else{
+    				return false;
+    			}
+    		},
+    		validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.passwrd}]]", dataType: "string", dataIndx: "passwrd",	//비밀번호
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.usernam}]]", dataType: "string", dataIndx: "usernam",	//사용자이름
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.address}]]", dataType: "string", dataIndx: "address", hidden: true,	//Address
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.citycod}]]", dataType: "string", dataIndx: "citycod", hidden: true,	//*City
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.rsonkey}]]", dataType: "string", dataIndx: "rsonkey", hidden: true,	//*Region
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.postcod}]]", dataType: "string", dataIndx: "postcod", hidden: true,	//*Postal code
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.natn2ky}]]", dataType: "string", dataIndx: "natn2ky", hidden: true,	//*국기코드
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 2, msg: "[[#{ms.validations.maxLenLength(2)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.telphnm}]]", dataType: "string", dataIndx: "telphnm",	//휴대전화번호
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.emailad}]]", dataType: "string", dataIndx: "emailad",	//이메일
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.departm}]]", dataType: "string", dataIndx: "departm",	//부서명
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.emploid}]]", dataType: "string", dataIndx: "emploid", hidden: true,	//*회사 내부 사번
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.acapdoc}]]", dataType: "string", dataIndx: "acapdoc", hidden: true,	//*결재문서번호
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.usertyp}]]",  dataType: "string", dataIndx: "usertyp",	//사용자 타입
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+				type: "select",
+	            init: function (ui) { 
+	            	ui.$cell.find("select").pqSelect({ search : false, singlePlaceholder: '' });
+	            	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+	            },
+				options: []
+			},
+	        render: function (ui) {
+          		var option = ui.column.editor.options.find(function (obj) {
+                   return (obj[ui.cellData] != null);
+               	});
+              	return option ? option[ui.cellData] : "";
+			}
+		},
+		{ title: "[[#{sy.susrma.ownerky}]]", dataType: "string", dataIndx: "ownerky",	//Owner key
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+				type: "select",
+	            init: function (ui) { 
+	            	ui.$cell.find("select").pqSelect({ search : false, singlePlaceholder: '' });
+	            	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+	            },
+				options: []
+			},
+	        render: function (ui) {
+          		var option = ui.column.editor.options.find(function (obj) {
+                   return (obj[ui.cellData] != null);
+               	});
+          		if(ui.cellData == ""){
+                	ui.rowData.ownamlc = "";
+                }
+              	return option ? option[ui.cellData] : ui.rowData.ownamlc;
+			},
+			editable: function (ui) {
+				return editable = (ui.rowData.usertyp === 'OWNER' || ui.rowData.usertyp === 'VENDER' || ui.rowData.usertyp === 'CUSTOMER') ? true : false;
+			}
+		},
+		{ title: "[[#{sy.susrma.ptnrkey}]]", dataType: "string", dataIndx: "ptnrkey",	//Partner Key
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+				type: "select",
+	            init: function (ui) { 
+	            	ui.$cell.find("select").pqSelect({ search : false, singlePlaceholder: '' });
+	            	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+	            },
+				options: []
+			},
+	        render: function (ui) {
+          		var option = ui.column.editor.options.find(function (obj) {
+                   return (obj[ui.cellData] != null);
+               	});
+          		if(ui.cellData == ""){
+                	ui.rowData.ptnamlc = "";
+                }
+              	return option ? option[ui.cellData] : ui.rowData.ptnamlc;
+			},
+			editable: function (ui) {
+				return editable = ui.rowData.usertyp === 'VENDER' ? true : false;
+			}
+		},
+		{ title: "[[#{sy.susrma.custkey}]]", dataType: "string", dataIndx: "custkey",	//Customer Key
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+				type: "select",
+	            init: function (ui) { 
+	            	ui.$cell.find("select").pqSelect({ search : false, singlePlaceholder: '' });
+	            	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+	            },
+				options: []
+			},
+	        render: function (ui) {
+          		var option = ui.column.editor.options.find(function (obj) {
+                   return (obj[ui.cellData] != null);
+               	});
+          		if(ui.cellData == ""){
+                	ui.rowData.cunamlc = "";
+                }
+              	return option ? option[ui.cellData] : ui.rowData.cunamlc;
+			},
+			editable: function (ui) {
+				return editable = ui.rowData.usertyp === 'CUSTOMER' ? true : false;
+			}
+		},
+		{ title: "[[#{sy.susrma.usergr1}]]", dataType: "string", dataIndx: "usergr1",	//User group1
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+            cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+            	var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{sy.susrma.usergr2}]]", dataType: "string", dataIndx: "usergr2",	//User group2
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.usergr3}]]", dataType: "string", dataIndx: "usergr3",	//User group3
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.langkey}]]", dataType: "string", dataIndx: "langkey", hidden: true,	//*Language key
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 2, msg: "[[#{ms.validations.maxLenLength(2)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.datefmt}]]", dataType: "string", dataIndx: "datefmt", hidden: true,	//*Date format
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.timefmt}]]", dataType: "string", dataIndx: "timefmt", hidden: true,	//*Time format
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.decifmt}]]", dataType: "string", dataIndx: "decifmt", hidden: true,	//*Decimal format
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.utimzon}]]", dataType: "integer",dataIndx: "utimzon", hidden: true,	//*Time zone by user
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.idexpdt}]]", dataType: "date", format:"yy-mm-dd", dataIndx: "idexpdt",	//계정 만료일
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			cls: 'pq-calendar pq-side-icon',
+	        editor: {
+	            type: 'textbox',
+	            init: dateEditor,
+	            getData: function (ui) {
+	                var dt = $.datepicker.parseDate(ui.column.format, ui.$cell.find("input").val());
+	                return $.datepicker.formatDate("yy-mm-dd", dt);
+	            }
+	        },
+	        validations: [ { type: 'regexp', value: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$', msg: 'Not in date format' } ]
+	    },
+		{ title: "[[#{sy.susrma.pwexpdt}]]", dataType: "date", format:"yy-mm-dd", dataIndx: "pwexpdt",	//비밀번호 만료일자
+	    	styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+	    	cls: 'pq-calendar pq-side-icon',
+	        editor: {
+	            type: 'textbox',
+	            init: dateEditor,
+	            getData: function (ui) {
+	                var dt = $.datepicker.parseDate(ui.column.format, ui.$cell.find("input").val());
+	                return $.datepicker.formatDate("yy-mm-dd", dt);
+	            }
+	        },
+	        validations: [ { type: 'regexp', value: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$', msg: 'Not in date format' } ]
+		},
+		{ title: "[[#{sy.susrma.pwercnt}]]", dataType: "integer", dataIndx: "pwercnt",	//비번 오류횟수
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.alocked}]]", dataType: "string", dataIndx: "alocked",	//계정잠금여부
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			align: "center", type: 'checkbox', editor: false,
+            cb: { all: false, header: true, check: "Y", uncheck: "N" },
+            render: function (ui) {                            
+                var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+            }
+		},
+		{ title: "[[#{sy.susrma.alockmo}]]", dataType: "string", dataIndx: "alockmo",	//계정 Locked 사유
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{sy.susrma.rolgkey}]]", dataType: "string", dataIndx: "rolgkey",	//권한그룹 키
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+				type: "select",
+	            init: function (ui) {
+	            	ui.$cell.find("select").pqSelect({ search : false, singlePlaceholder: '' });
+	            	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+				},
+				options: []
+			},
+	        render: function (ui) {
+          		var option = ui.column.editor.options.find(function (obj) {
+                   return (obj[ui.cellData] != null);
+               	});
+              	return option ? option[ui.cellData] : "";
+			}
+        },
+        { title: "[[#{sy.susrma.polpryn}]]", dataType: "string", dataIndx: "polpryn",	//개인정보동의
+        	align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			},
+			editable: false
+		},
+		{ title: "[[#{sy.susrma.polsvyn}]]", dataType: "string", dataIndx: "polsvyn",	//이용약관동의여부
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			},
+			editable: false
+		},
+		{ title: "[[#{sy.susrma.polsmyn}]]", dataType: "string", dataIndx: "polsmyn",	//문자수신동의
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			},
+			editable: false
+		},
+		{ title: "[[#{sy.susrma.polemyn}]]", dataType: "string", dataIndx: "polemyn",	//이메일수신동의
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			},
+			editable: false
+		},
+		{ title: "[[#{sy.susrma.poldate}]]", dataType: "string", dataIndx: "poldate", editable: false},	//서비스동의날자
+		{ title: "[[#{sy.susrma.poltime}]]", dataType: "string", dataIndx: "poltime", editable: false},	//서비스동의시간
+		{ title: "[[#{sy.susrma.approyn}]]", dataType: "string", dataIndx: "approyn",	//사용자승인여부
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{sy.susrma.sotapyn}]]", dataType: "string", dataIndx: "sotapyn",	//탈퇴요청(Y=요청)
+        	align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			},
+			editable: false
+		},
+		{ title: "[[#{sy.susrma.sotdate}]]", dataType: "string", dataIndx: "sotdate", editable: false},	//탈퇴요청일자
+		{ title: "[[#{sy.susrma.sottime}]]", dataType: "string", dataIndx: "sottime", editable: false},	//탈퇴요청시간
+		{ title: "[[#{sy.susrma.ownapyn}]]", dataType: "string", dataIndx: "ownapyn",	//화주사용자 승인여부
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{sy.susrma.ownapdt}]]", dataType: "string", dataIndx: "ownapdt", editable: false},	//화주사용자 승인일자
+		{ title: "[[#{sy.susrma.ownaptm}]]", dataType: "string", dataIndx: "ownaptm", editable: false},	//화주사용자 승인시간
+		{ title: "[[#{sy.susrma.ownapid}]]", dataType: "string", dataIndx: "ownapid", editable: false},	//화주사용자 승인자
+		{ title: "[[#{sy.susrma.themety}]]", dataType: "string", dataIndx: "themety",	//Main테마타입
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+				type: "select",
+	            init: function (ui) {
+	            	ui.$cell.find("select").pqSelect({ search : false, singlePlaceholder: '' });
+	            	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+				},
+				options: []
+			},
+	        render: function (ui) {
+          		var option = ui.column.editor.options.find(function (obj) {
+                   return (obj[ui.cellData] != null);
+               	});
+              	return option ? option[ui.cellData] : "";
+			}
+        },
+		{ title: "[[#{sy.susrma.credate}]]", dataType: "string", dataIndx: "credate", editable: false},
+		{ title: "[[#{sy.susrma.cretime}]]", dataType: "string", dataIndx: "cretime", editable: false},
+		{ title: "[[#{sy.susrma.creuser}]]", dataType: "string", dataIndx: "creuser", editable: false},
+		{ title: "[[#{sy.susrma.lmodate}]]", dataType: "string", dataIndx: "lmodate", editable: false},
+		{ title: "[[#{sy.susrma.lmotime}]]", dataType: "string", dataIndx: "lmotime", editable: false},
+		{ title: "[[#{sy.susrma.lmouser}]]", dataType: "string", dataIndx: "lmouser", editable: false}
+    ];
+	
+	var syu1_grid = new GridUtil(syu1_gridCM, '[[${gprogrid}]]', 'syu1_grid');
+	syu1_grid.setFind();
+	syu1_grid.setReset();
+	
+	syu1_grid.setAdd(function(evt, ui){
+		var rowData = { 
+			state : true, 
+			compkey: "[[${session.compkey}]]",
+			idexpdt: moment().add(5, "y").format("YYYY-MM-DD"), 
+			pwexpdt: moment().add(5, "y").format("YYYY-MM-DD"),
+			pwercnt: 0,
+			usergr1: "N",
+			alocked: "N",
+			polpryn: "Y",
+			polsvyn: "Y",
+			polsmyn: "Y",
+			polemyn: "Y",
+			approyn: "Y",
+			sotapyn: "N",
+			ownapyn: "N"
+		};
+		var rowIndx = this.addRow({ rowData: rowData, checkEditable: false });
+		this.goToPage({ rowIndx: rowIndx });
+		//this.editCell({ rowIndx : rowIndx , dataIndx : "useract"});
+   		this.editCell({ rowIndx : rowIndx , dataIndx : "useract"});
+    });
+	
+	syu1_grid.setCreate(function (evt, ui) {
+		Combo("syu1_grid", "usertyp", {comcdky : "USERTYP"} );
+		Combo("syu1_grid", "ownerky", "", "/md/ownerSelectBox.do" );
+		Combo("syu1_grid", "rolgkey", "", "/sy/groupSelectBox.do");
+        Combo("syu1_grid", "themety", {comcdky : "THEMETY"} );
+	});
+	
+	syu1_grid.setChange(function (evt, ui) {
+       	if (ui.source == 'edit' || ui.source == 'clear'){
+       		for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.hasOwnProperty('usertyp') && ui.updateList[i].oldRow.hasOwnProperty('usertyp')){
+    				newRow.ownerky = [];
+    				newRow.ptnrkey = [];
+    				newRow.custkey = [];
+    			}
+    			
+    			if(ui.updateList[i].newRow.hasOwnProperty('ownerky') && ui.updateList[i].oldRow.hasOwnProperty('ownerky')){
+    				newRow.ptnrkey = [];
+    				newRow.custkey = [];
+    			}
+    			
+    			if(ui.updateList[i].newRow.hasOwnProperty('ptnrkey') && ui.updateList[i].oldRow.hasOwnProperty('ptnrkey')){
+    				newRow.custkey = [];
+    			}
+    			this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+           		    newRow : newRow,
+           		    checkEditable: false
+           		});
+    		}
+       	}else if(ui.source === 'paste'){
+       		for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.usertyp){
+    				newRow.ownerky = [];
+    				newRow.ptnrkey = [];
+    				newRow.custkey = [];
+    			}
+    			
+    			if(ui.updateList[i].newRow.ownerky){
+    				newRow.ptnrkey = [];
+    				newRow.custkey = [];
+    			}
+    			
+    			if(ui.updateList[i].newRow.ptnrkey){
+    				newRow.custkey = [];
+    			}
+    			this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+           		    newRow : newRow,
+           		    checkEditable: false
+           		});
+    		}
+       		for(i=0; i<ui.addList.length; i++){
+    			ui.addList[i].newRow.state = true;
+    			ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+    			ui.addList[i].newRow.idexpdt = ui.addList[i].newRow.idexpdt ? ui.addList[i].newRow.idexpdt : moment().add(5, "y").format("YYYY-MM-DD"); 
+    			ui.addList[i].newRow.pwexpdt = ui.addList[i].newRow.pwexpdt ? ui.addList[i].newRow.pwexpdt : moment().add(5, "y").format("YYYY-MM-DD");
+    			ui.addList[i].newRow.pwercnt = ui.addList[i].newRow.pwercnt ? ui.addList[i].newRow.pwercnt : 0;
+    			ui.addList[i].newRow.alocked = ui.addList[i].newRow.alocked ? ui.addList[i].newRow.alocked : "N";
+    			ui.addList[i].newRow.polpryn = ui.addList[i].newRow.polpryn ? ui.addList[i].newRow.polpryn : "Y";
+    			ui.addList[i].newRow.polsvyn = ui.addList[i].newRow.polsvyn ? ui.addList[i].newRow.polsvyn : "Y";
+    			ui.addList[i].newRow.polsmyn = ui.addList[i].newRow.polsmyn ? ui.addList[i].newRow.polsmyn : "Y";
+    			ui.addList[i].newRow.polemyn = ui.addList[i].newRow.polemyn ? ui.addList[i].newRow.polemyn : "Y";
+    			ui.addList[i].newRow.approyn = ui.addList[i].newRow.approyn ? ui.addList[i].newRow.approyn : "Y";
+    			ui.addList[i].newRow.sotapyn = ui.addList[i].newRow.sotapyn ? ui.addList[i].newRow.sotapyn : "N";
+    			ui.addList[i].newRow.ownapyn = ui.addList[i].newRow.ownapyn ? ui.addList[i].newRow.ownapyn : "N";
+    		}
+       	}else if(ui.source === 'checkbox'){
+       		for(i=0; i<ui.updateList.length; i++){
+    			if(ui.updateList[i].newRow.hasOwnProperty('alocked') || ui.updateList[i].newRow.hasOwnProperty('approyn') ||
+    			   ui.updateList[i].newRow.hasOwnProperty('ownapyn') ){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : true },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+       	}
+	});
+	
+	syu1_grid.setCellClick(function(evt, ui){
+		if(ui.dataIndx == "ownerky"){
+       		if(ui.rowData.usertyp == 'OWNER' || ui.rowData.usertyp == 'VENDER' || ui.rowData.usertyp == 'CUSTOMER'){
+       			Combo("syu1_grid", "ownerky", "", "/md/ownerSelectBox.do" );
+       		}else{
+       			var column = this.getColumn({ dataIndx: ui.dataIndx });
+           		column.editor.options = [];
+       		}
+       	}else if(ui.dataIndx == "ptnrkey"){
+       		if(ui.rowData.usertyp === 'VENDER' && ui.rowData.ownerky){
+       			Combo("syu1_grid", "ptnrkey", {ownerky : ui.rowData.ownerky, ptdelyn : 'N'}, "/md/mdp2SelectBox.do" );
+       		}else{
+       			var column = this.getColumn({ dataIndx: ui.dataIndx });
+           		column.editor.options = [];
+       		}
+       	}else if(ui.dataIndx == "custkey"){
+       		if(ui.rowData.usertyp === 'CUSTOMER' && ui.rowData.ownerky){
+       			Combo("syu1_grid", "custkey", {ownerky : ui.rowData.ownerky, custtyp : 'WHOLESALE', cudelyn : 'N'}, "/md/customerSelectBox.do" );
+       		}else{
+       			var column = this.getColumn({ dataIndx: ui.dataIndx });
+           		column.editor.options = [];
+       		}
+       	}
+	});
+	
+	syu1_grid.open();
+});
+
+</script>
+
+</div>
+</html>

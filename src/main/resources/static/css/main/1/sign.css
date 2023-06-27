@@ -1,0 +1,415 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
+
+.login-wrap{
+    width: 100%; 
+    height: 100%; 
+    background: url('/img/sign/sign_bg.png')no-repeat center center; 
+    background-color: #f3f4f8;
+    padding: 40px 20px;
+    font-family: 'AppleSDGothicNeoM';
+}
+.sign-wrap{
+    width: 100%; 
+    height: auto; 
+    min-height: 100%; 
+    background-color: #ffffff;
+    padding: 10px 40px; /* 20221111 ksw 45px 40px; */
+    font-family: 'AppleSDGothicNeoM';
+}
+.logo{
+    display: flex; 
+    align-items: center;
+}
+.logo img{
+    margin-right: 10px;
+}
+.login-box{
+    width: 510px; 
+    max-width: 100%;
+    padding: 40px 65px;
+    border-radius: 5px;
+    background: #ffffff; 
+    margin: auto; 
+    position: relative;
+    top:50%;
+    transform: translateY(-50%);
+    margin-top: -20px;
+}
+.login-title{
+    margin-top: 35px;
+    margin-bottom: 70px;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+}
+.login-title b{
+    font-size: 28px;
+    color: #242934; 
+    display: block; 
+    margin-bottom: 15px; 
+}
+.login-title span{
+    color: #818b9b; 
+    font-size: 15px;    
+}
+.login-box .form-group{
+    margin-bottom: 8px;
+    padding-bottom: 20px;
+}
+.login-box .form-group:last-child{
+    margin-bottom: 0 !important;
+}
+.login-box label{
+    font-size: 0.938rem;
+    font-family: 'Montserrat', 'AppleSDGothicNeoM';
+    color: #242934;
+    margin-bottom: 12px;
+}
+
+.login-box .form-control{
+    border-color: #e6e7e9; 
+    height: 40px;
+}
+.login-box .btn-primary{
+    width: 100%; 
+    background: #0070c0;
+    height: 50px;
+    font-size: 18px; 
+    letter-spacing: -0.02rem;
+  
+}
+.sign-line{
+    margin-top: 28px; 
+    margin-bottom: 110px;
+    color: #242934; 
+    font-size: 15px; 
+    text-align: center;
+}
+.sign-line .sign-link{
+    background: none; 
+    padding: 0; margin:0; 
+    font-size: 15px; 
+    text-decoration: underline;
+    color: #0087e8;
+    margin-left: 10px; 
+    line-height: 1;
+    position: relative;
+/*    top: -3px;*/
+}
+.copyright{
+    color: #999999;
+    font-size: 12px;
+    font-family: 'Montserrat',
+    'AppleSDGothicNeoM';
+    text-align: center;
+}
+
+.center-box{
+    width: 500px;
+    max-width: 100%;
+    margin: auto; 
+    position:relative;
+    top:50vh;
+    transform: translateY(-50%);
+    text-align: center;
+    margin-top: -40px;
+}
+.center-title{
+    margin-top: 60px;
+    margin-bottom: 70px;
+}
+
+.center-title b{
+    font-size: 30px;
+    line-height: 42px;
+    color: #3d3d4e; 
+    margin-bottom: 27px;
+    display: block;
+}
+.center-title span{
+    color: #6e6d7a; 
+    font-size: 20px; 
+    display: block;
+    font-family: 'AppleSDGothicNeoL';
+    margin-bottom: 10px;
+}
+.center-title .info-box{
+    margin-top: 115px;
+}
+.center-title .info-box span{
+    font-size: 18px;
+}
+.btn-sign{
+    width: 120px; 
+    height: 48px; 
+    border-radius: 3px; 
+    border: 1px solid #0070c0; 
+    background-color: #0070c0; 
+    font-size: 16px; 
+    font-family: 'AppleSDGothicNeoM';
+	color: #ffffff; 
+    line-height: 46px;
+    margin: 0 5px; 
+    padding:0;
+
+}
+.btn-sign-border{
+    width: 120px; 
+    height: 48px; 
+    border-radius: 3px; 
+    border: 1px solid #c9c9c9; 
+    background-color: #ffffff; 
+    font-size: 16px; 
+    font-family: 'AppleSDGothicNeoM';
+    color: #0d0c22;
+    line-height: 46px;
+    margin: 0 5px; 
+    padding: 0;
+}
+
+.btn-prev{
+    color: #0d0c22; 
+    border: 0; margin:0; padding: 0 ;
+    background: #fff; 
+}
+.btn-prev i {
+    margin-right: 8px;
+}
+
+.signup-box{
+    width: 510px; 
+    max-width: 100%;
+    margin: 1vh auto 10vh auto; /* 20221111 ksw margin: 1vh auto 10vh auto;  */ 
+    text-align: center;
+}
+.signup-box form .form-group,
+.signup-box form .terms-box{
+    text-align: left;
+}
+.signup-box .form-group {
+    margin-bottom: 1.25rem; /* 2022-09-08 추가 */
+}
+.signup-title{
+    font-size: 40px;
+    display: block;
+    text-align: center;
+    color: #242934;
+    letter-spacing: -0.03em;
+    font-family: 'AppleSDGothicNeoB';
+    margin-bottom: 50px;
+}
+.signup-box label{
+    font-size: 0.938rem; 
+    color: #242934; 
+    font-family: 'AppleSDGothicNeoM'; /* 2022-09-08 수정*/
+    padding-bottom: 4px; /* 2022-09-08 수정*/
+}
+
+.valid-text{
+    display: inline-block;
+    color: #6e6d7a; 
+    font-size: 13px; 
+    margin-top: 5px;
+}
+.valid-text i{
+    color: #6e6d7a;
+    margin-right: 4px;
+}
+.terms-box{
+    margin-bottom: 50px; /* margin-bottom: 90px; */
+    margin-top: 35px;
+}
+.terms-box div input{
+    margin-right: 5px; 
+}
+.terms-box .pl-30{
+    padding-left: 30px;
+}
+.check-group{
+    margin-top: 10px;
+}
+.check-group div{
+    display: flex;
+    align-items: center;
+    margin-bottom :10px;
+    position: relative; 
+}
+.check-group div a{
+    font-size: 14px;
+    color: #3d3d4e;
+    text-decoration: underline; 
+    position: absolute; 
+    right: 0; top: 0; 
+
+}
+.check-group .event-check-group{
+    padding-left: 30px; 
+    flex-direction: column;
+    justify-content: center;
+    align-items:  flex-start;
+}
+
+.check-costom{
+   display: none;
+}
+.check-costom + label{
+    font-size: 14px; 
+    color: #3d3d4e;    
+    font-family: 'AppleSDGothicNeoM';
+    position: relative;
+    padding-left: 30px; 
+    vertical-align: middle;
+   
+}
+.check-costom + label .check{
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 12px; 
+    text-align: center;
+    color:#3d3d4e; 
+
+}
+
+.check-costom + label .check span{
+	color :#f35258;
+}
+.check-costom + label .check::before{
+    content:'';
+    width: 20px; 
+    height: 20px; 
+    border-radius: 3px;
+    border: 1px solid #dcdedf;
+    background: #fff; 
+    position: absolute; 
+    left:0; top: -2px;
+    line-height: 18px;
+}
+
+.check-costom:checked + label .check::before{
+    content: '\f00c';
+    background: #0070c0;
+    border-color: #0070c0; 
+}
+
+.check-costom + label b{
+    font-size: 15px; 
+    color: #0d0c22; 
+}
+.check-costom + label span{
+    color: #f35258; 
+}
+.terms-lines{
+    padding-left: 30px;
+    flex-direction: column;
+}
+.terms-noti{
+    color: #9e9ea7; 
+    display:block;
+    margin-bottom: 10px; 
+    width: 100%; 
+    font-size: 14px; 
+    font-family: 'AppleSDGothicNeoL';
+    letter-spacing: -0.04em;
+    line-height: 1.3em;
+}
+.policy-wrap{
+    width: 100%; 
+    height: auto; 
+    padding: 145px 20px 60px 20px; 
+    position: relative;
+    font-family: 'AppleSDGothicNeoL';
+    color: #0d0c22;
+    letter-spacing: -0.02em;
+}
+.policy-wrap .btn-prev{
+    position :absolute; 
+    left: 24px; 
+    top:30px; 
+}
+.policy-wrap .underline{
+    position :absolute; 
+    right: 24px; 
+    top:30px; 
+    padding: 0; margin: 0; 
+    background:transparent; 
+    border: 0; 
+    color: #0070c0; 
+    font-size: 15px; 
+    text-decoration: underline;
+}
+.policy-header{
+    text-align: center;
+    margin-bottom: 70px;
+}
+.policy-header h1{
+    font-size: 44px; 
+    color: #242934; 
+    font-family: 'AppleSDGothicNeoB';
+    margin-bottom: 24px; 
+}
+.policy-header span{
+    color: #6e6d7a; 
+    font-size: 16px;
+
+}
+.policy-box{
+    width: 1160px; 
+    max-width: 100%;
+    margin: 0 auto; 
+
+}
+.policy-tabs{
+    width: 100%; 
+    border: 0; 
+}
+.policy-tabs .nav-link{
+    width: 30%; 
+    height: 50px;
+    border: 1px solid #d4d4d4;
+    color: #6e6d7a; 
+    font-size: 15px; 
+    text-align: center;
+    padding:0; 
+    line-height: 50px;
+    border-radius: 0;
+    margin-bottom: 60px;
+}
+.policy-tabs .nav-link:hover{
+    border: 1px solid #d4d4d4;
+}
+.policy-tabs .nav-link.active{
+    background: #1e1e1e; 
+    color: #ffffff; 
+    border-color: #1e1e1e;
+}
+.policy-box .tab-content{
+    margin-bottom: 180px;
+}
+
+.policy-item{
+    margin-bottom: 70px;
+}
+
+.policy-item h3{
+    font-family: 'AppleSDGothicNeoB';
+    font-size: 20px; 
+    margin-bottom: 38px; 
+}
+.policy-item h4{
+    font-family: 'AppleSDGothicNeoM';
+    font-size: 16px; 
+    margin-top: 24px; 
+    margin-bottom: 14px; 
+}
+.policy-item p{
+    font-size: 15px; 
+    line-height: 1.7;
+}
+.policy-item p.pl-20{
+    padding-left: 20px;
+}
+.policy-item p.pl-40{
+    padding-left: 40px;
+}
+.policy-item p.pl-60{
+    padding-left: 60px;
+}

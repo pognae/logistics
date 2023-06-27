@@ -1,0 +1,85 @@
+/*
+	WMPT88 - modal 적용 css
+*/
+@media print{
+	
+	* {
+      margin: 0; 
+      padding: 0;
+      -webkit-box-sizing: border-box;
+      box-sizing: border-box;
+      }
+      
+     .wmpt8-print-content{
+     	page-break-before: always;
+      }
+     
+      .wmpt8_m_box{
+		padding :25% 0% 25% 40%;
+		width : 1100px;
+		height: 300px; 
+		page-break-before: always;
+		transform: rotate(90deg);
+      }
+		
+     .wmpt8_m_box_container{
+		width : 100%;
+		height: 100%; 
+	   	font-weight:700; 
+		text-align:center; 
+		font-size:40px; 
+		line-height: 7.5; 
+     }
+     
+     .page-break-divide{
+/*      	page-break-before : always; */
+     }
+}
+      
+.wmpt8-print-content{
+	display: flex;
+	flex-direction: column;
+	padding: 8rem !important;
+	width:100%; 
+	height:100%; 
+	text-align:center; 
+	overflow:scroll;
+}      
+
+.wmpt8_m_box_container{
+	background-color: pink; 
+	outline: auto; 
+	width: 100%; 
+	height: 350px; 
+	font-weight:700; 
+	text-align:center; 
+	font-size:40px; 
+	line-height: 8.5; 	
+    margin-top : 3%;
+}
+
+.wmpt8_m_imgBox{
+	height:100px; 
+	width: 100%;
+	display :flex;
+	justify-content :end ;
+	align-items :center ;
+	padding-right: 1rem;
+	margin-bottom: 3rem;
+}
+
+.wmpt8-print-content{
+	-ms-overflow-style: none;
+}
+
+.wmpt8-print-content::-webkit-scrollbar{
+	display:none;
+}
+
+
+.wmpt8-print-wrap{
+	width :auto; 
+	max-height: 100%; 
+	height:auto;
+	margin-bottom: 3rem;
+}

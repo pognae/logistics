@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.logistics.sy.mapper.WorkbenchMapper">
+
+    <!-- *********************************************** -->
+    <!--  Workbench  -->
+    <!-- *********************************************** -->  
+	<!-- syw1 : Program Master List 조회 --> 
+    <select id="selectSyw1List" resultType="com.logistics.sy.domain.SprogmVO">
+     	select concat(COMPKEY, PROGRID) as ROWKEY
+     		 , COMPKEY
+			 , PROGRID
+			 , PROGRNM
+			 , PROGLKY
+			 , PROGCMD
+			 , WHROLYN
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%Y-%m-%d') as CRETIME, fn_sy_usernam(COMPKEY,CREUSER) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%Y-%m-%d') as LMOTIME, fn_sy_usernam(COMPKEY,LMOUSER) as LMOUSER
+			 , INDIBZL, INDIARC, UPDTCHK
+		  from SPROGM
+		 where 1=1
+		   and COMPKEY = #{userData.compkey}
+		<if test="progrid != null and  progrid != ''">
+		   and upper(PROGRID) like concat('%', upper(#{progrid}), '%')
+		</if>
+		<if test="progrnm != null and  progrnm != ''">
+		   and upper(PROGRNM) like concat('%', upper(#{progrnm}), '%')
+		</if>
+    </select>
+    
+    <!-- syw1 : Program Master 생성 -->
+    <insert id="insertSprogm" parameterType="com.logistics.sy.domain.SprogmVO">
+		insert 
+		  into SPROGM(COMPKEY, PROGRID, PROGRNM, PROGLKY, PROGCMD, WHROLYN, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER)
+	    values 
+	    <foreach collection="list" item="item"  separator=",">
+		 ( #{item.compkey}, #{item.progrid}, #{item.progrnm}, #{item.proglky}, #{item.progcmd}, #{item.whrolyn}
+		 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+		</foreach>
+	</insert>
+	
+	<!-- syw1 : Program Master 수정 -->
+	<update id="updateSprogm" parameterType="com.logistics.sy.domain.SprogmVO"> 
+		<foreach collection="list" item="item"  separator=";">
+		update SPROGM
+		   set PROGRID = #{item.progrid}
+		     , PROGRNM = #{item.progrnm}
+		     , PROGLKY = #{item.proglky}
+		     , PROGCMD = #{item.progcmd}
+		     , WHROLYN = #{item.whrolyn}
+		     , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		     , LMOTIME = to_char(NOW() ,'hh24miss')
+		     , LMOUSER = #{userData.useract}
+		 where COMPKEY = #{item.compkey}
+		   and UPDTCHK = #{item.updtchk}
+		<choose>
+		   	<when test="item.oldprogrid != null and item.oldprogrid !=''">
+		   and PROGRID = #{item.oldprogrid}
+		   	</when>
+		   	<otherwise>
+		   and PROGRID = #{item.progrid}
+		   	</otherwise>
+		</choose>
+		</foreach>
+	</update>
+	
+	<!-- syw1 : Program Master 삭제 -->
+    <delete id="deleteSprogm" parameterType="com.logistics.sy.domain.SprogmVO"> 
+		<foreach collection="list" item="item"  separator=";">
+		delete from SPROGM  	                     
+		 where COMPKEY = #{item.compkey}   
+		   and PROGRID = #{item.progrid}
+		</foreach>
+    </delete>
+	
+	<!-- syw2 : 프로그램 사용 이력 List 조회 --> 
+    <select id="selectSyw2List" resultType="com.logistics.sy.domain.SupahiVO">
+     	select COMPKEY, USRPGSQ, USERACT, PROGRID, MENUNAM, THEMETY
+     		 , date_format(ACCLGDT, '%Y-%m-%d') as ACCLGDT
+     		 , date_format(ACCLGTM, '%H-%i-%s') as ACCLGTM
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%H-%i-%s') as CRETIME, fn_sy_usernam(COMPKEY,CREUSER) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%H-%i-%s') as LMOTIME, fn_sy_usernam(COMPKEY,LMOUSER) as LMOUSER
+		  from SUPAHI
+		 where 1=1
+		   and COMPKEY = #{userData.compkey}
+		<if test="useract != null and  useract != ''">
+		   and upper(USERACT) like concat('%', upper(#{useract}), '%')
+		</if>
+		<if test="menunam != null and  menunam != ''">
+		   and upper(MENUNAM) like concat('%', upper(#{menunam}), '%')
+		</if>
+		<if test="acclgdtfrom != null and  acclgdtfrom != '' and acclgdtto != null and  acclgdtto != ''">
+		   and ACCLGDT between replace(#{acclgdtfrom}, '-','') and replace(#{acclgdtto}, '-','')
+		</if>
+		<if test="acclgtm != null and  acclgtm != ''">
+		   and substr(ACCLGTM,1,4) = replace(#{acclgtm}, ':','')
+		</if>
+	  	 order by COMPKEY, USRPGSQ
+    </select>
+    
+    <!-- syw3 : 사용자 접속 이력 List 조회 --> 
+    <select id="selectSyw3List" resultType="com.logistics.sy.domain.SloghiVO">
+     	select SL.COMPKEY, SL.LOGINSQ
+			 , SL.USERACT, SU.USERNAM
+			 , SL.WAREKEY, date_format(SL.LOGINDT, '%Y-%m-%d') as LOGINDT, date_format(SL.LOGINTM, '%H-%i-%s') as LOGINTM, SL.LOGINIP
+			 , SL.SECCHUA, SL.SECCHMB, SL.NAVPLAT, SL.SECCHPF
+			 , SL.HACCEPT, SL.NAVVERS, SL.LOGINSF
+			 , date_format(SL.CREDATE, '%Y-%m-%d') AS CREDATE, date_format(SL.CRETIME, '%H-%i-%s') as CRETIME, fn_sy_usernam(SL.COMPKEY, SL.CREUSER) as CREUSER
+			 , date_format(SL.LMODATE, '%Y-%m-%d') AS LMODATE, date_format(SL.LMOTIME, '%H-%i-%s') as LMOTIME, fn_sy_usernam( SL.COMPKEY, SL.LMOUSER) as LMOUSER
+		  from SLOGHI SL
+		  left join SUSRMA SU
+		    on SL.COMPKEY = SU.COMPKEY 
+		   and SL.USERACT = SU.USERACT 
+		 where 1=1
+		   and SL.COMPKEY = #{userData.compkey}
+		<if test="useract != null and  useract != ''">
+		   and upper(SL.USERACT) like concat('%', upper(#{useract}), '%')
+		</if>
+		<if test="usernam != null and  usernam != ''">
+		   and upper(SU.USERNAM) like concat('%', upper(#{usernam}), '%')
+		</if>
+		<if test="logindtfrom != null and  logindtfrom != '' and logindtto != null and  logindtto != ''">
+		   and SL.LOGINDT between replace(#{logindtfrom}, '-','') and replace(#{logindtto}, '-','')
+		</if>
+		<if test="logintm != null and  logintm != ''">
+		   and substr(SL.LOGINTM,1,4) = replace(#{logintm}, ':','')
+		</if>
+	  	 order by SL.COMPKEY, SL.LOGINSQ
+    </select>
+    
+    <!-- syw4 : 인쇄 이력 List 조회 --> 
+    <select id="selectSyw4List" resultType="com.logistics.sy.domain.SprthiVO">
+     	select COMPKEY, PRINTSQ, WAREKEY, PROGRID, EOASNKY, EOASNIT, RCVDCKY, RCVDCIT
+			 , TASKOKY, TASKOIT, ADJSOKY, ADJSOIT, PHYSOKY, PHYSOIT, SHPDCKY, SHPDCIT
+			 , ALLGRKY, COPODKY, COPODIT, REFSODC, REFSOIT, REFDNDC, REFDNIT, REFSDDC, REFSDIT, INVOKEY
+			 , date_format(PRTDATE, '%Y-%m-%d') as PRTDATE, date_format(PRTTIME, '%H-%i-%s') as PRTTIME, fn_sy_usernam(COMPKEY,PRTUSER) as PRTUSER
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%H-%i-%s') as CRETIME, fn_sy_usernam(COMPKEY,CREUSER) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%H-%i-%s') as LMOTIME, fn_sy_usernam(COMPKEY,LMOUSER) as LMOUSER
+		  from SPRTHI
+		 where 1=1
+		   and COMPKEY = #{userData.compkey}
+		<if test="prtdatefrom != null and  prtdatefrom != '' and prtdateto != null and  prtdateto != ''">
+		   and PRTDATE between replace(#{prtdatefrom}, '-','') and replace(#{prtdateto}, '-','')
+		</if>
+		<if test="prtuser != null and  prtuser != ''">
+		   and upper(PRTUSER) like concat('%', upper(#{prtuser}), '%')
+		</if>
+	  	 order by COMPKEY, PRINTSQ
+    </select>
+	
+</mapper>

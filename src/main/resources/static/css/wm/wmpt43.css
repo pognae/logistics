@@ -1,0 +1,58 @@
+@charset "UTF-8";
+
+
+@media print{
+	
+	* {
+      margin: 0; 
+      padding: 0;
+      -webkit-box-sizing: border-box;
+      box-sizing: border-box;
+      }
+      
+     .wmpt43_print_wrap{
+     	page-break-before: always;
+     }
+}
+
+.wmpt43-print-wrap{
+	-ms-overflow-style: none;
+}
+
+.wmpt43-print-wrap::-webkit-scrollbar{
+	display:none;
+}
+
+.wmpt43-print-content{
+	margin-bottom : 20rem;
+}
+
+.wmpt43-print-title{
+    text-align: center;
+    font-size: 30px;
+    line-height: 2.5;
+}
+
+.wmpt43-print-info{
+	display : flex;
+	flex-direction:column;
+}
+
+.wmpt43-print-date-span{
+	margin : 15px 0;
+}
+
+@media print{
+	
+	* {
+      margin: 0; 
+      padding: 0;
+      -webkit-box-sizing: border-box;
+      box-sizing: border-box;
+      }
+      
+     .wmpt43-print-container{
+     	page-break-before: always;
+     	width : 100%;
+     }
+}

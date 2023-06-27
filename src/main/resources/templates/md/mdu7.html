@@ -1,0 +1,1847 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<!--  mainContent 시작 -->
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+			</div>
+			<div class="header-right">
+				<button type="button" class="btn default-btn" id="mdu7_save"   th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+				<button type="button" class="btn default-btn" id="mdu7_search" th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+			</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdu7_warekey" class="col-md-5 col-xl-2 col-form-label">[[#{md.mskuwc.warekey}]]</label> 
+					<div class="col-md-7 col-xl-4">
+						<select class="custom-select" id="mdu7_warekey"></select>
+					</div>
+					<label for="mdu7_ownerky" class="col-md-5 col-xl-2 col-form-label">[[#{md.mskuwc.ownerky}]]</label> 
+					<div class="col-md-7 col-xl-4" th:switch="${session.usertyp}">
+						<select class="custom-select" id="mdu7_ownerky" th:case="BINBLUR">
+						</select>
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mskuwc.ownerky')}" id="mdu7_ownerky" th:case="*" th:value="${session.ownerky}" disabled/>
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label class="col-md-5 col-xl-2 col-form-label" for="inputGroupSelect01">[[#{md.mdu7.store}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<select class="form-control" id="mdu7_custkey" name="mdu7_custkey">
+						</select>
+					</div>
+					<label for="mdu7_skudesc" class="col-md-5 col-xl-2 col-form-label">[[#{md.mskuwc.skudesc}]]</label> 
+					<div class="col-md-7 col-xl-4">
+						<input type="search" class="form-control" th:placeholder="${#messages.msg('md.mskuwc.skudesc')}" id="mdu7_skudesc"  th:value="${gprodata != 'undefined' ? gprodata : ''}" >
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label for="mdu7_skumkey" class="col-md-5 col-xl-2 col-form-label">[[#{md.mskuwc.skumkey}]]</label> 
+					<div class="col-md-7 col-xl-4">
+						<input type="search" class="form-control" th:placeholder="${#messages.msg('md.mskuwc.skumkey')}" id="mdu7_skumkey"   >
+					</div>
+					<label for="mdu7_vendnam" class="col-md-5 col-xl-2 col-form-label">[[#{md.mskuwc.vendnam}]]</label> 
+					<div class="col-md-7 col-xl-4">
+						<input type="search" class="form-control" th:placeholder="${#messages.msg('md.mskuwc.vendnam')}" id="mdu7_vendnam"> 
+					</div>
+				</div>
+			</div>
+			<!-- 토글버튼 -->
+			<div class="btn-fold-wrap">
+				<button class="btn-fold" onclick="onSearchExpand(this)"><i class="fa-solid fa-angle-down"></i></button>
+			</div>
+		</div>
+		<div class="row">
+			<div class="grid-col col-md-12">
+				<div class="content-inner">
+					<div class="grid-item grid-2 mgb20">
+						<div class="grid-container">
+							<div id="mdu7_head_grid"></div>
+						</div>
+					</div>
+					<div class="grid-item grid-2">
+						<div class="grid-container" >
+							<div id="mdu7_item_grid"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="preview-col">
+				<div class="content-inner">
+					<div class="grid-container grid-flex-container ht-100">
+						<div class="grid-preview"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+<script>
+var mdu7Init;
+
+$(function(){
+	
+	var gridListData = null;
+	mdu7Init = mdu7InitData();
+	//============================================================	
+	//검색 화면 이벤트
+	//============================================================
+	comboCreateData(null, "mdu7_warekey", mdu7Init.warekeyList, {combovl : "combovl", combonm : "combonm"});
+	comboCreateData(null, "mdu7_ownerky", mdu7Init.ownerkyList, {combovl : "ownerky", combonm : "ownamlc"});
+	mdu7SetCustList();
+	comboCreateData(null, "mdu7_custkey", mdu7Init.custkeyList, {combovl : "combovl", combonm : "combonm"});
+
+	//=====================================
+	// 검색 영역 이벤트
+	//=====================================
+		
+	$("#mdu7_warekey, #mdu7_ownerky, #mdu7_custkey").change(function(){
+		
+		if($(this).attr("id") == "mdu7_ownerky"){
+			var data = {ownerky : $(this).val(), custtyp : 'WHOLESALE', cudelyn : 'N'}
+			var custData = callAjax("data", "GET", "/md/customerSelectBox.do", data);
+			comboCreateData(null, "mdu7_custkey", custData.item, {combovl : "combovl", combonm : "combonm"});
+		}
+
+		searchmdu7List();
+	});
+	
+	$("#mdu7_skudesc, #mdu7_skumkey, #mdu7_vendnam").keydown(function(e){
+		if(e.keyCode == 13){
+			searchmdu7List();
+		}
+	});
+	
+	$('#mdu7_search').click(function() {
+		searchmdu7List();
+	});	
+	
+	//미리 보기 체크 이벤트
+	$('#mdu7_btnPreview').click(function() {
+		if($(this).hasClass("default-btn")){
+			//비활성화 -> 활성화
+			$(this).removeClass("default-btn");
+			$(this).addClass("main-btn");
+			
+			gulHead.preViewShow();
+		}else{
+			//활성화 -> 비활성화
+			$(this).removeClass("main-btn");
+			$(this).addClass("default-btn");
+			
+			gulHead.preViewHide();
+		}
+	});
+	
+	$("#mdu7_save").click(function () {
+		
+		var grid = gulItem.getGrid();
+
+	    //============================================================	 
+	  	// 중복 데이터 체크
+	  	//============================================================
+	    for(i=0; i< grid.getData().length; i++){
+	    	var gridCK = grid.getData().slice();
+	    	var warekey = grid.getData()[i].warekey;
+	    	var ownerky = grid.getData()[i].ownerky;
+	      	var skumkey = grid.getData()[i].skumkey;
+	      	 	   	
+	      	gridCK.splice(i,1);
+	      	for(j=0; j< gridCK.length; j++){
+	      		if(gridCK[j].warekey == warekey && gridCK[j].ownerky == ownerky && gridCK[j].skumkey == skumkey){
+	      			alert("[[#{ms.DuplicateKeyErr}]]");	//테이터가 중복됩니다. 확인바랍니다.
+	      			return false;
+	          	}
+	      	}
+		}	    
+		
+	    var gridHeadData = gulHead.getGrid().getData();
+	    var checkHeadData = gridHeadData.filter(function(e){
+	    	return e.state == "Y";
+	    });
+        var gridData = grid.getChanges({all:true});
+        var addList  = [];
+
+		for(var i=0; i<gridData.addList.length; i++){
+			if(gridData.addList[i].state == "Y"){
+				addList.push(gridData.addList[i]);
+			}
+		}
+		
+    	if(addList.length > 0){
+    		var list = new Object();
+	    	list.addList = addList;
+	    	list.targetWtk = checkHeadData[0].warekey;
+	    	list.targetSku = checkHeadData[0].skumkey;
+	    	
+	    	var data = {
+		        list : list
+		    };
+    	}
+    	else{
+    		alert("[[#{ms.choiceRowZero}]]");
+    		return;
+    	}
+
+    	if(confirm("[[#{ms.checksave}]]")){
+    		
+	        gulItem.getGrid().showLoading();
+	        var rData = callAjax("data", "POST", "/md/mdu7Save.do", data);
+	        gulItem.getGrid().hideLoading();
+
+	        if(rData.code == "300"){
+	        	alert("[[#{ms.duplicateSkuwc}]]");
+	        }
+	        else{
+	        	alert("[[#{ms.saveSuccess}]]");
+	        	searchmdu7List();
+	        	gulItem.searchList([]);
+	        }
+    	}
+    	
+	});
+	
+
+	function mdu7InitData(){
+		var rData = callAjax("data", "GET", "/md/mdu7InitData.do", {});
+		return rData.item;
+	}
+	
+	function mdu7SetCustList(){
+		var custParam = {
+			compkey : mdu7Init.compkey,
+			ownerky : $("#mdu7_ownerky").val(),
+			custkey : mdu7Init.custkey,
+			custtyp : 'WHOLESALE',
+			cudelyn : 'N'
+		}
+
+		var custData = callAjax("data", "GET", "/md/customerSelectBox.do", custParam);
+		mdu7Init.custkeyList = custData.item;
+	}
+	
+	function searchmdu7List(){
+		var grid = pq.grid("#mdu7_head_grid");
+		
+		var data = { 
+			warekey : $("#mdu7_warekey option:selected").val(),
+			ownerky : $("#mdu7_ownerky").val(),
+			custkey : $("#mdu7_custkey").val(),
+			skumkey : $("#mdu7_skumkey").val(),
+			skudesc : $("#mdu7_skudesc").val(),
+			vendnam : $("#mdu7_vendnam").val()
+		};
+		
+		if(data.ownerky != ""){
+			grid.showLoading();
+			var aul = new AjaxUtil_Order("/md/mdu7List.do", data, "GET");
+			aul.setCallbackSuccess(function(data){
+				grid.hideLoading();
+				if(data.list.length == 0){
+					alert("[[#{ms.getDataZero}]]");
+				}
+				gridListData : data.list;
+				grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+				grid.refreshDataAndView();
+			});
+			aul.send();
+		}else{
+			grid.option( "dataModel", { data: [], recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		}
+	} 
+	
+	var colHeadModel = [
+		{ title: "", dataType: "String",  dataIndx: "state", type: "checkBoxSelection"
+			, align: "center"
+			, maxWidth:"30", maxHeight:"30"
+			, menuIcon: false
+			, cls: 'ui-state-default', sortable: false, editor: false,
+			cb: {all: false, header: false, check:"Y", uncheck:"N"}
+		},
+		{ title: "rowkey", dataType: "string", dataIndx: "rowkey", editable: false, hidden: true , editable: false},
+		{ title: "[[#{md.mskuwc.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden:true },
+		{ title: "[[#{md.mskuwc.warekey}]]", dataType: "string", dataIndx: "warekey", editable: false },
+		{ title: "[[#{md.mskuwc.ownerky}]]", dataType: "string", dataIndx: "ownerky", editable: false },
+		{ title: "[[#{md.mskuur.usrat01}]]", dataType: "string", dataIndx: "usrat01",	//관심상품여부
+			editable: false,
+			align: "center",
+            type: 'checkbox',
+            cb: { all: false, header: false, check: "Y", uncheck: "N" },
+            render: function (ui) {                            
+                var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+            },
+            editor: false
+        },
+		{ title: "[[#{md.mskuur.usrat02}]]", dataType: "string", dataIndx: "usrat02",	//세일상품여부
+        	editable: false,
+			align: "center",
+            type: 'checkbox',
+            cb: { all: false, header: false, check: "Y", uncheck: "N" },
+            render: function (ui) {                            
+                var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+            },
+            editor: false
+		},
+		{ title: "[[#{md.mskuwc.skumkey}]]", dataType: "string", dataIndx: "skumkey", editable: false },
+		{ title: "[[#{md.mskuwc.skutkey}]]", dataType: "string", dataIndx: "skutkey", editable: false },
+		{ title: "[[#{md.mskuwc.skudesc}]]", dataType: "string", dataIndx: "skudesc" ,
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skudlyn}]]", dataType: "string" , dataIndx: "skudlyn",
+			editable: false,
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mskuwc.skutype}]]", dataType: "string", dataIndx: "skutype", hidden:true ,
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.vendnam}]]", dataType: "string", dataIndx: "vendkey" ,
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: "[[#{md.mskuwc.vndfday}]]", dataType: "integer" , dataIndx: "vndfday", format: '#,###', 
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0, warn: true }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},																							
+		{ title: "[[#{md.mskuwc.truntyp}]]", dataType: "string", dataIndx: "truntyp",
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mskuwc.packkey}]]", width: 100, dataType: "string", dataIndx: "packkey",
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mskuwc.eancode}]]", dataType: "string", dataIndx: "eancode" , 
+			editable: false,
+			summary: { type: "sum" },
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.upccode}]]", dataType: "string", dataIndx: "upccode" , 
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.brandcd}]]", dataType: "string", dataIndx: "brandcd" ,
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }		
+		},	//브랜드
+		{ title: "[[#{md.mskuwc.roinqty}]]", dataType: "integer", dataIndx: "roinqty", format: "###,###,###,###",
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},	//1절수량
+		{ title: "[[#{md.mskuwc.miniqty}]]", dataType: "integer", dataIndx: "miniqty", format: "#,###", 
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},	//최소발주수량
+		{ title: "[[#{md.mskuwc.mixrato}]]", dataType: "string", dataIndx: "mixrato" ,
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},	//혼용률
+		{ title: "[[#{md.mskuwc.skugr01}]]", dataType: "string", dataIndx: "skugr01",		//SKU Group 1
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mskuwc.skugr02}]]", dataType: "string", dataIndx: "skugr02",		//SKU Group 2 Season 
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skugr03}]]", dataType: "string", dataIndx: "skugr03", 			//SKU Group 3 Size 
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+	    },
+		{ title: "[[#{md.mskuwc.skugr04}]]", dataType: "string", dataIndx: "skugr04", 			//SKU Group 4 Color 
+	    	editable: false,
+	    	validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+	    },
+		{ title: "[[#{md.mskuwc.skugr05}]]", dataType: "string", dataIndx: "skugr05",		//SKU Group 5 원단종류
+	    	editable: false,
+	    	editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+	    },
+		{ title: "[[#{md.mskuwc.skualt1}]]", dataType: "string", dataIndx: "skualt1", hidden:true,
+	    	editable: false,
+	    	editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+	   	},
+		{ title: "[[#{md.mskuwc.skualt2}]]", dataType: "string", dataIndx: "skualt2", hidden:true,
+	   		editable: false,
+	   		validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+	   	},
+		{ title: "[[#{md.mskuwc.skualt3}]]", dataType: "string", dataIndx: "skualt3", hidden:true,
+	   		editable: false,
+		    validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+	    },
+		{ title: "[[#{md.mskuwc.skuat01}]]", dataType: "string", dataIndx: "skuat01",		//SKU Attribute1 디자이너
+	    	editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mskuwc.skuat02}]]", dataType: "string", dataIndx: "skuat02",		//SKU Attribute2
+			editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuat03}]]", dataType: "string", dataIndx: "skuat03",		//SKU Attribute3
+			editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuat04}]]", dataType: "string", dataIndx: "skuat04",		//SKU Attribute4
+			editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuat05}]]", dataType: "string", dataIndx: "skuat05",		//SKU Attribute5
+			editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.sgrweig}]]", dataType: "integer" , dataIndx: "sgrweig", hidden:true,
+			editable: false,
+			summary: { type: "sum" }
+		},
+		{ title: "[[#{md.mskuwc.sneweig}]]", dataType: "integer" , dataIndx: "sneweig", 	//Net weight
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuleng}]]", dataType: "integer" , dataIndx: "skuleng", hidden:true,
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuwidh}]]", dataType: "integer" , dataIndx: "skuwidh", hidden:true,
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuheig}]]", dataType: "integer" , dataIndx: "skuheig", hidden:true,
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skucubi}]]", dataType: "float" , dataIndx: "skucubi", format: '###,###,###,###,###.0000000000', hidden:true ,
+			editable: false,
+		},
+		{ title: "[[#{md.mskuwc.suomkey}]]", dataType: "string", dataIndx: "suomkey",		//Default unit of measure
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+	    },
+		{ title: "[[#{md.mskuwc.skuwabc}]]", dataType: "string", dataIndx: "skuwabc", editable :false,	//WH SKU ABC analyzed value
+	    	editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+	    },
+		{ title: "[[#{md.mskuwc.sputzon}]]", dataType: "string", dataIndx: "sputzon",		//*기본 적치 Zone
+	    	editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.sputloc}]]", dataType: "string", dataIndx: "sputloc",		//*기본 적치 Location 
+			editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuimg1}]]", dataIndx: "skuimg1", editable: false,		//상품이미지1
+			editable: false,
+			render: function (ui) {
+				var cellData = ui.cellData;
+				var imgbutton = "<button class='imgBtn'>" + "[[#{bt.imgview}]]" + "</button>";
+                return imgbutton;
+            },
+			postRender: function (ui) {
+				var param = {
+					url : "/md/popup/mdu7PopupSelect.do",
+					compkey : ui.rowData.compkey,
+					warekey : ui.rowData.warekey,
+					ownerky : ui.rowData.ownerky,
+					skumkey : ui.rowData.skumkey,
+					imgcolumn : ui.column.dataIndx
+				}
+				
+                $cell = this.getCell(ui);
+                $cell.find(".imgBtn").button({ icons: { primary: 'ui-icon-contact' } }).on("click", function () {
+                    return callMd2ImgModalLayerPopup(param);
+                });
+			}
+		},
+		{ title: "[[#{md.mskuwc.skuimg2}]]", dataIndx: "skuimg2", editable: false,		//상품이미지2
+			editable: false,
+			render: function (ui) {
+				var cellData = ui.cellData;
+				var imgbutton = "<button class='imgBtn'>" + "[[#{bt.imgview}]]" + "</button>";
+                return imgbutton;
+            },
+			postRender: function (ui) {
+				var param = {
+					url : "/md/popup/mdu7PopupSelect.do",
+					compkey : ui.rowData.compkey,
+					warekey : ui.rowData.warekey,
+					ownerky : ui.rowData.ownerky,
+					skumkey : ui.rowData.skumkey,
+					imgcolumn : ui.column.dataIndx
+				}
+				
+                $cell = this.getCell(ui);
+                $cell.find(".imgBtn").button({ icons: { primary: 'ui-icon-contact' } }).on("click", function () {
+                    return callMd2ImgModalLayerPopup(param);
+                });
+			}
+        },
+		{ title: "[[#{md.mskuwc.skuimg3}]]", dataIndx: "skuimg3", editable: false,		//상품이미지3
+        	editable: false,
+        	render: function (ui) {
+        		var cellData = ui.cellData;
+        		var imgbutton = "<button class='imgBtn'>" + "[[#{bt.imgview}]]" + "</button>";
+                return imgbutton;
+            },
+			postRender: function (ui) {
+				var param = {
+					url : "/md/popup/mdu7PopupSelect.do",
+					compkey : ui.rowData.compkey,
+					warekey : ui.rowData.warekey,
+					ownerky : ui.rowData.ownerky,
+					skumkey : ui.rowData.skumkey,
+					imgcolumn : ui.column.dataIndx
+				}
+				
+                $cell = this.getCell(ui);
+                $cell.find(".imgBtn").button({ icons: { primary: 'ui-icon-contact' } }).on("click", function () {
+                    return callMd2ImgModalLayerPopup(param);
+                });
+			}
+       	},
+		{ title: "[[#{md.mskuwc.skuimg4}]]", dataIndx: "skuimg4", editable: false,		//상품이미지4
+       		editable: false,
+       		render: function (ui) {
+       			var cellData = ui.cellData;
+       			var imgbutton = "<button class='imgBtn'>" + "[[#{bt.imgview}]]" + "</button>";
+                return imgbutton;
+            },
+			postRender: function (ui) {
+				var param = {
+					url : "/md/popup/mdu7PopupSelect.do",
+					compkey : ui.rowData.compkey,
+					warekey : ui.rowData.warekey,
+					ownerky : ui.rowData.ownerky,
+					skumkey : ui.rowData.skumkey,
+					imgcolumn : ui.column.dataIndx
+				}
+				
+                $cell = this.getCell(ui);
+                $cell.find(".imgBtn").button({ icons: { primary: 'ui-icon-contact' } }).on("click", function () {
+                    return callMd2ImgModalLayerPopup(param);
+                });
+			}
+       	},
+		{ title: "[[#{md.mskuwc.skuimg5}]]", dataIndx: "skuimg5", editable: false,		//상품이미지5
+       		editable: false,
+       		render: function (ui) {
+       			var cellData = ui.cellData;
+       			var imgbutton = "<button class='imgBtn'>" + "[[#{bt.imgview}]]" + "</button>";
+                return imgbutton;
+            },
+			postRender: function (ui) {
+				var param = {
+					url : "/md/popup/mdu7PopupSelect.do",
+					compkey : ui.rowData.compkey,
+					warekey : ui.rowData.warekey,
+					ownerky : ui.rowData.ownerky,
+					skumkey : ui.rowData.skumkey,
+					imgcolumn : ui.column.dataIndx
+				}
+				
+                $cell = this.getCell(ui);
+                $cell.find(".imgBtn").button({ icons: { primary: 'ui-icon-contact' } }).on("click", function () {
+                    return callMd2ImgModalLayerPopup(param);
+                });
+			}
+       	},
+       	{ title: "[[#{md.mskuwc.itmcost}]]", dataType: "integer" , dataIndx: "itmcost", format: '###,###,###,###', 	//단가
+       		editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.selpric}]]", dataType: "integer" , dataIndx: "selpric", format: '###,###,###,###', 	
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.sproprc}]]", dataType: "integer" , dataIndx: "sproprc", format: '###,###,###,###', 
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.spronte}]]", dataType: "string" , dataIndx: "spronte", 	
+			editable: false,
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.retexky}]]", dataType: "string" , dataIndx: "retexky", 
+			editable: false,
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skudcex}]]", dataType: "string" , dataIndx: "skudcex",	
+			editable: false,
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mskuwc.cuspric}]]", dataType: "integer" , dataIndx: "cuspric", format: '###,###,###,###',	
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.rtspric}]]", dataType: "integer" , dataIndx: "rtspric", format: '###,###,###,###',
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skunote}]]", dataType: "string" , dataIndx: "skunote", editable: false,
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+       	{ title: "[[#{md.mskuwc.skustat}]]", dataType: "string", dataIndx: "skustat", editable: false,	//*SKU상태
+	    	editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mskuwc.itemnt1}]]", dataType: "string", dataIndx: "itemnt1", editable: false,	//상품비고1
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+	    },
+	    { title: "[[#{md.mskuwc.itemnt2}]]", dataType: "string", dataIndx: "itemnt2", editable: false,	//상품비고2
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+	    },
+	    { title: "[[#{md.mskuwc.tollvd1}]]", dataType: "string", dataIndx: "tollvd1" , editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: "[[#{md.mskuwc.tollvd2}]]", dataType: "string", dataIndx: "tollvd2" , editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: "[[#{md.mskuwc.tollvd3}]]", dataType: "string", dataIndx: "tollvd3" , editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: "[[#{md.mskuwc.tollvd4}]]", dataType: "string", dataIndx: "tollvd4" , editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: "[[#{md.mskuwc.tollfe1}]]", dataType: "integer" , dataIndx: "tollfe1", format: '###,###,###,###', editable: false,
+			summary: { type: "sum" },
+		},
+		{ title: "[[#{md.mskuwc.tollfe2}]]", dataType: "integer" , dataIndx: "tollfe2", format: '###,###,###,###', editable: false,
+			summary: { type: "sum" },
+		},
+		{ title: "[[#{md.mskuwc.tollfe3}]]", dataType: "integer" , dataIndx: "tollfe3", format: '###,###,###,###', editable: false,
+			summary: { type: "sum" },
+		},
+		{ title: "[[#{md.mskuwc.tollfe4}]]", dataType: "integer" , dataIndx: "tollfe4", format: '###,###,###,###', editable: false,
+			summary: { type: "sum" },
+		},
+		{ title: "[[#{md.mskuwc.tollnt1}]]", dataType: "string", dataIndx: "tollnt1", editable: false	//임가공비고1
+		},
+	    { title: "[[#{md.mskuwc.tollnt2}]]", dataType: "string", dataIndx: "tollnt2", editable: false	//임가공비고2
+		},
+	    { title: "[[#{md.mskuwc.tollnt3}]]", dataType: "string", dataIndx: "tollnt3", editable: false	//임가공비고3
+	    },
+	    { title: "[[#{md.mskuwc.tollnt4}]]", dataType: "string", dataIndx: "tollnt4", editable: false //임가공비고4
+	    },
+		{ title: "[[#{md.mskuwc.credate}]]", dataType: "string", dataIndx: "credate", editable: false },
+		{ title: "[[#{md.mskuwc.cretime}]]", dataType: "string", dataIndx: "cretime", editable: false },
+		{ title: "[[#{md.mskuwc.creuser}]]", dataType: "string", dataIndx: "creuser", editable: false },
+		{ title: "[[#{md.mskuwc.lmodate}]]", dataType: "string", dataIndx: "lmodate", editable: false },
+		{ title: "[[#{md.mskuwc.lmotime}]]", dataType: "string", dataIndx: "lmotime", editable: false },
+		{ title: "[[#{md.mskuwc.lmouser}]]", dataType: "string", dataIndx: "lmouser", editable: false }
+	];
+	
+	var gulHead = new GridUtil(colHeadModel, '[[${gprogrid}]]', 'mdu7_head_grid');
+	
+	gulHead.setFind();
+        
+	gulHead.setCreate(function (evt, ui) {
+		Combo("mdu7_head_grid", "skustat", {comcdky : "SKUSTAT"}, "/md/mdc7code.do");
+    	Combo("mdu7_head_grid", "suomkey", {uodelyn : "N"}, "/md/unitSelectBox.do");
+    	Combo("mdu7_head_grid", "truntyp", {trdelyn : "N"}, "/md/mtutSelectBox.do");
+    	Combo("mdu7_head_grid", "packkey", {pkdelyn : "N"}, "/md/mpakmaSelectPackBox.do");
+    	Combo("mdu7_head_grid", "vendkey", {comcdky : "SKUSTAT"}, "/md/mdp2SelectBox.do");
+    	Combo("mdu7_head_grid", "tollvd1", {comcdky : "SKUSTAT"}, "/md/mdp2SelectBox.do");
+    	Combo("mdu7_head_grid", "tollvd2", {comcdky : "SKUSTAT"}, "/md/mdp2SelectBox.do");
+    	Combo("mdu7_head_grid", "tollvd3", {comcdky : "SKUSTAT"}, "/md/mdp2SelectBox.do");
+    	Combo("mdu7_head_grid", "tollvd4", {comcdky : "SKUSTAT"}, "/md/mdp2SelectBox.do");
+		Combo("mdu7_head_grid", "brandcd", {comcdky : "BRANDCD", custtyp : 'WHOLESALE', cudelyn : 'N'}, "/md/customerSelectBox.do");
+		Combo("mdu7_head_grid", "skugr05", {comcdky : "SKUGR05"}, "/md/mdc7code.do");
+		Combo("mdu7_head_grid", "skuat01", {useract : "[[${session.useract}]]"}, "/sy/findDesigner.do");
+		
+		Combo("mdu7_head_grid", "skugr01", {compkey : mdu7Init.compkey, comcdky : "SKUGR01", cdcate1 : "L"}, "/md/mdc7code.do");
+		Combo("mdu7_head_grid", "skualt1", {compkey : mdu7Init.compkey, comcdky : "SKUGR01", cdcate1 : "M"}, "/md/mdc7code.do");
+	});
+	
+	gulHead.setBeforeCheck(function(event, ui){
+		var headGridData 	= gulHead.getGrid().getData();
+		mdu7HeadCheckList 	= headGridData.filter(function(e){
+			return e.state == "Y";
+		});
+		
+		if(mdu7HeadCheckList.length > 0){
+			for(var i=0; i<mdu7HeadCheckList.length; i++){
+				this.updateRow( {
+		   			rowIndx : mdu7HeadCheckList[i].pq_ri,
+		   		    newRow : { state : "N" },
+		   		    checkEditable: false
+		   		});
+			}
+			
+			gulItem.getGrid().rollback();
+		}
+	});
+	
+	gulHead.setCellClick(function(evt, ui){
+        if(ui.column.dataIndx == "packkey"){
+        	if(ui.rowData.truntyp){
+        		var data 	= {
+        			warekey : ui.rowData.warekey,
+        			truntyp : ui.rowData.truntyp,
+        			pkdelyn : "N"
+        		};
+        		Combo("mdu7_head_grid", "packkey", data, "/md/mpakmaSelectPackBox.do");
+        	}else{
+        		var column = this.getColumn({ dataIndx: 'packkey' });
+        		column.editor.options = [];
+        	}
+		}
+        
+      	//셀 클릭시 발생 이벤트
+    	if(ui.column.dataIndx == "skualt1"){
+    		changeSkugr01TypeData(ui);
+    	}
+	});
+    
+	gulHead.setBeforeValidate(function (evt, ui) {
+    	if(ui.source === 'edit' || ui.source === 'paste' || ui.source === 'checkbox'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+           		    newRow : { state : "Y" },
+           		    checkEditable: false
+           		});
+    		}
+    		
+    		ui.addList = [];
+    	}
+	});
+	
+	gulHead.open();
+
+	
+	var colItemModel = [
+		{ title: "", dataType: "String",  dataIndx: "state", type: "checkBoxSelection"
+			, align: "center"
+			, maxWidth:"30", maxHeight:"30"
+			, menuIcon: false
+			, cls: 'ui-state-default', sortable: false, editor: false,
+			cb: {all: false, header: false, check:"Y", uncheck:"N"}
+		},
+		{ title: "rowkey", dataType: "string", dataIndx: "rowkey", editable: false, hidden: true , editable: false},
+		{ title: "[[#{md.mskuwc.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden:true },
+		{ title: "[[#{md.mskuwc.warekey}]]", dataType: "string", dataIndx: "warekey", editable: false },
+		{ title: "[[#{md.mskuwc.ownerky}]]", dataType: "string", dataIndx: "ownerky", editable: false },
+		{ title: "[[#{md.mskuur.usrat01}]]", dataType: "string", dataIndx: "usrat01",	//관심상품여부
+			editable: false,
+			align: "center",
+            type: 'checkbox',
+            cb: { all: false, header: false, check: "Y", uncheck: "N" },
+            render: function (ui) {                            
+                var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+            },
+            editor: false
+        },
+		{ title: "[[#{md.mskuur.usrat02}]]", dataType: "string", dataIndx: "usrat02",	//세일상품여부
+        	editable: false,
+			align: "center",
+            type: 'checkbox',
+            cb: { all: false, header: false, check: "Y", uncheck: "N" },
+            render: function (ui) {                            
+                var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+            },
+            editor: false
+		},
+		{ title: "[[#{md.mskuwc.skumkey}]]", dataType: "string", dataIndx: "skumkey", editable: false },
+		{ title: "[[#{md.mskuwc.skutkey}]]", dataType: "string", dataIndx: "skutkey", editable: false },
+		{ title: "[[#{md.mskuwc.skudesc}]]", dataType: "string", dataIndx: "skudesc" ,
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skutdsc}]]", dataType: "string", dataIndx: "skutdsc" ,
+			editable: false, hidden:true
+		},
+		{ title: "[[#{md.mskuwc.skuskey}]]", dataType: "string", dataIndx: "skuskey" ,
+			editable: false, hidden:true
+		},
+		
+		{ title: "[[#{md.mskuwc.skudlyn}]]", dataType: "string" , dataIndx: "skudlyn",
+			editable: false,
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mskuwc.skutype}]]", dataType: "string", dataIndx: "skutype", hidden:true ,
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.vendnam}]]", dataType: "string", dataIndx: "vendkey" ,
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: "[[#{md.mskuwc.vndfday}]]", dataType: "integer" , dataIndx: "vndfday", format: '#,###', 
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0, warn: true }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},																							
+		{ title: "[[#{md.mskuwc.truntyp}]]", dataType: "string", dataIndx: "truntyp",
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mskuwc.packkey}]]", width: 100, dataType: "string", dataIndx: "packkey",
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mskuwc.eancode}]]", dataType: "string", dataIndx: "eancode" , 
+			editable: false,
+			summary: { type: "sum" },
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.upccode}]]", dataType: "string", dataIndx: "upccode" , 
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.brandcd}]]", dataType: "string", dataIndx: "brandcd" ,
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }		
+		},	//브랜드
+		{ title: "[[#{md.mskuwc.roinqty}]]", dataType: "integer", dataIndx: "roinqty", format: "###,###,###,###",
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},	//1절수량
+		{ title: "[[#{md.mskuwc.miniqty}]]", dataType: "integer", dataIndx: "miniqty", format: "#,###", 
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},	//최소발주수량
+		{ title: "[[#{md.mskuwc.mixrato}]]", dataType: "string", dataIndx: "mixrato" ,
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},	//혼용률
+		{ title: "[[#{md.mskuwc.skugr01}]]", dataType: "string", dataIndx: "skugr01",		//SKU Group 1
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mskuwc.skugr02}]]", dataType: "string", dataIndx: "skugr02",		//SKU Group 2 Season 
+			editable: false,
+			validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skugr03}]]", dataType: "string", dataIndx: "skugr03", 			//SKU Group 3 Size 
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+        },
+		{ title: "[[#{md.mskuwc.skugr04}]]", dataType: "string", dataIndx: "skugr04", 			//SKU Group 4 Color 
+	    	styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+	    	validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+	    },
+		{ title: "[[#{md.mskuwc.skugr05}]]", dataType: "string", dataIndx: "skugr05",		//SKU Group 5 원단종류
+	    	editable: false,
+	    	editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+	    },
+		{ title: "[[#{md.mskuwc.skualt1}]]", dataType: "string", dataIndx: "skualt1", hidden:true,
+	    	editable: false,
+	    	editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+	   	},
+		{ title: "[[#{md.mskuwc.skualt2}]]", dataType: "string", dataIndx: "skualt2", hidden:true,
+	   		editable: false,
+	   		validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+	   	},
+		{ title: "[[#{md.mskuwc.skualt3}]]", dataType: "string", dataIndx: "skualt3", hidden:true,
+	   		editable: false,
+		    validations: [{ type: 'minLen', value: 0, warn: true },{ type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+	    },
+		{ title: "[[#{md.mskuwc.skuat01}]]", dataType: "string", dataIndx: "skuat01",		//SKU Attribute1 디자이너
+	    	editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mskuwc.skuat02}]]", dataType: "string", dataIndx: "skuat02",		//SKU Attribute2
+			editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuat03}]]", dataType: "string", dataIndx: "skuat03",		//SKU Attribute3
+			editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuat04}]]", dataType: "string", dataIndx: "skuat04",		//SKU Attribute4
+			editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuat05}]]", dataType: "string", dataIndx: "skuat05",		//SKU Attribute5
+			editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.sgrweig}]]", dataType: "integer" , dataIndx: "sgrweig", hidden:true,
+			editable: false,
+			summary: { type: "sum" }
+		},
+		{ title: "[[#{md.mskuwc.sneweig}]]", dataType: "integer" , dataIndx: "sneweig", 	//Net weight
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuleng}]]", dataType: "integer" , dataIndx: "skuleng", hidden:true,
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuwidh}]]", dataType: "integer" , dataIndx: "skuwidh", hidden:true,
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuheig}]]", dataType: "integer" , dataIndx: "skuheig", hidden:true,
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skucubi}]]", dataType: "float" , dataIndx: "skucubi", format: '###,###,###,###,###.0000000000', hidden:true ,
+			editable: false,
+		},
+		{ title: "[[#{md.mskuwc.suomkey}]]", dataType: "string", dataIndx: "suomkey",		//Default unit of measure
+			editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+	    },
+		{ title: "[[#{md.mskuwc.skuwabc}]]", dataType: "string", dataIndx: "skuwabc", editable :false,	//WH SKU ABC analyzed value
+	    	editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+	    },
+		{ title: "[[#{md.mskuwc.sputzon}]]", dataType: "string", dataIndx: "sputzon",		//*기본 적치 Zone
+	    	editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.sputloc}]]", dataType: "string", dataIndx: "sputloc",		//*기본 적치 Location 
+			editable: false,
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skuimg1}]]", dataIndx: "skuimg1", editable: false,		//상품이미지1
+			editable: false,
+			render: function (ui) {
+				var cellData = ui.cellData;
+				var imgbutton = "<button class='imgBtn'>" + "[[#{bt.imgview}]]" + "</button>";
+                return imgbutton;
+            },
+			postRender: function (ui) {
+				var param = {
+					url : "/md/popup/mdu7PopupSelect.do",
+					compkey : ui.rowData.compkey,
+					warekey : ui.rowData.warekey,
+					ownerky : ui.rowData.ownerky,
+					skumkey : ui.rowData.skumkey,
+					imgcolumn : ui.column.dataIndx
+				}
+				
+                $cell = this.getCell(ui);
+                $cell.find(".imgBtn").button({ icons: { primary: 'ui-icon-contact' } }).on("click", function () {
+                    return callMd2ImgModalLayerPopup(param);
+                });
+			}
+		},
+		{ title: "[[#{md.mskuwc.skuimg2}]]", dataIndx: "skuimg2", editable: false,		//상품이미지2
+			editable: false,
+			render: function (ui) {
+				var cellData = ui.cellData;
+				var imgbutton = "<button class='imgBtn'>" + "[[#{bt.imgview}]]" + "</button>";
+                return imgbutton;
+            },
+			postRender: function (ui) {
+				var param = {
+					url : "/md/popup/mdu7PopupSelect.do",
+					compkey : ui.rowData.compkey,
+					warekey : ui.rowData.warekey,
+					ownerky : ui.rowData.ownerky,
+					skumkey : ui.rowData.skumkey,
+					imgcolumn : ui.column.dataIndx
+				}
+				
+                $cell = this.getCell(ui);
+                $cell.find(".imgBtn").button({ icons: { primary: 'ui-icon-contact' } }).on("click", function () {
+                    return callMd2ImgModalLayerPopup(param);
+                });
+			}
+        },
+		{ title: "[[#{md.mskuwc.skuimg3}]]", dataIndx: "skuimg3", editable: false,		//상품이미지3
+        	editable: false,
+        	render: function (ui) {
+        		var cellData = ui.cellData;
+        		var imgbutton = "<button class='imgBtn'>" + "[[#{bt.imgview}]]" + "</button>";
+                return imgbutton;
+            },
+			postRender: function (ui) {
+				var param = {
+					url : "/md/popup/mdu7PopupSelect.do",
+					compkey : ui.rowData.compkey,
+					warekey : ui.rowData.warekey,
+					ownerky : ui.rowData.ownerky,
+					skumkey : ui.rowData.skumkey,
+					imgcolumn : ui.column.dataIndx
+				}
+				
+                $cell = this.getCell(ui);
+                $cell.find(".imgBtn").button({ icons: { primary: 'ui-icon-contact' } }).on("click", function () {
+                    return callMd2ImgModalLayerPopup(param);
+                });
+			}
+       	},
+		{ title: "[[#{md.mskuwc.skuimg4}]]", dataIndx: "skuimg4", editable: false,		//상품이미지4
+       		editable: false,
+       		render: function (ui) {
+       			var cellData = ui.cellData;
+       			var imgbutton = "<button class='imgBtn'>" + "[[#{bt.imgview}]]" + "</button>";
+                return imgbutton;
+            },
+			postRender: function (ui) {
+				var param = {
+					url : "/md/popup/mdu7PopupSelect.do",
+					compkey : ui.rowData.compkey,
+					warekey : ui.rowData.warekey,
+					ownerky : ui.rowData.ownerky,
+					skumkey : ui.rowData.skumkey,
+					imgcolumn : ui.column.dataIndx
+				}
+				
+                $cell = this.getCell(ui);
+                $cell.find(".imgBtn").button({ icons: { primary: 'ui-icon-contact' } }).on("click", function () {
+                    return callMd2ImgModalLayerPopup(param);
+                });
+			}
+       	},
+		{ title: "[[#{md.mskuwc.skuimg5}]]", dataIndx: "skuimg5", editable: false,		//상품이미지5
+       		editable: false,
+       		render: function (ui) {
+       			var cellData = ui.cellData;
+       			var imgbutton = "<button class='imgBtn'>" + "[[#{bt.imgview}]]" + "</button>";
+                return imgbutton;
+            },
+			postRender: function (ui) {
+				var param = {
+					url : "/md/popup/mdu7PopupSelect.do",
+					compkey : ui.rowData.compkey,
+					warekey : ui.rowData.warekey,
+					ownerky : ui.rowData.ownerky,
+					skumkey : ui.rowData.skumkey,
+					imgcolumn : ui.column.dataIndx
+				}
+				
+                $cell = this.getCell(ui);
+                $cell.find(".imgBtn").button({ icons: { primary: 'ui-icon-contact' } }).on("click", function () {
+                    return callMd2ImgModalLayerPopup(param);
+                });
+			}
+       	},
+       	{ title: "[[#{md.mskuwc.itmcost}]]", dataType: "integer" , dataIndx: "itmcost", format: '###,###,###,###', 	//단가
+       		editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.selpric}]]", dataType: "integer" , dataIndx: "selpric", format: '###,###,###,###', 	
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.sproprc}]]", dataType: "integer" , dataIndx: "sproprc", format: '###,###,###,###', 
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.spronte}]]", dataType: "string" , dataIndx: "spronte", 	
+			editable: false,
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.retexky}]]", dataType: "string" , dataIndx: "retexky", 
+			editable: false,
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skudcex}]]", dataType: "string" , dataIndx: "skudcex",	
+			editable: false,
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mskuwc.cuspric}]]", dataType: "integer" , dataIndx: "cuspric", format: '###,###,###,###',	
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.rtspric}]]", dataType: "integer" , dataIndx: "rtspric", format: '###,###,###,###',
+			editable: false,
+			summary: { type: "sum" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mskuwc.skunote}]]", dataType: "string" , dataIndx: "skunote", editable: false,
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+       	{ title: "[[#{md.mskuwc.skustat}]]", dataType: "string", dataIndx: "skustat", editable: false,	//*SKU상태
+	    	editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mskuwc.itemnt1}]]", dataType: "string", dataIndx: "itemnt1", editable: false,	//상품비고1
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+	    },
+	    { title: "[[#{md.mskuwc.itemnt2}]]", dataType: "string", dataIndx: "itemnt2", editable: false,	//상품비고2
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+	    },
+	    { title: "[[#{md.mskuwc.tollvd1}]]", dataType: "string", dataIndx: "tollvd1" , editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: "[[#{md.mskuwc.tollvd2}]]", dataType: "string", dataIndx: "tollvd2" , editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: "[[#{md.mskuwc.tollvd3}]]", dataType: "string", dataIndx: "tollvd3" , editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: "[[#{md.mskuwc.tollvd4}]]", dataType: "string", dataIndx: "tollvd4" , editable: false,
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }	
+		},
+		{ title: "[[#{md.mskuwc.tollfe1}]]", dataType: "integer" , dataIndx: "tollfe1", format: '###,###,###,###', editable: false,
+			summary: { type: "sum" },
+		},
+		{ title: "[[#{md.mskuwc.tollfe2}]]", dataType: "integer" , dataIndx: "tollfe2", format: '###,###,###,###', editable: false,
+			summary: { type: "sum" },
+		},
+		{ title: "[[#{md.mskuwc.tollfe3}]]", dataType: "integer" , dataIndx: "tollfe3", format: '###,###,###,###', editable: false,
+			summary: { type: "sum" },
+		},
+		{ title: "[[#{md.mskuwc.tollfe4}]]", dataType: "integer" , dataIndx: "tollfe4", format: '###,###,###,###', editable: false,
+			summary: { type: "sum" },
+		},
+		{ title: "[[#{md.mskuwc.tollnt1}]]", dataType: "string", dataIndx: "tollnt1", editable: false	//임가공비고1
+		},
+	    { title: "[[#{md.mskuwc.tollnt2}]]", dataType: "string", dataIndx: "tollnt2", editable: false	//임가공비고2
+		},
+	    { title: "[[#{md.mskuwc.tollnt3}]]", dataType: "string", dataIndx: "tollnt3", editable: false	//임가공비고3
+	    },
+	    { title: "[[#{md.mskuwc.tollnt4}]]", dataType: "string", dataIndx: "tollnt4", editable: false //임가공비고4
+	    },
+		{ title: "[[#{md.mskuwc.credate}]]", dataType: "string", dataIndx: "credate", editable: false },
+		{ title: "[[#{md.mskuwc.cretime}]]", dataType: "string", dataIndx: "cretime", editable: false },
+		{ title: "[[#{md.mskuwc.creuser}]]", dataType: "string", dataIndx: "creuser", editable: false },
+		{ title: "[[#{md.mskuwc.lmodate}]]", dataType: "string", dataIndx: "lmodate", editable: false },
+		{ title: "[[#{md.mskuwc.lmotime}]]", dataType: "string", dataIndx: "lmotime", editable: false },
+		{ title: "[[#{md.mskuwc.lmouser}]]", dataType: "string", dataIndx: "lmouser", editable: false }
+	];
+	
+	var gulItem = new GridUtil(colItemModel, '[[${gprogrid}]]', 'mdu7_item_grid');
+	
+	gulItem.setFind();
+	gulItem.setReset();
+	gulItem.setAdd(function(evt, ui){
+		var headGridData = gulHead.getGrid().getData();
+		var checkList = headGridData.filter(function(e){
+			return e.state == "Y";
+		});
+		
+		if(checkList.length == 0){
+			alert("[[#{ms.notRowCheck}]]");
+			return;
+		}
+		else if(checkList.length > 1){
+			alert("[[#{ms.notMultiCheck}]]");
+			return;
+		}else{
+			var sRow = JSON.parse(JSON.stringify(checkList[0]));
+			var skutdsc 		= "";
+			var skudesc 		= sRow.skudesc;
+			var skutdescArr 	= sRow.skudesc.split(".");
+			var skutdesc 		= "";
+
+			if(skutdescArr.length > 1){
+				for(var i=0; i<skutdescArr.length-2; i++){
+					skutdesc += skutdescArr[i];
+					skutdsc  += skutdescArr[i];
+				}
+			}else{
+				skutdesc = skudesc;
+			}
+			
+			
+			sRow.skumkey = sRow.skutkey;
+			sRow.skudesc = skutdesc;
+			sRow.skutdsc = skutdsc;
+			sRow.skugr03 = "";
+			sRow.skugr04 = "";
+			
+			delete sRow.rowkey;
+			delete sRow.pq_ri;
+			delete sRow.pq_cellcls;
+			delete sRow.lmodate;
+			delete sRow.lmotime;
+			delete sRow.lmouser;
+			delete sRow.skuimg1;
+			delete sRow.skuimg2;
+			delete sRow.skuimg3;
+			delete sRow.skuimg4;
+			delete sRow.skuimg5;
+			
+			var rowData = JSON.parse(JSON.stringify(sRow));
+
+			var rowIndx = this.addRow({ rowData: rowData, checkEditable: false });
+			this.goToPage({ rowIndx: rowIndx });
+		}
+    });
+	
+	gulItem.setDelete(function(event, ui){
+		if(confirm("[[#{ms.rowDelete}]]")){
+			var ItemGridData = gulItem.getGrid().getData();
+			var checkList = ItemGridData.filter(function(e){
+				return e.state == "Y";
+			});
+
+			var rowArrList = [];
+			
+        	for(var i=0; i<checkList.length; i++){
+        	 	var rowArrObject = new Object();
+        		rowArrObject.rowIndx = checkList[i].pq_ri;
+        		rowArrList.push(rowArrObject);
+        	}
+        	
+        	this.deleteRow({rowList: rowArrList});
+        	this.setSelection(null);
+    	}
+	});
+	
+	gulItem.setCreate(function (evt, ui) {
+		Combo("mdu7_item_grid", "skustat", {comcdky : "SKUSTAT"}, "/md/mdc7code.do");
+    	Combo("mdu7_item_grid", "suomkey", {uodelyn : "N"}, "/md/unitSelectBox.do");
+    	Combo("mdu7_item_grid", "truntyp", {trdelyn : "N"}, "/md/mtutSelectBox.do");
+    	Combo("mdu7_item_grid", "packkey", {pkdelyn : "N"}, "/md/mpakmaSelectPackBox.do");
+    	Combo("mdu7_item_grid", "vendkey", {comcdky : "SKUSTAT"}, "/md/mdp2SelectBox.do");
+    	Combo("mdu7_item_grid", "tollvd1", {comcdky : "SKUSTAT"}, "/md/mdp2SelectBox.do");
+    	Combo("mdu7_item_grid", "tollvd2", {comcdky : "SKUSTAT"}, "/md/mdp2SelectBox.do");
+    	Combo("mdu7_item_grid", "tollvd3", {comcdky : "SKUSTAT"}, "/md/mdp2SelectBox.do");
+    	Combo("mdu7_item_grid", "tollvd4", {comcdky : "SKUSTAT"}, "/md/mdp2SelectBox.do");
+		Combo("mdu7_item_grid", "brandcd", {comcdky : "BRANDCD", custtyp : 'WHOLESALE', cudelyn : 'N'}, "/md/customerSelectBox.do");
+		Combo("mdu7_item_grid", "skugr05", {comcdky : "SKUGR05"}, "/md/mdc7code.do");
+		Combo("mdu7_item_grid", "skuat01", {useract : "[[${session.useract}]]"}, "/sy/findDesigner.do");
+		
+		Combo("mdu7_item_grid", "skugr01", {compkey : mdu7Init.compkey, comcdky : "SKUGR01", cdcate1 : "L"}, "/md/mdc7code.do");
+		Combo("mdu7_item_grid", "skugr03", {compkey : mdu7Init.compkey, comcdky : "SIZECOD"}, "/md/mdc7code.do");
+		Combo("mdu7_item_grid", "skualt1", {compkey : mdu7Init.compkey, comcdky : "SKUGR01", cdcate1 : "M"}, "/md/mdc7code.do");
+	});
+	
+	gulItem.setCellClick(function(evt, ui){
+        if(ui.column.dataIndx == "packkey"){
+        	if(ui.rowData.truntyp){
+        		var data 	= {
+        			warekey : ui.rowData.warekey,
+        			truntyp : ui.rowData.truntyp,
+        			pkdelyn : "N"
+        		};
+        		Combo("mdu7_item_grid", "packkey", data, "/md/mpakmaSelectPackBox.do");
+        	}else{
+        		var column = this.getColumn({ dataIndx: 'packkey' });
+        		column.editor.options = [];
+        	}
+		}
+        
+      	//셀 클릭시 발생 이벤트
+    	if(ui.column.dataIndx == "skualt1"){
+    		changeSkugr01TypeData(ui);
+    	}
+	});
+    
+	gulItem.setBeforeValidate(function(event, ui){
+		if (ui.source != 'undo' && (ui.source == 'edit' || ui.source == 'paste' || ui.source == 'checkbox')){
+			
+			if(ui.updateList.length == 1){
+				var rownum 		= ui.updateList[0].rowIndx;
+				var updateRow 	= ui.updateList[0].newRow;
+				var rowData		= ui.updateList[0].rowData;
+				
+				var skumkeyOrigin = rowData.skutkey;
+				var skuskeyOrigin = rowData.skuskey;
+				var skudescOrigin = rowData.skudesc.split(".")[0];
+				var skuskeyArr	  = rowData.skuskey.split(".");
+				
+				var uRow = JSON.parse(JSON.stringify(updateRow));
+	        	var rRow = JSON.parse(JSON.stringify(rowData));
+	        	var afterRow = Object.assign(rRow, uRow);
+	        	
+	        	
+				if(afterRow.skugr03 != "" && afterRow.skugr04 != ""){
+					var skumkey = skumkeyOrigin + "."+afterRow.skugr04+"."+afterRow.skugr03.toUpperCase();
+					var skudesc = skudescOrigin + "."+afterRow.skugr04+"."+afterRow.skugr03.toUpperCase();
+					var skuskey = skumkeyOrigin + "."+afterRow.skugr04+"."+afterRow.skugr03.toUpperCase()+"."+skuskeyArr[skuskeyArr.length-1];
+				}else{
+					var skumkey = skumkeyOrigin;
+					var skudesc = skudescOrigin;
+					var skuskey = skuskeyOrigin;
+				}
+
+				var skugr03 = afterRow.skugr03.toUpperCase();
+				
+				this.updateRow( {
+	    			rowIndx : rownum,
+	    		    newRow : {
+	    		    	"state" : "Y",
+	    		    	"skudesc": skudesc,
+	    		    	"skumkey": skumkey,
+	    		    	"skugr03": skugr03,
+	    		    	"skuskey": skuskey
+	    		    },
+	    		    checkEditable: false
+	    		});
+			}
+			else
+			{
+				for(var i=0; i<ui.updateList.length; i++){
+					var rownum 		= ui.updateList[i].rowIndx;
+					var updateRow 	= ui.updateList[i].newRow;
+					var rowData		= ui.updateList[i].rowData;
+					
+					var skumkeyOrigin = rowData.skutkey;
+					var skuskeyOrigin = rowData.skuskey;
+					var skudescOrigin = rowData.skudesc.split(".")[0];
+					var skuskeyArr	  = rowData.skuskey.split(".");
+					
+					var uRow = JSON.parse(JSON.stringify(updateRow));
+		        	var rRow = JSON.parse(JSON.stringify(rowData));
+		        	var afterRow = Object.assign(rRow, uRow);
+					
+					if(afterRow.skugr03 != "" && afterRow.skugr04 != ""){
+						var skumkey = skumkeyOrigin + "."+afterRow.skugr04+"."+afterRow.skugr03.toUpperCase();
+						var skudesc = skudescOrigin + "."+afterRow.skugr04+"."+afterRow.skugr03.toUpperCase();
+						var skuskey = skumkeyOrigin + "."+afterRow.skugr04+"."+afterRow.skugr03.toUpperCase()+"."+skuskeyArr[skuskeyArr.length-1];
+					}else{
+						var skumkey = skumkeyOrigin;
+						var skudesc = skudescOrigin;
+						var skuskey = skuskeyOrigin;
+					}
+
+					var skugr03 = afterRow.skugr03.toUpperCase();
+					
+					this.updateRow( {
+		    			rowIndx : rownum,
+		    		    newRow : {
+		    		    	"state" : "Y",
+		    		    	"skudesc": skudesc,
+		    		    	"skumkey": skumkey,
+		    		    	"skugr03": skugr03,
+		    		    	"skuskey": skuskey
+		    		    },
+		    		    checkEditable: false
+		    		});
+				}
+				
+			
+			}
+			
+			
+		}
+	});
+	
+	gulItem.open();
+	//============================================================	 
+	//페이지 호출시 검색 1회 호출
+	//============================================================
+	searchmdu7List();
+	
+	
+	function changeSkugr01TypeData(ui){
+		var pgrid 		= pq.grid("#mdu7_head_grid");
+		
+		if(ui.rowData.skugr01){
+			var data 	= {
+				compkey : ui.rowData.compkey,
+				comcdky : "SKUGR01",
+				cdcate1 : "M",
+				cdcate2 : ui.rowData.skugr01,
+				codelyn : 'N'
+			}
+			pgrid.showLoading();
+			Combo("mdu7_head_grid", "skualt1", data, "/md/mdc7code.do");
+			pgrid.hideLoading();
+		}
+		else{
+			var column = pgrid.getColumn({ dataIndx: 'skualt1' });
+			column.editor.options = [];
+		}
+	}
+	
+	function comboCreateData(gridnm, colnm, obj, mapob, type){
+
+		if(!gridnm){
+			$("#" + colnm + " option").not("[value='']").remove();	//초기화
+			if(mapob != null && mapob.combovl != undefined && mapob.combonm != undefined){
+				$.each(obj, function(key, value) {
+					$('#' + colnm) .append($("<option></option>").attr("value",value[mapob.combovl]).text(value[mapob.combonm])); 
+				});
+			}else{
+				$.each(obj, function(key, value) { 
+					$('#' + colnm) .append($("<option></option>").attr("value",value.combovl).text(value.combonm)); 
+				});
+			}
+		}
+		else{
+			
+			var grid 	= pq.grid("#" + gridnm);
+			var column 	= grid.getColumn({ dataIndx: colnm });
+
+			var options = obj.map(function(obj){
+	        	var rObj = {};
+	        	if(mapob != null && mapob.combovl != undefined && mapob.combonm != undefined){
+	        		rObj[obj[mapob.combovl]] = obj[mapob.combonm];
+	        	}else{
+					rObj[obj.combovl] = obj.combonm;
+	        	}
+				return rObj;
+			});
+			
+			column.editor.options = options;
+		}
+	}
+});
+
+</script>
+	<!--  mainConten 종료 -->
+</div>
+</html>

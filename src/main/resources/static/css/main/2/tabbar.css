@@ -1,0 +1,86 @@
+.table.line-table{
+/* 	min-width: 760px 2022-11-25 수정 */
+	width : 100%;  /* 2022-11-25 수정 */
+}
+.table.line-table td{
+	width: 10.5%;
+	border-bottom: 1px solid #e1e3e6; 
+	border-top: 0; 
+}
+.table.line-table td:first-of-type{
+	width: 16%;
+	border-right: 1px solid #e1e3e6;
+}
+.table.line-table tr:first-of-type td{
+	
+	border-top: 1px solid #e1e3e6 !important;  
+}
+.table.line-table td > div{
+	width: 100%; 
+	min-height: 140px; 
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	line-height: 1.2;
+	color: #444444;
+	padding-top: 20px;
+}
+.table.line-table td:first-child{
+	border-top: 1px solid #e1e3e6; 
+}
+.table.line-table td:first-child > div{
+	justify-content: center;
+	padding-top: 0;
+}
+
+.table.line-table td > div.data-box{
+	position: relative;
+	color:#6e6d7a; 
+}
+.table.line-table td > div.data-box::before{
+	content:'';
+	width: 100%; 
+	height: 2px; 
+	background: #e9ecf0; 
+	position:absolute; 
+	right: 50%; top: 71px;
+	z-index: 0;
+}
+
+.table.line-table td:nth-child(2) > div.data-box::before{
+	display: none;
+}
+.table.line-table td > div.data-box *{
+	position: relative; 
+	z-index:  1;
+}
+.data-box .data-icon{
+	width: 56px; 
+	height: 56px; 
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: 3px; 
+	margin-bottom: 6px;
+}
+
+.data-box.state1 .data-icon{
+	background: #d4e9ff;
+}
+.data-box.state1 .data-state{
+	color: #0087e8;
+}
+.data-box.state2 .data-icon{
+	background: #e9e9ea;
+}
+.data-box.state2 .data-state{
+	color: #6e6d7a;
+}
+.data-box.state3 .data-icon{
+	background: #eae0f6;
+}
+.data-box.state3 .data-state{
+	color: #8238ed;
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+	<head> 
+ 		<th:block th:replace="/main/fragment3/comHead.html :: fragments-comHead"></th:block>
+	</head> 
+	<body>
+	    <div id="wrapper"> 
+		    <!-- Header  --> 
+	        <header>
+	            <th:block th:replace="/main/fragment3/mainHeader.html :: fragments-mainHeader"></th:block>
+			</header>
+			<!-- Header  end -->
+			
+	        <!-- Sidebar 사용안함 --> 
+	        <!-- <nav >   -->
+	        <!--	<th:block th:replace="/main/fragment2/mainSideBar.html :: fragments-mainSideBar"></th:block> -->
+	        <!-- </nav>  -->
+	        <!-- Sidebar  end --> 
+	        
+	        <!-- Page Content  -->
+	        <div id="mainContent">
+	        	<th:block th:replace="/main/fragment2/mainContent.html :: fragments-mainContent"></th:block>
+	        </div>
+	        <!-- Page Content  end -->
+	        
+	        <!-- Footer -->
+	        <footer>
+	            <th:block th:replace="/main/fragment1/mainFooter.html :: fragments-mainFooter"></th:block>
+	        </footer>
+	        <!-- Footer end  -->   
+	              		
+			<!-- spinner -->
+			<div class="spinner-wrapper">
+				<div class="spinner-background"></div>
+				<div class="spinner-border" role="status"></div>
+			</div>
+			<!-- spinner end -->
+	    </div>
+
+		 
+	</body>
+</html>   
+ 
+ 

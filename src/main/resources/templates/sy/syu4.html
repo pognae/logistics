@@ -1,0 +1,296 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">  			
+	    		<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+	  		<div class="header-right">
+	  			<button type="button" class="btn default-btn" id="syu4_save"    th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+		  		<button type="button" class="btn default-btn" id="syu4_search"  th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+	  		</div>
+	  	</div>
+	  	<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+			  	<div class="form-group row col">
+					<label for="syu4_rolgkey" class="col-md-5 col-xl-2 col-form-label">[[#{sy.srolgr.rolgkey}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.srolgr.rolgkey')}" id="syu4_rolgkey"/>
+					</div>
+					<label for="syu4_rolgnam" class="col-md-5 col-xl-2 col-form-label">[[#{sy.srolgr.rolgnam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.srolgr.rolgnam')}" id="syu4_rolgnam"/>
+			  		</div>
+				</div>
+			</div>
+	  	</div>
+		<div class="content-inner">
+		 	<div class="grid-item grid-1">
+		 		<div class="grid-container">
+		 			<div id="syu4_grid"></div>
+		 		</div>
+		 	</div>
+		 </div>
+	</div>
+	
+<script>
+$(function(){
+	//============================================================	
+	//검색 화면 이벤트
+	//============================================================
+	$("#syu4_search").click(function () {
+		var grid = pq.grid("#syu4_grid");
+		grid.showLoading();
+		var data = { rolgkey : $('#syu4_rolgkey').val(), rolgnam : $('#syu4_rolgnam').val() };
+		var aul = new AjaxUtil_Order("/sy/groupSelect.do", data, "GET");
+		aul.setCallbackSuccess(function(data){
+			if(data.list.length == 0){
+				alert("[[#{ms.getDataZero}]]");
+			}
+			grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		});
+		aul.send();
+	});
+	
+	$("#syu4_save").click(function () {
+		var grid = pq.grid("#syu4_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		var gridChange = grid.getChanges({all:true});
+		
+		if(gridCheck.length > 0){
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+			for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].rolgkey){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "rolgkey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].rolgnam){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "rolgnam" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].rolekey){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "rolekey" } );
+	    	  		return false;
+	    	  	}
+				if(!gridCheck[i].menukey){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+	    	  		grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "menukey" } );
+	    	  		return false;
+				}
+	    	}
+	    	
+			//============================================================	 
+	    	//체크된 데이터 충복 체크
+	    	//============================================================
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){
+						if(gridCheck[i].rolgkey === grid.getData()[j].rolgkey){
+			      			alert((grid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+		  	
+			//updateList 체크 데이터 정제
+			for(z=0; z<gridChange.updateList.length; z++){
+				if(gridChange.updateList[z].state != true){
+					gridChange.updateList.splice(z, 1);
+					gridChange.oldList.splice(z, 1);
+				}
+			}
+			
+			//addList 체크 데이터 정제
+			for(x=0; x<gridChange.addList.length; x++){
+				if(gridChange.addList[x].state != true){
+					gridChange.addList.splice(x, 1);
+				}
+			}
+			
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+		        var data = { data : gridChange, rolgkey : $('#syu4_rolgkey').val(), rolgnam : $('#syu4_rolgnam').val() };
+		        grid.showLoading();
+		    	var aul = new AjaxUtil_Order("/sy/groupSave.do", data);
+		    	aul.setCallbackSuccess(function(data){
+		    		grid.option( "dataModel", {data: data.list , recIndx: "rowkey" } );
+		    		grid.refreshDataAndView();  
+		    		alert("[[#{ms.saveSuccess}]]");
+		    	});
+		    	aul.setComplete(function(data){
+					grid.hideLoading();
+				});
+		    	aul.send();
+		    }
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	var syu4_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: true }
+     	},
+     	{ title: "rowkey", dataType: "string", dataIndx: "rowkey", editable: false, hidden: true },
+    	{ title: "[[#{sy.srolgr.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden: true},
+		{ title: "[[#{sy.srolgr.rolgkey}]]", dataType: "string", dataIndx: "rolgkey", 
+    		styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+    		render: function (ui) {                            
+    			if(ui.cellData){
+   					ui.rowData.rolgkey = ui.cellData.toUpperCase();	
+   				}
+            },
+    		editable: function (ui) {
+    			return editable = ui.rowData.rowkey ? false : true
+    		},
+    		validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{sy.srolgr.rolgnam}]]", dataType: "string", dataIndx: "rolgnam",
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{sy.srolgr.rolekey}]]", dataType: "string", dataIndx: "rolekey",
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : "";
+            }
+        },
+        { title: "[[#{sy.srolgr.menukey}]]", dataType: "string", dataIndx: "menukey",
+        	styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+        	editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : "";
+            }
+        },
+		{ title: "[[#{sy.srolgr.credate}]]", dataType: "string", dataIndx: "credate", editable: false},
+		{ title: "[[#{sy.srolgr.cretime}]]", dataType: "string", dataIndx: "cretime", editable: false},
+		{ title: "[[#{sy.srolgr.creuser}]]", dataType: "string", dataIndx: "creuser", editable: false},
+		{ title: "[[#{sy.srolgr.lmodate}]]", dataType: "string", dataIndx: "lmodate", editable: false},
+		{ title: "[[#{sy.srolgr.lmotime}]]", dataType: "string", dataIndx: "lmotime", editable: false},
+		{ title: "[[#{sy.srolgr.lmouser}]]", dataType: "string", dataIndx: "lmouser", editable: false}
+    ];
+	
+	var syu4_grid = new GridUtil(syu4_gridCM, '[[${gprogrid}]]', 'syu4_grid');
+	syu4_grid.setFind();
+	syu4_grid.setReset();
+	
+	syu4_grid.setCreate(function (evt, ui) {
+		Combo("syu4_grid", "rolekey", "", "/sy/roleSelectBox.do");
+    	Combo("syu4_grid", "menukey", "", "/sy/menuSelectBox.do");
+	});
+	
+	syu4_grid.setAdd(function(evt, ui){
+		var rowData = { state : true, compkey: "[[${session.compkey}]]" };
+		var rowIndx = this.addRow({ rowData: rowData, checkEditable: false });
+        this.goToPage({ rowIndx: rowIndx });
+        this.editCell({ rowIndx : rowIndx , dataIndx : "rolgkey"});
+	});
+	
+	syu4_grid.setDelete(function(evt, ui){
+		var grid = this, checkList = this.Checkbox('state').getCheckedNodes();
+		
+		if(checkList.length > 0){
+			setTimeout(function () {
+				var ans = window.confirm("[[#{ms.choiceRowDelete}]]");	//선택된 행을 모두 삭제하시겠습니까?
+                if (ans) {
+                	if(!checkList[0].rowkey){
+                		grid.deleteRow({ rowIndx: checkList[0].pq_ri });
+        			}else{
+        				var data = { data : checkList, rolgkey : $('#syu4_rolgkey').val(), rolgnam : $('#syu4_rolgnam').val() };
+        				grid.showLoading();
+                		var aul = new AjaxUtil_Order("/sy/groupDelete.do", data, "DELETE");
+            	    	aul.setCallbackSuccess(function (data){
+            	    		grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+            	    		grid.refreshDataAndView();
+                        	alert("[[#{ms.deleteSuccess}]]");
+            	    	});
+            	    	aul.setComplete(function(data){
+            	    		grid.hideLoading();
+        				});
+            	    	aul.send();
+        			}
+                }
+			});
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+    	}
+    });
+	
+	syu4_grid.setChange(function (evt, ui) {
+    	if(ui.source === 'edit'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+           		    newRow : { state : true },
+           		    checkEditable: false
+           		});
+    		}
+    	}else if(ui.source === 'paste'){
+    		if(ui.updateList.length > 0){
+    			for(i=0; i<ui.updateList.length; i++){
+    				var newRow = {state : true};
+        			if(ui.updateList[i].newRow.rolgkey){
+        				newRow.rolgkey = ui.updateList[i].newRow.rolgkey.toUpperCase();
+        			}
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : newRow,
+            		    checkEditable: false
+            		});
+        		}
+    		}
+    		if(ui.addList.length > 0){
+    			for(i=0; i<ui.addList.length; i++){
+        			ui.addList[i].newRow.state = true;
+        			ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+        			ui.addList[i].newRow.rolgkey = ui.addList[i].newRow.rolgkey ? ui.addList[i].newRow.rolgkey.toUpperCase() : "";
+        		}
+    		}
+    	}
+	});
+	
+	syu4_grid.open();
+});
+	
+</script>
+
+</div>
+</html>

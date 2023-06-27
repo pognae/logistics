@@ -1,0 +1,132 @@
+<html xmlns:th="http://www.thymeleaf.org"  xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+	<meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="ko" >
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+	<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+	<META HTTP-EQUIV="Expires" CONTENT="-1">
+	
+ 	<link rel="manifest" href="/manifest.json" />
+	<link rel="apple-touch-icon" href="/img/touch-icon-iphone.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="/img/touch-icon-ipad.png">
+	<link rel="apple-touch-icon" sizes="167x167" href="/img/touch-icon-ipad-retina.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/img/touch-icon-iphone-retina.png"> 
+        
+	<title> :: BINBLUR :: </title>
+    <link rel="shortcut icon" href="/img/warehouse1.ico">
+    
+    <!-- CSS  -->	
+    <link rel="stylesheet" href="/vender/bootstrap/bootstrap-4.1.3/css/bootstrap.css">
+    <link rel="stylesheet" href="/css/main/1/common.css">
+	<link rel="stylesheet" href="/css/main/1/sign.css">
+    
+    <script type="text/javascript" src="/vender/jquery/jquery-3.6.0.js"></script>
+    <script type="text/javascript" src="/vender/jqueryui/jquery-ui-1.13.1/jquery-ui.js"></script>
+</head>
+<body>
+	<div class="login-wrap">
+	    <span class="logo">
+	    	<img src="/img/logo.png" width=120  alt="binblur">
+		</span>
+		<div class="login-box">
+			<div class="login-title">
+				<b>[[#{sy.main.login.title}]]   <!-- Welcome Back ! --> </b> 
+				<span th:text="#{sy.main.login.titlemsg}" > <!-- 서비스를 이용하시려면 로그인을 해주세요--> </span>
+			</div>
+	    	<form method="post" id="frmLogin" onsubmit="return false;"> 
+	            <input type="hidden" name="compkey" id="compkey"  th:value="${compkey}" >
+		        <div class="form-group">
+		            <label th:for="useract" th:text="${#messages.msg('sy.main.login.useract')}"></label>
+		            <input type="text" name="useract" id="useract" class="form-control" th:placeholder="${#messages.msg('sy.main.login.userValidation')}" th:value="${#httpServletRequest.getParameter('useract')}"  autofocus >
+		        </div>
+		        
+		        <div class="form-group">
+		            <label th:for="passwrd" th:text="${#messages.msg('sy.main.login.passwrd')}"></label>
+		            <input type="password" class="form-control" name="passwrd" id="passwrd" autoComplete="off" th:placeholder="${#messages.msg('sy.main.login.passValidation')}" th:value="1" >
+		        </div>
+		        <div class="form-group">
+					<div id="errmsg" class="idpw-check" role="alert"> 
+					</div>
+				</div>
+		        <div class="form-group">
+					<select  name="langkey" id="langkey" class="form-control">
+					  	<option value='ko' th:selected="${#httpServletRequest.getParameter('langkey')}=='ko'" >KO</option>
+					  	<option value='en' th:selected="${#httpServletRequest.getParameter('langkey')}=='en'" >EN</option>
+					  	<option value='ulsan' th:selected="${#httpServletRequest.getParameter('langkey')}=='ulsan'" >ulsan</option> 
+					</select>
+		        </div>
+				<div>
+					<input type="hidden" id="token" data-token-name="${_csrf.headerName}" placeholder="Password" value="${_csrf.token}">
+				</div>
+				<button type="button" id="login-button" class="btn btn-primary" th:text="${#messages.msg('sy.main.login.btnlogin')}"></button>
+				<div class="sign-line">[[#{sy.main.login.memberyet}]] <!--  아직 회원이아니신가요? --> <button type="button" class="btn sign-link" onclick="location.href='/signUp'" th:text="${#messages.msg('sy.main.login.btnsignup')}"></button></div>
+			</form>
+			<p class="copyright">Copyright ⓒ 2023 Logistics Inc. All right reserved.</p>			                
+	    </div>
+	</div>
+</body>
+
+<script>  
+$(function(){
+	$("#login-button").click(function(){
+		login();
+	})	;
+	
+	$("#langkey").change(function(){
+		changeLocale();
+	});
+
+    $("#frmLogin").keypress(function (e) {
+        if (e.keyCode === 13) {
+        	login();
+        }
+    });		
+});
+
+function login(){  
+	if($("#compkey").val()=='') $("#compkey").val('000');
+	//if($("#warekey").val()=='') $("#warekey").val('WH1');
+	if($("#useract").val()=='') $("#useract").val('1');
+	
+	$.ajax({
+		url:"/login_proc",
+		type :  "POST",
+		dataType : "json",
+		data : {
+			compkey : $("#compkey").val(),
+			langkey : $("#langkey").val(),
+			useract : $("#useract").val(),
+			passwrd : $("#passwrd").val()  
+			
+		},
+		beforeSend : function(xhr)
+		{ 
+    		var token = $("#token").val();
+    		var header = "X-CSRF-TOKEN";			
+			xhr.setRequestHeader(header, token);
+		},
+		success : function(response){
+			if(response.code == "200"){
+				window.location = response.item.url;
+			} else {
+				$("#errmsg").text(response.message);
+				$("#passwrd").val("");
+			}
+		},
+		error : function(a,b,c){
+			console.log(a,b,c);
+		} 
+	}) 
+}
+
+function changeLocale(){ 
+	var compkey = $("#compkey").val();
+	//let warekey = $("#warekey").val();	
+	var useract = $("#useract").val();	
+	var langkey = $("#langkey").val();
+	window.location = "/login?langkey="+ langkey + '&compkey='+compkey + '&useract='+useract;
+}
+</script>
+
+</html>

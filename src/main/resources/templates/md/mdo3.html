@@ -1,0 +1,312 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+ 	<div class="tab-inner">
+	 	<div class="content-header">
+			<div class="header-left">  			
+	    		<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+			<div class="header-right">
+				<button type="button" class="btn default-btn" id="mdo3_save"   th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+		  		<button type="button" class="btn default-btn" id="mdo3_search" th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+			</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdo3_warekey" class="col-md-5 col-xl-2 col-form-label">[[#{md.marema.warekey}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<select class="custom-select" id="mdo3_warekey"></select>
+					</div>
+					<label for="mdo3_areanam" class="col-md-5 col-xl-2 col-form-label">[[#{md.marema.areanam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.marema.areanam')}" id="mdo3_areanam"/>
+					</div>
+				</div>
+			</div>
+			<div class="btn-fold-wrap">
+				<button class="btn-fold" onclick="onSearchExpand(this)"><i class="fa-solid fa-angle-down"></i></button>
+			</div>
+		</div>
+		<div class="content-inner">
+			<div class="grid-item grid-1">
+		 		<div class="grid-container">
+		 			<div id="mdo3_grid"></div>
+		 		</div>
+			</div>
+		</div>
+	</div>
+	
+<script>
+$(function(){;
+	
+	var mdo3_init = mdo3Init();
+	//============================================================	 
+	//검색 화면 이벤트
+	//============================================================
+	$("#mdo3_search").click(function () {
+		mdo3List();
+	});
+	
+	$("#mdo3_save").click(function () {
+		var grid = pq.grid("#mdo3_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		var gridChange = grid.getChanges({all:true});
+		
+		if(gridCheck.length > 0){
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+	        for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].warekey){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "warekey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].areakey){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "areakey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].areanam){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "areanam" } );
+	    	  		return false;
+	    	  	}
+				if(!gridCheck[i].areatyp){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+	    	  		grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "areatyp" } );
+	    	  		return false;
+				}
+	    	}
+			
+			//============================================================	 
+	    	//체크된 데이터 충복 체크
+	    	//============================================================
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){
+						if(gridCheck[i].warekey === grid.getData()[j].warekey && gridCheck[i].areakey === grid.getData()[j].areakey){
+			      			alert((grid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+			//updateList 체크 데이터 정제
+			for(z=0; z<gridChange.updateList.length; z++){
+				if(gridChange.updateList[z].state != true){
+					gridChange.updateList.splice(z, 1);
+					gridChange.oldList.splice(z, 1);
+				}
+			}
+			
+			//addList 체크 데이터 정제
+			for(x=0; x<gridChange.addList.length; x++){
+				if(gridChange.addList[x].state != true){
+					gridChange.addList.splice(x, 1);
+				}
+			}
+			
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { data : gridChange, warekey : $('#mdo3_warekey option:selected').val(), areanam : $('#mdo3_areanam').val() };
+			    grid.showLoading();
+				var aul = new AjaxUtil_Order("/md/areaSave.do", data);
+				aul.setCallbackSuccess(function (data){
+					grid.option( "dataModel", { data: data.areaList, recIndx: "rowkey" } );
+			   		grid.refreshDataAndView();
+			        alert("[[#{ms.saveSuccess}]]");
+				});
+				aul.setComplete(function(data){
+					grid.hideLoading();
+				})
+			    aul.send();
+			}
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	var mdo3_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+             cb: { all: false, header: true }
+     	},
+		{ title: "rowkey", dataType: "string", dataIndx: "rowkey", hidden: true, editable: false},
+		{ title: "[[#{md.marema.compkey}]]", dataType: "string", dataIndx: "compkey", hidden: true },
+		{ title: "[[#{md.marema.warekey}]]", dataType: "string", dataIndx: "warekey",
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+				type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+				options: []
+			},
+          	render: function (ui) {
+          		var option = ui.column.editor.options.find(function (obj) {
+                   return (obj[ui.cellData] != null);
+               });
+              	return option ? option[ui.cellData] : "";
+			}
+		},
+    	{ title: "[[#{md.marema.areakey}]]", dataType: "string", dataIndx: "areakey",
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			render: function (ui) {
+      			if(ui.cellData){
+      				ui.rowData.areakey = ui.cellData.toUpperCase();
+      			}
+			},
+			validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]                
+		},
+		{ title: "[[#{md.marema.ardelyn}]]", dataType: "string", dataIndx: "ardelyn",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+            cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+            	var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.marema.areanam}]]", dataType: "string", dataIndx: "areanam",
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.marema.areatyp}]]", dataType: "string", dataIndx: "areatyp",
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+				type: "select",
+	            init: function (ui) { 
+	            	ui.$cell.find("select").pqSelect({ search : false, singlePlaceholder: '' });
+	            	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+	            },
+				options: []
+			},
+	        render: function (ui) {
+          		var option = ui.column.editor.options.find(function (obj) {
+                   return (obj[ui.cellData] != null);
+               	});
+              	return option ? option[ui.cellData] : "";
+			}
+		},
+		{ title: "[[#{md.marema.syonlyn}]]", dataIndx: "syonlyn",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.marema.credate}]]", dataType: "string", dataIndx: "credate", editable: false},
+		{ title: "[[#{md.marema.cretime}]]", dataType: "string", dataIndx: "cretime", editable: false},
+		{ title: "[[#{md.marema.creuser}]]", dataType: "string", dataIndx: "creuser", editable: false},
+		{ title: "[[#{md.marema.lmodate}]]", dataType: "string", dataIndx: "lmodate", editable: false},
+		{ title: "[[#{md.marema.lmotime}]]", dataType: "string", dataIndx: "lmotime", editable: false},
+		{ title: "[[#{md.marema.lmouser}]]", dataType: "string", dataIndx: "lmouser", editable: false}
+	];
+	
+	var mdo3_grid = new GridUtil(mdo3_gridCM, '[[${gprogrid}]]', 'mdo3_grid');
+	
+	mdo3_grid.setFind();
+	mdo3_grid.setReset();
+	
+	mdo3_grid.setAdd(function(evt, ui){
+		var rowData = { state : true, compkey: "[[${session.compkey}]]" , ardelyn : "N", syonlyn : "N" };
+   		var rowIndx = this.addRow({ rowData: rowData, checkEditable: false });
+   		this.goToPage({ rowIndx: rowIndx });
+   		this.editCell({ rowIndx : rowIndx , dataIndx : "warekey"});
+    });
+	
+	mdo3_grid.setCreate(function (evt, ui) {
+		var keys = Object.keys(mdo3_init);
+		for(key of keys){
+			var gData = mdo3_init[key];
+			var column = this.getColumn({ dataIndx: key });
+			var options = gData.map(function(obj){
+	        	var rObj = {};
+	        	rObj[obj.combovl] = obj.combonm;
+	        	return rObj;
+			});
+	    	column.editor.options = options;
+		}
+	});
+		
+	mdo3_grid.setChange(function (evt, ui) {
+	    if(ui.source === 'edit'){
+	    	for(i=0; i<ui.updateList.length; i++){
+	    		this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+            		newRow : { state : true },
+            		checkEditable: false
+            	});
+	    	}
+	    }else if(ui.source === 'paste'){
+	    	for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.hasOwnProperty('areakey') && ui.updateList[i].oldRow.hasOwnProperty('areakey')){
+    				newRow.areakey = ui.updateList[i].newRow.areakey.toUpperCase();
+    			}
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : newRow,
+        		    checkEditable: false
+        		});
+    		}
+	    	for(i=0; i<ui.addList.length; i++){
+	    		ui.addList[i].newRow.state = true;
+	    		ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+	    		ui.addList[i].newRow.ardelyn = ui.addList[i].newRow.ardelyn ? ui.addList[i].newRow.ardelyn : "N";
+	    		ui.addList[i].newRow.syonlyn = ui.addList[i].newRow.syonlyn ? ui.addList[i].newRow.syonlyn : "N";
+    		}
+	    }else if(ui.source === 'checkbox'){
+	    	for(i=0; i<ui.updateList.length; i++){
+    			if(ui.updateList[i].newRow.hasOwnProperty('ardelyn') || ui.updateList[i].newRow.hasOwnProperty('syonlyn')){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : true },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+	    }
+	});
+	mdo3_grid.open();
+	mdo3List();            
+
+	function mdo3List(){
+		var grid = pq.grid("#mdo3_grid");
+		grid.showLoading();
+		var aul = new AjaxUtil_Order("/md/areaSelect.do", { warekey : $('#mdo3_warekey option:selected').val(), areanam : $('#mdo3_areanam').val() }, "GET");
+		aul.setCallbackSuccess(function (data){
+			grid.option( "dataModel", {data: data.areaList , recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		})
+		aul.send();
+	}
+	
+	function mdo3Init(){
+		var initData = callAjax('data', 'GET', "/md/mdo3Init.do" , {});
+		if(initData){
+			var list = initData.warekey;
+			for(item of list){
+				$('#mdo3_warekey').append("<option value='" + item.combovl + "'>" + item.combonm +"</option>");	
+			}
+		}
+		return initData
+	}
+});
+	
+	
+</script>    
+
+</div>
+</html>

@@ -1,0 +1,267 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">  			
+	    		<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+	  		<div class="header-right">
+	  			<button type="button" class="btn default-btn" id="syw1_save"    th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+		  		<button type="button" class="btn default-btn" id="syw1_search"  th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+	  		</div>
+	  	</div>
+	  	<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+			  	<div class="form-group row col">
+					<label for="syw1_progrid" class="col-md-5 col-xl-2 col-form-label">[[#{sy.sprogm.progrid}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.sprogm.progrid')}" id="syw1_progrid"/>
+					</div>
+					<label for="syw1_progrnm" class="col-md-5 col-xl-2 col-form-label">[[#{sy.sprogm.progrnm}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.sprogm.progrnm')}" id="syw1_progrnm"/>
+					</div>
+				</div>
+	  		</div>
+	  	</div>
+	  	<div class="content-inner">
+		 	<div class="grid-item grid-1">
+		 		<div class="grid-container">
+		 			<div id="syw1_grid"></div>
+		 		</div>
+		 	</div>
+		 </div>
+	</div>
+	
+<script>
+$(function(){
+	//============================================================	
+	//검색 화면 이벤트
+	//============================================================
+	$("#syw1_search").click(function () {
+		var grid = pq.grid("#syw1_grid");
+		var data = { progrid : $('#syw1_progrid').val(), progrnm : $('#syw1_progrnm').val() };
+		grid.showLoading();
+		var aul = new AjaxUtil_Order("/sy/selectSyw1List.do", data, "GET");
+		aul.setCallbackSuccess(function (data){
+			if(data.list.length == 0){
+				alert("[[#{ms.getDataZero}]]");
+			}
+			grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		});
+		aul.send();
+	});
+	
+	$("#syw1_save").click(function () {
+		var grid = pq.grid("#syw1_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		var gridChange = grid.getChanges({all:true});
+		
+		if(gridCheck.length > 0){
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+			for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].progrid){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "progrid" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].progrnm){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "progrnm" } );
+	    	  		return false;
+	    	  	}
+	    	}
+			
+			//============================================================	 
+	    	//체크된 데이터 충복 체크
+	    	//============================================================
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){
+						if(gridCheck[i].progrid === grid.getData()[j].progrid){
+			      			alert((grid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+			
+			//updateList 체크 데이터 정제
+			for(z=0; z<gridChange.updateList.length; z++){
+				if(gridChange.updateList[z].state != true){
+					gridChange.updateList.splice(z, 1);
+					gridChange.oldList.splice(z, 1);
+				}
+			}
+			
+			//addList 체크 데이터 정제
+			for(x=0; x<gridChange.addList.length; x++){
+				if(gridChange.addList[x].state != true){
+					gridChange.addList.splice(x, 1);
+				}
+			}
+			
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { data : gridChange, progrid : $('#syw1_progrid').val(), progrnm : $('#syw1_progrnm').val() };
+		        grid.showLoading();
+		    	var aul = new AjaxUtil_Order("/sy/syw1Save.do", data);
+		    	aul.setCallbackSuccess(function(data){
+		    		grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+        			grid.refreshDataAndView();
+        			alert("[[#{ms.saveSuccess}]]");
+		    	});
+		    	aul.setComplete(function(data){
+					grid.hideLoading();
+				});
+		    	aul.send();
+		    }
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	var syw1_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: true }
+     	},
+     	{ title: "rowkey", dataType: "string", dataIndx: "rowkey", editable: false, hidden: true },
+       	{ title: "[[#{sy.sprogm.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden: true},
+    	{ title: "[[#{sy.sprogm.progrid}]]", dataType: "string", dataIndx: "progrid",	//프로그램ID
+       		styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+       		render: function (ui) {
+    			if(ui.cellData){
+   					ui.rowData.progrid = ui.cellData.toLowerCase();	
+   				}
+            },
+       		validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+    	},
+    	{ title: "[[#{sy.sprogm.progrnm}]]", dataType: "string", dataIndx: "progrnm",	//프로그램명
+    		styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+    		validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 30, msg: "[[#{ms.validations.maxLenLength(30)}]]" }]
+    	},
+    	{ title: "[[#{sy.sprogm.proglky}]]", dataType: "string", dataIndx: "proglky",	//프로그램명 라벨키
+    		styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+    		validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+    	},
+    	{ title: "[[#{sy.sprogm.progcmd}]]", dataType: "string", dataIndx: "progcmd",	//프로그램 실행 경로
+    		styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+    		validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+    	},
+    	{ title: "[[#{sy.sprogm.whrolyn}]]", dataType: "string", dataIndx: "whrolyn", 	//창고별 권한관리 여부
+    		styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: false, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+    	},
+    	{ title: "[[#{sy.sprogm.credate}]]", dataType: "string", dataIndx: "credate", editable: false},
+		{ title: "[[#{sy.sprogm.cretime}]]", dataType: "string", dataIndx: "cretime", editable: false},
+		{ title: "[[#{sy.sprogm.creuser}]]", dataType: "string", dataIndx: "creuser", editable: false},
+		{ title: "[[#{sy.sprogm.lmodate}]]", dataType: "string", dataIndx: "lmodate", editable: false},
+		{ title: "[[#{sy.sprogm.lmotime}]]", dataType: "string", dataIndx: "lmotime", editable: false},
+		{ title: "[[#{sy.sprogm.lmouser}]]", dataType: "string", dataIndx: "lmouser", editable: false}
+	];
+	
+	var syw1_grid = new GridUtil(syw1_gridCM, '[[${gprogrid}]]', 'syw1_grid');
+	syw1_grid.setFind();
+	syw1_grid.setReset();
+	
+	syw1_grid.setAdd(function(evt, ui){
+		var rowData = { state : true, compkey: "[[${session.compkey}]]" };
+		var rowIndx = this.addRow({ rowData: rowData, checkEditable: false });
+        this.goToPage({ rowIndx: rowIndx });
+        this.editCell({ rowIndx : rowIndx , dataIndx : "progrid"});
+	});
+	
+	syw1_grid.setDelete(function(evt, ui){
+		var grid = this;
+		var checkList = this.Checkbox('state').getCheckedNodes();
+		if(checkList.length > 0){
+			setTimeout(function () {
+				var ans = window.confirm("[[#{ms.choiceRowDelete}]]");	//선택된 행을 모두 삭제하시겠습니까?
+                if (ans) {
+                	if(!checkList[0].rowkey){
+                		grid.deleteRow({ rowIndx: checkList[0].pq_ri });
+        			}else{
+        				var data = { data : checkList, progrid : $('#syw1_progrid').val(), progrnm : $('#syw1_progrnm').val() };
+        				grid.showLoading();
+                		var aul = new AjaxUtil_Order("/sy/syw1Delete.do", data, "DELETE");
+            	    	aul.setCallbackSuccess(function (data){
+            	    		grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+            	    		grid.refreshDataAndView();
+                        	alert("[[#{ms.deleteSuccess}]]");
+            	    	});
+            	    	aul.setComplete(function(data){
+            	    		grid.hideLoading();
+        				});
+            	    	aul.send();
+        			}
+                }
+			});
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+    	}
+    });
+
+	syw1_grid.setChange(function (evt, ui) {
+		if(ui.source === 'edit'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+           		    newRow : { state : true },
+           		    checkEditable: false
+           		});
+    		}
+    	}else if(ui.source === 'paste'){
+    		if(ui.updateList.length > 0){
+    			for(i=0; i<ui.updateList.length; i++){
+        			var newRow = {state : true};
+        			if(ui.updateList[i].newRow.progrid){
+        				newRow.progrid = ui.updateList[i].newRow.progrid.toLowerCase();
+        			}
+        			this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : newRow,
+            		    checkEditable: false
+            		});
+        		}
+    		}
+    		if(ui.addList.length > 0){
+    			for(i=0; i<ui.addList.length; i++){
+        			ui.addList[i].newRow.state = true;
+        			ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+        			ui.addList[i].newRow.progrid = ui.addList[i].newRow.progrid ? ui.addList[i].newRow.progrid.toLowerCase() : "";
+        			ui.addList[i].newRow.whrolyn = ui.addList[i].newRow.whrolyn ? ui.addList[i].newRow.whrolyn : "N";
+        		}
+    		}
+    	}else if(ui.source === 'checkbox'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			if(ui.updateList[i].newRow.hasOwnProperty('whrolyn')){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : true },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+    	}
+	});
+	
+	syw1_grid.open();
+});	
+		
+</script>
+
+</div>
+</html>

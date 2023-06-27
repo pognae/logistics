@@ -1,0 +1,115 @@
+<div class="wmpt-print-bk">
+<button type="button" class="btn main-btn wmpt6-print-btn" id="wmpt6PrintBtn"><i class="fa-solid fa-print"></i></button>
+</div>
+<div class="wmpt6-wrap">
+</div>
+	      	
+<script th:inline="javascript">
+$(function(){
+	var parentParam = /*[[${params}]]*/ null;
+
+	initData();
+	var wrapDom 	= $("#"+parentParam.previewId);
+	var invonam 	= wrapDom.find(".wmpt6-invonam");
+	var whoqryn 	= wrapDom.find(".wmpt6-whoqryn");
+	var qrOrdinfo 	= wrapDom.find(".wmpt6-ordinfo");
+	
+	for(var i=0; i<whoqryn.length; i++){
+		qrCreate(whoqryn.eq(i), 100);
+	}
+	
+	for(var i=0; i<qrOrdinfo.length; i++){
+		qrCreate(qrOrdinfo.eq(i).find("span").eq(0), 50);
+	}
+	
+
+	if(invonam.length <= 1 && invonam.find("span").length >= 2 ){
+		var qrDom = invonam.find("span").eq(1);
+		qrCreate(qrDom, 50);
+	}
+	
+	function initData(){
+		var rData = callAjax("data", "GET", "/wm/wmpt6List.do", parentParam);
+		initDom(rData.list);
+	}
+	
+	
+	function initDom(data)
+	{
+		var wrapDom 		= $("#"+parentParam.previewId).find(".wmpt6-wrap");
+
+		for(var i=0; i<data.length; i++){
+			if(data[i].rowgrid == "INVONAM"){
+				var rollDom 	= $("<div></div>",{
+					"class" : "wmpt6-roll"
+				});
+			}
+
+			var rowgridArr = data[i].rowgrid.split(" ");
+			var className = [];
+			
+			if(rowgridArr.length > 1){
+				for(var j=0; j<rowgridArr.length; j++){
+					var rowId = rowgridArr[j].split("/");
+					className.push("wmpt6-"+rowId[0].toLowerCase());
+				}
+			}
+			else{
+				className[0] = "wmpt6-"+rowgridArr[0].toLowerCase();
+			}
+			
+			var classNameString = className.join(" ");
+
+			var divDom = $("<div></div>",{
+				"class" : classNameString
+			});
+			
+			for(var j=0; j<4; j++){
+				if(data[i]["zzcol0"+(j+1)] != undefined && data[i]["zzcol0"+(j+1)].trim() != ""){
+					var spanDom = $("<span></span>",{
+						"text" : data[i]["zzcol0"+(j+1)]
+					})
+					
+					divDom.append(spanDom);
+				}
+			}
+			
+			rollDom.append(divDom);
+			
+			if(data[i].rowgrid == "END"){
+				wrapDom.append(rollDom);
+			}
+		}
+	}
+	
+	/*
+	 * Event 영역
+ 	 */
+	
+	function qrCreate(selector, size){
+		var urlText = selector.text(); 
+		selector.children().remove();
+		selector.text("");
+		selector.qrcode({   //qrcode 시작        
+			render : "canvas",   
+			minVersion: 1,
+		    maxVersion: 40,
+		    mode: 0,
+			size : size,     
+			text   : urlText
+		});
+	}
+});
+
+function wmpt6Print(previewId){
+	var wrapDom 	= $("#"+previewId).find(".wmpt6-wrap");
+	var rollDom 	= wrapDom.find(".wmpt6-roll");
+
+	for(var i=0; i<rollDom.length; i++){
+		rollDom.eq(i).printThis({
+			importCSS:false,
+			loadCSS: "/css/pt/pt.css",
+		});
+	}
+}
+</script>

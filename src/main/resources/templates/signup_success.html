@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head> 
+	<meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="ko" >
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+	<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+	<META HTTP-EQUIV="Expires" CONTENT="-1">
+	
+ 	<link rel="manifest" href="/manifest.json">
+	<link rel="apple-touch-icon" href="/img/touch-icon-iphone.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="/img/touch-icon-ipad.png">
+	<link rel="apple-touch-icon" sizes="167x167" href="/img/touch-icon-ipad-retina.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/img/touch-icon-iphone-retina.png">
+	
+        
+	<title> :: BINBLUR :: </title>
+    <link rel="shortcut icon" href="/img/warehouse1.ico">
+    
+    <!-- JavaScript : jQuery Library -->
+    <script type="text/javascript" src="/vender/jquery/jquery-3.6.0.js"></script>
+    <script type="text/javascript" src="/vender/jqueryui/jquery-ui-1.13.1/jquery-ui.js"></script>
+    
+	<!-- JavaScript : Bootstrap Library -->
+	<script type="text/javascript" src="/vender/bootstrap/bootstrap-4.1.3/js/bootstrap.bundle.js"></script>
+	    
+	<!-- JavaScript : font, icon Library -->
+	<script type="text/javascript" src="/vender/fontAwesomeKit/fontAwesome-6.2.js"></script>   
+	    
+    <!-- CSS : bootstrap   -->
+    <link rel="stylesheet" href="/vender/bootstrap/bootstrap-4.1.3/css/bootstrap.css">
+    
+    <!-- CSS : Main 프레임 -->
+	<link rel="stylesheet" href="/css/main/1/common.css">
+	<link rel="stylesheet" href="/css/main/1/sign.css">
+
+</head>
+ 
+<body> 
+	<div class="sign-wrap">
+		<button class="btn-prev"><i class="fa-solid fa-angle-left"  th:text="${#messages.msg('su.goBack')}"></i></button>
+		<div class="center-box">
+			<img src="./img/sign/sign_success.png" alt="회원가입 성공">
+			<div class="center-title">
+<!-- 				<b>홍길동님(아이디)의 회원가입이<br>성공적으로 완료되었습니다.</b> -->
+				<b th:text="${#messages.msg('su.signSuccess')}"></b>
+				<span th:text="${#messages.msg('su.signSuccess2')}"></span>
+				<div class="info-box">
+					<span>문의 : 02-2232-5129</span>
+					<span>메일 : binblur@binblur.com</span>
+				</div>
+			</div>
+			
+			<button type="button" class="btn btn-sign-border" onclick="location.href='/'" th:text="${#messages.msg('bt.main')}"></button>
+			<button class="btn btn-sign" type="button" onclick="location.href='/login'" th:text="${#messages.msg('sy.main.login.btnlogin')}">></button>
+		</div>
+		
+	</div>
+	
+	<!-- Footer --> 
+<!-- 	<footer th:replace="/com/fragment/signup_footer :: footerFragment"></footer>  -->
+	<!-- Footer end  --> 
+		 
+
+	
+</body>
+  
+</html>
+ 
+ 

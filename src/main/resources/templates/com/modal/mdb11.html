@@ -1,0 +1,134 @@
+<head>
+	<link rel="stylesheet" href="/css/md/md.css">
+</head>
+<div class="modal fade" id="mdb11ModalLayerPopup" tabindex="-1" aria-hidden="true" >
+	<div class="modal-dialog modal-lg" >
+		<div class="modal-content full-content">
+			<div class="modal-header">
+				<h5 class="modal-title h4"r>[[#{md.mboard.showBoard}]]</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="modal-inbody">
+					<div class="row gx-3">
+						<div class="col-md-6">
+							<label class="small mb-2">[[#{md.mboard.boidseq}]]</label> <input class="form-control" name="mdb11_dt_boidseq" id="mdb11_dt_boidseq" type="text" disabled>
+						</div>
+						<div class="col-md-6">
+							<label class="small mb-2">[[#{md.mboard.creuser}]]</label> <input class="form-control" name="mdb11_dt_creuser" id="mdb11_dt_creuser" type="text" disabled>
+						</div>
+					</div>
+					<div class="row gx-3">
+						<div class="col-md-12 mb-2">
+							<label class="small mb-2">[[#{md.mboard.botitle}]]</label> <input class="form-control" name="mdb11_dt_botitle" placeholder="" id="mdb11_dt_botitle" disabled>
+						</div>
+					</div>
+					<div class="row gx-3">
+						<div class="col-md-12">
+							<label class="small mb-2">[[#{md.mboard.boconte}]]</label>
+							<textarea class="form-control" name="mdb11_dt_boconte" placeholder="" id="mdb11_dt_boconte" style="height: 200px;" disabled></textarea>
+						</div>
+						<div class="col-md-12" id="mdb11_dt_imageDiv"></div>
+						<div class="col-md-12" id="mdb11_dt_fileDownloadDiv"></div>
+					</div>
+					<div class="row gx-3">
+						<div class="col-md-12">
+							<label class="small mb-1 mt-4 mb-2">[[#{md.mboard.refcont}]]</label>
+						</div>
+						<div class="col-md-12">
+							<div class="comemnt-list" style="border-top:1px solid #ececec;">
+								<ul id="mdb11_dt_refcont"></ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" id="mdb11_detailModalCloseBtn" class="btn btn-border-lg" data-bs-dismiss="modal" onclick="mdb11_modalCloseBtn('detail')">[[#{bt.close}]]</button>
+			</div>
+		</div>
+	</div>
+</div>
+<script th:inline="javascript">
+	var parentParam = /*[[${params}]]*/ null;
+	
+	var mdb11ModalOBject = $("#mdb11ModalLayerPopup");
+	if(parentParam.boidseq !== ""){ 
+		mdb11ModalOBject.modal("show");
+		var rData = new callAjax("data" , "GET" , "/md/boardDetail.do" , parentParam);
+		var noComment = /*[[#{md.mboard.noComment}]]*/ '';
+		initData(rData);
+	}
+	
+	function initData(rData){
+		var boardData = rData.dataList.boardData;
+		var refData = rData.dataList.refData;
+		
+		$('#mdb11_dt_boidseq').val(boardData.boidseq);
+		$('#mdb11_dt_creuser').val(boardData.creuser);
+		$('#mdb11_dt_botitle').val(boardData.botitle);
+		$('#mdb11_dt_boconte').val(boardData.boconte);
+		
+		// 첨부파일 insert 저장 후, 상세페이지 modal show하는 경우
+		$('#mdb11_dt_attfnm1').val("");
+		$('#mdb11_dt_attfnm2').val("");
+		$('#mdb11_dt_attfnm3').val("");
+		$('#mdb11_dt_refcont').children().remove();
+		
+		initMdb1FileDownload(boardData); // 파일 다운로드
+	
+		var div = "";
+		if(refData.length > 0) {
+			// 댓글
+			$(refData).each(function(i){
+				div += '<li><div><span class="thumb"><img src="/img/ex/ex_user.png"></span><span>' + refData[i].creuser.substring(0,1) + '*************' +
+					   '</span><span class="comment-date">' + refData[i].credate + '</span></div>' +
+					   '<span class="comment">' + refData[i].refcont + '</span></li>';
+			});
+
+		}else{
+			div = $("<div></div>" , {
+				"class" : "text-center mgt20 ht-100" ,
+				"text" : noComment
+			});
+		}
+			$('#mdb11_dt_refcont').append(div);
+	}
+	
+	//=================================================================
+	// 파일 불러오기
+	//=================================================================
+		function initMdb1FileDownload(boardData){
+			var fileImageDiv = $('#mdb11_dt_fileDownloadDiv');
+			fileImageDiv.children().remove();
+			
+			for(var i=1; i<=3; i++){
+				var columnName ="attfnm"+i;
+				var originName ="orgfnm"+i; 
+				var columnValue = boardData['attfnm'+i]; // UUID명
+				var originValue = boardData['orgfnm'+i]; // 파일명
+				if(columnValue != null){
+					var fileTypeIdx = columnValue.lastIndexOf('.'),  fileType = columnValue.substring(fileTypeIdx+1)
+					if(fileType === 'txt' ||  fileType === 'xlsx' || fileType === 'xlsm' || fileType === 'xls' || fileType === 'pdf' ||
+					   fileType === 'jpg' || fileType === 'jpeg' || fileType === 'gif'  || fileType === 'png'){
+						if($('#' + columnName).length == 0){
+							var originalName = columnValue.substring(0 , columnValue.lastIndexOf("."));
+							fileImageDiv.append('<a id="' + 'file'+ i +'" href="' + columnValue +'" >' + originValue + '</a>');
+					        $('#file'+ i).attr("download", originalName);
+					        fileImageDiv.addClass('file-box');
+						    $("#mdb11_dt_fileDownloadDiv a").click();	
+						}
+					}
+				}
+			} 
+	 	};
+	 	
+	//=================================================================
+	// 모달 CLOSE
+	//=================================================================	
+		function mdb11_modalCloseBtn(param){
+			$("#mdb11ModalLayerPopup").modal("hide");
+		};
+</script>

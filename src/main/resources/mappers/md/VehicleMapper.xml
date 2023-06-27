@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.logistics.md.mapper.VehicleMapper">
+
+
+    <!-- *********************************************** -->
+    <!-- 차량마스터 : mvhcma  -->
+    <!-- *********************************************** -->
+	<!-- mdv1 : 차량마스터 조회 -->
+	<select id="selectMvhcma" resultType="com.logistics.md.domain.MvhcmaVO">
+		select concat(COMPKEY, VEHICKY) as ROWKEY
+			 , COMPKEY, VEHICKY, VHDELYN, VHCFNAM, DLVTYPE, CARRIER
+			 , USERACT, VHCOPTY, VHCTYPE, VHCTNCD, MAXWEGT, MAXCAPA
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%Y-%m-%d') as CRETIME, fn_sy_usernam_test(COMPKEY , CREUSER) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%Y-%m-%d') as LMOTIME, fn_sy_usernam_test(COMPKEY , LMOUSER) as LMOUSER
+			 , INDIBZL, INDIARC, UPDTCHK
+		  from MVHCMA
+		 where 1=1
+		   and COMPKEY = #{userData.compkey}
+		<if test='vehicky != null and vehicky != "" '>
+		   and upper(VEHICKY) like concat('%', upper(#{vehicky}), '%')
+		</if>
+		<if test='vhcfnam != null and vhcfnam != "" '>
+		   and upper(VHCFNAM) like concat('%', upper(#{vhcfnam}), '%')
+		</if>
+		<if test='vhdelyn != null and vhdelyn != "" '>
+		   and VHDELYN  = #{vhdelyn}
+		</if>
+		 order by COMPKEY, VHCFNAM
+	</select>
+    
+    <!-- mdv1 : 차량마스터 생성 -->
+ 	<insert id="insertMvhcma" parameterType="com.logistics.md.domain.MvhcmaVO">
+		insert 
+		  into MVHCMA( COMPKEY, VEHICKY, VHDELYN, VHCFNAM, DLVTYPE, CARRIER
+					 , USERACT, VHCOPTY, VHCTYPE, VHCTNCD, MAXWEGT, MAXCAPA
+					 , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER )
+		values
+		<foreach collection="list" item="item" separator=",">
+		 	 ( #{item.compkey}, #{item.vehicky}, #{item.vhdelyn}, #{item.vhcfnam}, #{item.dlvtype}, #{item.carrier}
+		 	 , #{item.useract}, #{item.vhcopty}, #{item.vhctype}, #{item.vhctncd}, #{item.maxwegt}, #{item.maxcapa}
+		 	 , to_char(now(),'YYYYMMDD'), to_char(now(),'hh24miss'), #{userData.useract}
+		 	 , to_char(now(),'YYYYMMDD'), to_char(now(),'hh24miss'), #{userData.useract} )
+		</foreach>
+	</insert>   
+    
+    <!-- mdv1 : 차량마스터 수정 -->
+    <update id="updateMvhcma" parameterType="com.logistics.md.domain.MvhcmaVO">
+	 	<foreach collection="list" item="item" separator=";">
+ 		update MVHCMA
+		   set VEHICKY = #{item.vehicky}
+			 , VHDELYN = #{item.vhdelyn}
+			 , VHCFNAM = #{item.vhcfnam}
+			 , DLVTYPE = #{item.dlvtype}
+			 , CARRIER = #{item.carrier}
+			 , USERACT = #{item.useract}
+			 , VHCOPTY = #{item.vhcopty}
+			 , VHCTYPE = #{item.vhctype}
+			 , VHCTNCD = #{item.vhctncd}
+			 , MAXWEGT = #{item.maxwegt}
+			 , MAXCAPA = #{item.maxcapa}
+			 , LMODATE = to_char(now(),'YYYYMMDD')
+			 , LMOTIME = to_char(now(),'hh24miss')
+			 , LMOUSER = #{userData.useract}
+		 where COMPKEY = #{item.compkey}
+	       and UPDTCHK = #{item.updtchk}    
+		<choose>
+			<when test='item.oldvehicky != null and item.oldvehicky !="" '>
+		   and VEHICKY = #{item.oldvehicky}  
+			</when>
+			<otherwise>
+		   and VEHICKY = #{item.vehicky}
+			</otherwise>
+		</choose>			 			 
+		</foreach>
+ 	</update>
+
+     
+    <!-- *********************************************** -->
+    <!-- Shuttle Routing : mshrhd  -->
+    <!-- *********************************************** -->
+	<!-- mdv2 : Shuttle Routing Header 조회 -->
+	<select id="selectMshrhdList" resultType="com.logistics.md.domain.MshrhdVO">
+		select concat(COMPKEY, SHTRTKY) as ROWKEY
+			 , COMPKEY, SHTRTKY, SHTRTNM, SHTCYTM
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%Y-%m-%d') as CRETIME, fn_sy_usernam_test(COMPKEY , CREUSER ) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%Y-%m-%d') as LMOTIME, fn_sy_usernam_test(COMPKEY , LMOUSER ) as LMOUSER
+			 , INDIBZL, INDIARC, UPDTCHK
+		  from MSHRHD
+		 where 1=1
+		   and COMPKEY = #{userData.compkey}
+		<if test='shtrtky != null and shtrtky != "" '>
+		   and upper(SHTRTKY) like concat('%' , upper(#{shtrtky}) , '%')
+		</if>
+		<if test='shtrtnm != null and shtrtnm != "" '>
+		   and upper(SHTRTNM) like concat('%' , upper(#{shtrtnm}) , '%')
+		</if>
+		order by COMPKEY, SHTRTKY
+	</select> 
+    
+    <!-- mdv2 : Shuttle Routing Item 조회 -->
+    <select id="selectMshritList" resultType="com.logistics.md.domain.MshritVO">
+		select concat(COMPKEY, SHTRTKY, SHTRTIT) as ROWKEY
+			 , COMPKEY, SHTRTKY, SHTRTIT, CUSTKEY, SHTRPTY
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%Y-%m-%d') as CRETIME, fn_sy_usernam_test(COMPKEY , CREUSER ) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%Y-%m-%d') as LMOTIME, fn_sy_usernam_test(COMPKEY , LMOUSER ) as LMOUSER
+			 , INDIBZL, INDIARC, UPDTCHK
+		  from MSHRIT 
+		 where 1=1
+		   and COMPKEY = #{compkey}
+		   and SHTRTKY = #{shtrtky}
+		order by COMPKEY, SHTRTKY, SHTRTIT
+	</select>
+	
+	<!-- mdv2 : Shuttle Routing Header 삭제 -->
+	<delete id="deleteMshrhd" parameterType="com.logistics.md.domain.MshrhdVO">
+		<foreach collection="headList" item="item"  separator=";">
+    	delete from MSHRHD
+		 where COMPKEY = #{item.compkey}
+		   and SHTRTKY = #{item.shtrtky}
+		</foreach>
+	</delete>
+	
+	<!-- mdv2 : Shuttle Routing Item 삭제 -->
+	<delete id="deleteMshrit" parameterType="com.logistics.md.domain.MshritVO">
+		<foreach collection="itemList" item="item"  separator=";">
+    	delete from MSHRIT
+		 where COMPKEY = #{item.compkey}
+		   and SHTRTKY = #{item.shtrtky}
+		   <if test='item.shtrtit != null and item.shtrtit != "" '>
+		   and SHTRTIT = #{item.shtrtit}
+		   </if>
+		</foreach>
+	</delete>
+    
+    <!-- mdv2 : Shuttle Routing 키 채번 Shtrtky -->
+   	<select id="getShtrtky" resultType="String">
+     	select fn_tm_shtrtky() as shtrtky from dual
+    </select> 
+    
+    <!-- mdv2 : Shuttle Routing Header 생성 -->
+    <insert id="insertMshrhd" parameterType="com.logistics.md.domain.MshrhdVO">
+		insert 
+		  into MSHRHD( COMPKEY, SHTRTKY, SHTRTNM, SHTCYTM, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER )
+		values
+		<foreach collection="list" item="item" separator=",">
+		 ( #{item.compkey}, #{shtrtky}, #{item.shtrtnm}, #{item.shtcytm}	
+		 , to_char(now(),'YYYYMMDD'), to_char(now(),'hh24miss'), #{userData.useract}
+		 , to_char(now(),'YYYYMMDD'), to_char(now(),'hh24miss'), #{userData.useract} )
+		</foreach>
+	</insert>
+    
+    <!-- mdv2 : Shuttle Routing Header 수정 -->
+    <update id="updateMshrhd" parameterType="com.logistics.md.domain.MshrhdVO">
+	 	<foreach collection="list" item="item" separator=";">
+	 	update MSHRHD
+		   set SHTRTNM = #{item.shtrtnm}
+			 , SHTCYTM = #{item.shtcytm}
+			 , LMODATE = to_char(now(),'YYYYMMDD')
+			 , LMOTIME = to_char(now(),'hh24miss')
+			 , LMOUSER = #{userData.useract}
+		 where COMPKEY = #{item.compkey}
+	       and SHTRTKY = #{item.shtrtky}
+	       and UPDTCHK = #{item.updtchk}
+		</foreach>
+ 	</update>
+
+    <!-- mdv2 : Shuttle Routing Item 생성 -->
+    <insert id="insertMshrit" parameterType="com.logistics.md.domain.MshritVO">
+		insert 
+		  into MSHRIT( COMPKEY, SHTRTKY, SHTRTIT, CUSTKEY, SHTRPTY
+			 		 , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER )
+		values
+		<foreach collection="list" item="item" separator=",">
+		 	 ( #{item.compkey}, #{shtrtky}, fn_md_shtrtit(#{item.compkey}, #{shtrtky}), #{item.custkey}, #{item.shtrpty}	
+		 	 , to_char(now(),'YYYYMMDD'), to_char(now(),'hh24miss'), #{userData.useract}
+		 	 , to_char(now(),'YYYYMMDD'), to_char(now(),'hh24miss'), #{userData.useract} )
+		</foreach>
+	</insert>     
+    
+    <!-- mdv2 : Shuttle Routing Item 수정 -->
+	<update id="updateMshrit" parameterType="com.logistics.md.domain.MshritVO">
+	 	<foreach collection="list" item="item" separator=";">
+ 		update MSHRIT
+		   set CUSTKEY = #{item.custkey}                
+			 , SHTRPTY = #{item.shtrpty}
+			 , LMODATE = to_char(now(),'YYYYMMDD')
+			 , LMOTIME = to_char(now(),'hh24miss')
+			 , LMOUSER = #{userData.useract}
+	 	 where COMPKEY = #{item.compkey}  
+		   and SHTRTKY = #{item.shtrtky}
+		   and SHTRTIT = #{item.shtrtit}
+		   and UPDTCHK = #{item.updtchk}
+		</foreach>
+ 	</update> 
+    
+</mapper>

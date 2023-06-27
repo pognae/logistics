@@ -1,0 +1,237 @@
+<head>
+	<link rel="stylesheet" href="/css/wm/wmpt43.css">
+</head>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div class="modal fade" id="wmpt43ModalLayerPopup" tabindex="-1">
+	<div class="modal-dialog modal-xl">
+		<div class="modal-content full-content">
+	      	<div class="modal-body" id="wmpt43_mbody">
+	      		<div class="modal-top-btn-area d-flex justify-content-between">
+		      		<div>
+			      		<button type="button" id="wmpt43ModalLayerPopupPrintBtn" class="btn btn-primary">[[#{bt.print}]]</button>
+						<button type="button" id="wmpt43ModalLayerPopupCloseBtn" class="btn btn-secondary" data-bs-dismiss="modal">[[#{bt.close}]]</button>
+					</div>
+	      		</div>
+	      		<div class="wmpt43-print-wrap" id="wmpt43_print_wrap" style="width :100%; padding: 5%;"></div>
+	      	</div>
+	      	<div class="modal-footer" style="border:none;"></div>
+	    </div>
+    </div>
+</div>
+<script th:inline="javascript">
+$(function(){
+	var parentParam = /*[[ ${list} ]]*/ null;
+ 	var wmpt43ModalOBject = $("#wmpt43ModalLayerPopup");
+ 	wmpt43ModalOBject.modal("show");
+	
+	initData(parentParam);
+	
+	function initData(data){
+		var wrapDom = $('.wmpt43-print-wrap');
+		var physokyObj = new Object();
+		var today = moment().format("YYYY-MM-DD");
+		var time = moment().format("HH:MM:SS");
+		var messageArr = [];
+		messageArr[0] = /*[[#{sy.no}]]*/ '';
+		messageArr[1] = /*[[#{wm.wphyit.physoky}]]*/ '';
+		messageArr[2] = /*[[#{wm.wphyit.locakey}]]*/ '';
+		messageArr[3] = /*[[#{wm.wphyit.skudesc}]]*/ '';
+		messageArr[4] = /*[[#{wm.wphyit.systqty}]]*/ '';
+		messageArr[5] = /*[[#{wm.wphyit.physqty}]]*/ '';
+		messageArr[6] = /*[[#{wm.wphyit.lotnmky}]]*/ '';
+		messageArr[7] = /*[[#{wm.wphyit.suomkey}]]*/ '';
+		messageArr[8] = /*[[#{ms.phyitList}]]*/'';
+			
+		physokyObj = Object.assign(Object.keys(data));
+		var tableData = Object.keys(data).length;
+
+		for(var i=0; i< tableData ; i++){
+			
+			var printDivDom = $("<div></div>" , {
+				"class" : "wmpt43-print-container"
+			});
+			
+			var printTopDom = $("<div></div>" , {
+				"class" : "wmpt43-print-top"
+			});
+			
+			var printTitleDom = $("<div></div>" , {
+				"class" : "wmpt43-print-title"
+			});
+			
+			var printTitleSpanDom = $("<span></span>" , {
+				"class" : "font-weight-bold text-center" ,
+				"text"  : messageArr[8]
+			});
+			
+			var printInfoDom = $("<div></div>" , {
+				"class" : "wmpt43-print-info align-items-end"
+			});
+			
+			var printQrCodeDom = $("<div></div>" , {
+				"class" : "wmpt43-qrcode" , 
+				"id"    : physokyObj[i] ,
+			})
+			
+			var printTimeDom = $("<div></div>" , {
+				"class" : "wmpt43-print-date-span" ,
+				"text"  : "인쇄날짜 : " + today + " " + time
+			});
+			
+			var tableDom = $("<table></table>", {
+				"class" : "wmpt43-table-group type-group wd-100" 
+			});
+			
+			var printContentDom = $("<div></div>" , {
+				"class" : "wmpt43-print-content wd-100"
+			});
+			
+			var theadDom = $("<thead></thead>");
+			var tbodyDom = $("<tbody></tbody>");				
+			
+			tableDom.append(theadDom, tbodyDom);
+			wrapDom.append(tableDom);
+							
+			var thtrDom = $("<tr></tr>");
+			
+			var thNoDom = $("<th></th>" , {
+				"class" : "text-center font-weight-bold font-weight-bold",
+				"text"  : messageArr[0]
+			});
+			
+			var thPhysokyDom = $("<th></th>" , {
+				"class" : "text-center font-weight-bold font-weight-bold",
+				"text"  : messageArr[1]
+			});
+			
+			var thLocakeyDom = $("<th></th>" , {
+				"class" : "text-center font-weight-bold",
+				"text"  : messageArr[2]
+			});
+			
+			var thSkudescDom = $("<th></th>" , {
+				"class" : "text-center font-weight-bold",
+				"text"  : messageArr[3]
+			});
+			
+			var thSystqtyDom = $("<th></th>" , {
+				"class" : "text-center font-weight-bold",
+				"text"  : messageArr[4]
+			});
+			
+			var thPhysqtyDom = $("<th></th>" , {
+				"class" : "text-center font-weight-bold",
+				"text"  : messageArr[5]
+			});
+			
+			var thLotnmkyDom = $("<th></th>" , {
+				"class" : "text-center font-weight-bold",
+				"text"  : messageArr[6]
+			});
+			
+			var thSuomkeyDom = $("<th></th>" , {
+				"class" : "text-center font-weight-bold",
+				"text"  : messageArr[7]
+			});
+			
+			
+			thtrDom.append(thNoDom      , thPhysokyDom , thLocakeyDom , 
+						   thSkudescDom , thSystqtyDom , thPhysqtyDom , 
+						   thLotnmkyDom , thSuomkeyDom);
+			theadDom.append(thtrDom);
+			
+			var trData = data[physokyObj[i]].length;
+			for(var j = 0 ; j < trData ; j++){
+				var thDom = $("<th></th>");
+				var trDom = $("<tr></tr>");
+				
+				var tdNoDom = $("<td></td>",{
+					"class" : "text-center ",
+					"text" : (j+1)
+				});
+				
+				var tdPhysokyDom = $("<td></td>",{
+					"class" : "text-center ",
+					"text" : data[physokyObj[i]][j].physoky
+				});
+				
+				var tdLocakeyDom = $("<td></td>",{
+					"class" : "text-center ",
+					"text" : data[physokyObj[i]][j].locakey
+				});
+				
+				var tdSkudescDom = $("<td></td>",{
+					"class" : "text-center ",
+					"text" : data[physokyObj[i]][j].skudesc
+				});
+				
+				var tdSystqtyDom = $("<td></td>",{
+					"class" : "text-center ",
+					"text" : data[physokyObj[i]][j].systqty
+				});
+				
+				var tdPhysqtyDom = $("<td></td>",{
+					"class" : "text-center ",
+					"text" : data[physokyObj[i]][j].physqty
+				});
+				
+				var tdLotnmkyDom = $("<td></td>",{
+					"class" : "text-center ",
+					"text" : data[physokyObj[i]][j].lotnmky
+				});
+				
+				var tdSuomkeyDom = $("<td></td>",{
+					"class" : "text-center ",
+					"text" : data[physokyObj[i]][j].suomkey
+				});
+				
+				trDom.append( tdNoDom      , tdPhysokyDom , tdLocakeyDom , 
+							  tdSkudescDom , tdSystqtyDom , tdPhysqtyDom , 
+							  tdLotnmkyDom , tdSuomkeyDom );
+				tbodyDom.append(trDom);
+				
+				printDivDom.append(printTopDom , printInfoDom);
+				wrapDom.append(printDivDom);
+				printTopDom.append(printTitleDom);
+				printTitleDom.append(printTitleSpanDom);
+				printInfoDom.append(printQrCodeDom , printTimeDom, printContentDom);
+				printContentDom.append(tableDom);
+
+				qrCreate(physokyObj[i]);
+			}
+		}
+	}
+	
+	$("#wmpt43ModalLayerPopupPrintBtn").click(function(){
+		pickingPrint();
+	});
+	
+	$("#wmpt43ModalLayerPopupCloseBtn").click(function(){
+		wmpt43ModalOBject.modal("hide");
+	});
+
+	function qrCreate(rData){
+		var urlText = rData;
+		$("#" + rData).children().remove();
+		$("#" + rData).qrcode({   //qrcode 시작        
+			render : "canvas",   
+			minVersion: 1,
+		    maxVersion: 40,
+		    mode: 0,
+			size : 70,     
+			text   : urlText 
+		});
+	}	
+	
+	function pickingPrint(){
+		/*
+		2022-08-02 페이징 번호 넣기 방법 찾아야함..
+		*/
+		
+		$("#wmpt43_print_wrap").printThis({
+			importStyle : '<style media="print">@page {size: 15mm;margin: 50mm;text-align :center;}</style>'
+		});
+	}
+});
+</script>
+</html>

@@ -1,0 +1,323 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent">
+	<div class="tab-inner">
+		<!-- 타이틀 영역 -->
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+			</div>
+			<!-- 상단 공통 버튼 -->
+			<div class="header-right">
+				<button class="btn default-btn" id="tplt1_btnSave" th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+				<button type="button" class="btn default-btn" id="tplt1_btnSearch" th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button class="btn main-btn"><i class="fa-solid fa-arrows-rotate"></i></button>
+				<button class="btn main-btn"><i class="fa-solid fa-print"></i></button>	
+				<button th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}"  th:pprogrid="${gprogrid}"  onclick="bookmarkclick(this );"><i class="fa-solid fa-star"></i></button>					
+			</div>  
+		</div>
+		<!-- 검색영역 -->
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label class="col-md-5 col-xl-2 col-form-label" >[[#{tplt.tplt1.title}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="input" class="form-control in-block" id="tplt1_tplttit" name="tplt1_tplttit"/>
+					</div>
+					<label class="col-md-5 col-xl-2 col-form-label" >[[#{tplt.tplt1.content}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="input" class="form-control in-block" id="tplt1_tplcont" name="tplt1_tplcont"/>
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label class="col-md-5 col-xl-2 col-form-label" >[[#{tplt.tplt1.tpsbsal}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<select class="form-control" id="tplt1_tpscode" name="tplt1_tpscode">
+							<option value=""></option>
+						</select>
+					</div>
+				</div>
+				<!--div class="form-group row col">
+					<label class="col-md-5 col-xl-2 col-form-label" for="inputGroupSelect01">[[#{tplt.tplt1.postdat}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="date" max="2999-12-31" class="form-control in-block wd-472" id="tplt1_postdat_from" name="tplt1_postdat_from" onkeyup="setInputDateDel(this)"/>
+						~
+						<input type="date" max="2999-12-31" class="form-control in-block wd-472" id="tplt1_postdat_to" name="tplt1_postdat_to" onkeyup="setInputDateDel(this)"/>
+					</div>
+					<label class="col-md-5 col-xl-2 col-form-label" for="inputGroupSelect01">[[#{tplt.tplt1.cnfuser}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<select class="form-control" id="tplt1_cnfuser" name="tplt1_cnfuser">
+							<option value=""></option>
+						</select>
+					</div>
+				</div-->
+			</div>
+			<!-- 토글버튼 -->
+			<div class="btn-fold-wrap">
+				<button class="btn-fold" onclick="onSearchExpand(this)"><i class="fa-solid fa-angle-down"></i></button>
+			</div>
+		</div>
+		<div class="content-inner">
+			<div class="grid-item grid-2">
+				<div class="grid-container">
+					<div id="tplt1_pqgrid" style="height:400px;"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+<script>
+$(function(){
+	var pageId = "tplt1";
+	var gridId = "#"+pageId+"_pqgrid";
+
+	//페이지 초기화 데이터 호출
+	let tplt1InitData = initTplt1Data();
+
+	//pqGrid ColModel Object
+	let tplt1GridColModel;
+
+	//pqGrid Grid Object
+	let tplt1GridObject;
+
+	//============================================================	 
+	//영역 검색 버튼 이벤트
+	//============================================================	
+	/*$("#tplt1_custkey, #tplt1_postdat_from, #tplt1_postdat_to, #tplt1_cnfuser").change(function(){
+		searchTplt1List();
+	});*/
+
+	$('#'+pageId+'_btnSearch').click(function() {
+		searchTplt1List();
+	});
+	
+	$('#'+pageId+'_btnSave').click(function() {
+		saveTplt1Change();
+	});
+
+	function initTplt1Data(){
+		let rData = callAjax("data", "GET", "/tplt/tplt1Init.do", {});
+		return rData;
+	}
+
+	//검색박스 콤보생성
+	comboCreateData(null, "tplt1_tpscode", tplt1InitData.tpsbList, {combovl : "tpscode", combonm : "tpsname"});
+
+	//pqGrid ColModel 객체
+	tplt1GridColModel = [
+		{ title: "", dataType: "String",  dataIndx: "state", type: "checkBoxSelection"
+			, align: "center"
+			, maxWidth:"30", maxHeight:"30"
+			, menuIcon: false
+			, cls: 'ui-state-default', sortable: false, editor: false,
+			cb: {all: false, header: true, check:"Y", uncheck:"N"}
+		},
+		{ title: "[[#{tplt.tplt1.recindx}]]",  dataType: "string", dataIndx: "recindx", hidden: true, editable:false },
+		{ title: "[[#{tplt.tplt1.tpltseq}]]",  dataType: "integer", dataIndx: "tpltkey", hidden: true, editable:false },
+		{ title: "[[#{tplt.tplt1.tpsbval}]]", dataType: "string", dataIndx: "tpscode",
+			styleHead: { "background":"[[#{grid.styleHead01}]]" },
+			editor: {
+				type: 'select',
+				init: function (ui) {
+					ui.$cell.find("select").pqSelect();
+					setTimeout(function () {
+						ui.$cell.find("select").pqSelect('open');
+					}, 250);
+				},
+				options: []
+			},
+			render: function (ui) {
+				let option = ui.column.editor.options.find(function (obj) {
+					return (obj[ui.cellData] != null);
+				});
+				return option ? option[ui.cellData] : "";
+			}
+		},
+		{ title: "[[#{tplt.tplt1.tplttit}]]",  dataType: "string", dataIndx: "tplttit", },
+		{ title: "[[#{tplt.tplt1.tpltcon}]]",  dataType: "string", dataIndx: "tplcont", },
+		{ title: "[[#{tplt.tplt1.credate}]]",  dataType: "string", dataIndx: "credate", hidden: true, editable:false },
+		{ title: "[[#{tplt.tplt1.cretime}]]",  dataType: "string", dataIndx: "cretime", hidden: true, editable:false },
+		{ title: "[[#{tplt.tplt1.creuser}]]",  dataType: "string", dataIndx: "creuser", hidden: true, editable:false },
+		{ title: "[[#{tplt.tplt1.lmodate}]]",  dataType: "string", dataIndx: "lmodate", hidden: true, editable:false },
+		{ title: "[[#{tplt.tplt1.lmotime}]]",  dataType: "string", dataIndx: "lmotime", hidden: true, editable:false },
+		{ title: "[[#{tplt.tplt1.lmouser}]]",  dataType: "string", dataIndx: "lmouser", hidden: true, editable:false },
+		{ title: "[[#{tplt.tplt1.indibzl}]]",  dataType: "string", dataIndx: "indibzl", hidden: true, editable:false },
+		{ title: "[[#{tplt.tplt1.indiarc}]]",  dataType: "string", dataIndx: "indiarc", hidden: true, editable:false },
+		{ title: "[[#{tplt.tplt1.updtchk}]]",  dataType: "integer", dataIndx: "updtchk", hidden: true, editable:false },
+	]
+
+	//pqGrid 객체
+	tplt1GridObject = new GridUtil(tplt1GridColModel, "[[${gprogrid}]]", pageId+"_pqgrid");
+
+	//pqGrid 이벤트발생시 validate 함수
+	tplt1GridObject.setBeforeValidate(function(event, ui){
+		if (ui.source != 'undo' && (ui.source == 'edit' || ui.source == 'paste' || ui.source == 'checkbox')){
+        	let rownum 		= ui.updateList[0].rowIndx;
+        	this.updateRow( {
+       			rowIndx : rownum,
+       		    newRow : { 
+       		    	"state": "Y"
+       		    },
+       		    checkEditable: false
+       		});
+        }
+	});
+
+	//pqGrid 추가버튼 함수
+	tplt1GridObject.setAdd(function(evt, ui){
+		/*
+		 * addButton
+		 * 이벤트 발생시 컬럼 초기값 세팅
+		 */
+		let rowData = {
+   			state : "Y"
+   		}
+
+    	let rowIndx = this.addRow({
+    		rowData: rowData,
+    		checkEditable: false 			//colModel의 editable 옵션 무시
+    	});
+    	this.goToPage({ rowIndx: rowIndx });
+    	this.editFirstCellInRow({ rowIndx: rowIndx });
+    });
+
+	//pqGrid 삭제버튼 함수
+	tplt1GridObject.setDelete(function(evt, ui){
+		
+    	let rowSetData 		= new Set();
+		let rowSetArrList 	= [];
+		let rowArrList 		= [];
+
+		let grid 			= tplt1GridObject.getGrid();
+		let gridData 		= grid.getData();
+
+		let checkList = gridData.filter(function(e){
+			return e.state == "Y";
+		});
+
+		for(let i=0; i<checkList.length; i++){
+    		rowSetData.add(checkList[i].pq_ri);
+    	}
+		
+		rowSetArrList = Array.from(rowSetData);
+		
+		for(let i=0; i<rowSetArrList.length; i++){
+			let rowDelObject = new Object();
+			rowDelObject.rowIndx = rowSetArrList[i];
+			rowArrList.push(rowDelObject);
+		}
+
+		if(confirm(rowSetArrList.length+"[[#{ms.tplt1.rowCount}]] [[#{ms.tplt1.delete}]]")){
+			if(checkList.length > 0){
+				this.deleteRow({rowList: rowArrList});
+	        	this.setSelection(null);
+			}
+			else{
+				alert("[[#{ms.choiceRowZero}]]");
+				return;
+			}
+        	
+    	}
+    });
+
+	//pqGrid 생성시 호출되는 함수
+	tplt1GridObject.setCreate(function(evt, ui){
+		//pqGrid 초기화시 호출되는 이벤트 함수
+		comboCreateData("tplt1_pqgrid", "tpscode", tplt1InitData.tpsbList, {combovl : "tpscode", combonm : "tpsname"});
+	});
+
+	//pqGrid 랜더링
+	tplt1GridObject.open();
+
+	//============================================================
+	//페이지 호출시 검색 1회 호출
+	//============================================================
+	searchTplt1List();
+	
+	//============================================================	 
+	//영역 검색 버튼 이벤트
+	//============================================================
+	function searchTplt1List(){
+
+		let param = {
+			tplttit : $("#"+pageId+"_tplttit").val(),
+			tplcont : $("#"+pageId+"_tplcont").val(),
+			tpscode : $("#"+pageId+"_tpscode").val()
+		};
+
+		let ajaxCall = new AjaxUtil_Order("/tplt/tplt1List.do", param, "GET");
+		ajaxCall.setCallbackSuccess(function (data){
+			if(data.length == 0){
+				tplt1GridObject.searchList([]);
+			}
+			tplt1GridObject.getGrid().option( "dataModel", { data: data, recIndx: "tpltkey" } );
+			tplt1GridObject.getGrid().refreshDataAndView();
+		});
+		ajaxCall.setComplete(function(data){
+			tplt1GridObject.getGrid().hideLoading();
+		})
+		ajaxCall.send();
+	}
+
+	//============================================================	 
+	//그리드 세이브 버튼 이벤트 
+	//============================================================
+	function saveTplt1Change(){
+
+		let grid 			= tplt1GridObject.getGrid();
+		let gridAllData		= grid.getChanges({all:true});
+		let gridData 		= grid.getData();
+
+		let checkList = gridData.filter(function(e){
+			return e.state == "Y";
+		});
+
+		/*
+		 * ValidationFunction(Custom)
+		 */
+		/*
+		var validationCheck = saveValidation(checkList);
+
+		if(!validationCheck){
+			return;
+		}*/
+
+		if(checkList.length > 0) {
+			if (confirm("[[#{ms.checksave}]]")) {
+				let list 		= new Object();
+				let addList 	= [];
+				let updateList 	= [];
+
+				for(let i=0; i<checkList.length; i++){
+					if(checkList[i].recindx == undefined)
+						addList.push(checkList[i]);
+					else
+						updateList.push(checkList[i]);
+				}
+
+				list.addList 	= addList;
+				list.updateList = updateList;
+
+				let data = {
+					list: list
+				};
+
+				tplt1GridObject.getGrid().showLoading();
+				let rData = callAjax("data", "POST", "/tplt/tplt1Save.do", data);
+				tplt1GridObject.getGrid().hideLoading();
+
+				console.log("rData => " + rData);
+				if(rData != 0 && rData != undefined){
+					alert("[[#{ms.saveSuccess}]]");
+					searchTplt1List();
+				}else{
+					alert("[[#{ms.saveErr}]]");
+				}
+			}
+		}
+	}
+});
+</script>
+	<!--  mainConten 종료 -->
+</div>
+</html>

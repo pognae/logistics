@@ -1,0 +1,81 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div id="mainSideBar" th:fragment="fragments-mainSideBar">
+<!--  mainSideBar 시작 --> 
+	<div id="mainSidebar">
+		<div class="sidebar-header">
+           	<a href="/main/mainPage2LeftTAB.do">
+           		<img src="/img/binblur_wh1.png" width=120  alt="binblur"> 
+			</a>
+			<button id="sidebarCollapse" class="toggle-btn">
+				<i class="fa-solid fa-bars"></i>
+			</button> 
+		</div>
+		<!-- user info -->
+		<div class="user-panel">
+			<div class="image"> 
+				<div class="image-circle" th:with="userImg=${session.usernam} "th:text="${#strings.substring(userImg,0,1)}"></div>
+			</div>
+			<a id="navbarDropdownUserImage" href="javascript:void(0);" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              	<span th:text="${session.usernam}"></span>
+              	<i class="fa-solid fa-caret-down"></i>
+			</a> 
+ 			<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink"> 				
+				<th:block th:if="${session.usertyp == 'BINBLUR'}  OR ${session.usertyp == 'OWNER'} OR ${session.usertyp == 'CUSTOMER'}"> 
+			        <a href="javascript:mainProgramCMD('tmp2');" id="btntmp2"> <i class="fa-solid fa-truck-fast"></i> &nbsp; 운송상태</a><br>
+				</th:block> 			
+				<th:block th:if="${session.usertyp == 'OWNER'} OR ${session.usertyp == 'CUSTOMER'}"> 
+			        <a href="javascript:mainProgramCMD('omm3');" id="btnomm3"> <i class="fa-solid fa-bell"></i> &nbsp; 알람관리</a><br>
+				</th:block>
+ 				 				
+				<a href="#" id="btnEditProfile" ><i class="fa-solid fa-gear"></i>  &nbsp; Edit Profile</a><br>
+				<a href="/logout"><i class="fa-solid fa-right-from-bracket"></i>  &nbsp; Logout</a>
+			</div>  
+			<input type="hidden" id="token" data-token-name="${_csrf.headerName}" placeholder="Password" value="${_csrf.token}">
+			<input type="hidden" id="gSessionDatas" th:gthemety="${session.themety} ? ${session.themety} : 'MAIN1SD'" th:gfavoryn="${session.favoryn} ? ${session.favoryn} : 'N'" >
+		</div>
+		<!-- sidebar search -->
+		<form method="post" id="frmMainSidebar" onsubmit="return false;">
+			<div class="sidebar-search">
+				<div class="search-body">
+					<i class="fa-solid fa-magnifying-glass"></i>
+			    	<input type="text" name="searchcmd" class="form-control" placeholder="메뉴코드를 입력하세요" onkeyPress="searchcmdKeyevent(this);" autocomplete='on' >  
+				</div>
+			</div>               
+		</form>
+		<!-- sidebar-메뉴 생성 -->
+		<nav class="sidebar-nav-wrap">
+			<div class="sidebar-nav-outer">
+				<div id="sidebardiv" >   
+					<ul class="list-unstyled components" id="sideMenuBar"></ul> 
+				</div>
+			</div>
+		</nav>
+	</div>  
+<!--  mainSideBar 종료 -->
+<script type="text/javascript"> 
+	// 메뉴트리 구성
+	getUserMenuList();
+	
+	// search 입력
+	function searchcmdKeyevent(o){
+		if(event.keyCode==13){ 
+			var tprogcmd = o.value.toLowerCase();
+			mainSearchKeyevent(tprogcmd);
+		}
+	}
+	
+	//  Side Menu 열기/닫기
+	$(document).ready(function () {
+		$("#sidebar").mCustomScrollbar({
+			theme: "minimal"
+		});
+		
+		$('#sidebarCollapse').on('click', function () {
+			$('#mainSidebar, #mainContent').toggleClass('active');
+			$('.collapse.in').toggleClass('in');
+			$('a[aria-expanded=true]').attr('aria-expanded', 'false');
+		});
+	});
+</script>
+</div>
+</html>

@@ -1,0 +1,720 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.logistics.md.mapper.OrganizationMapper"> 
+
+    <!-- *********************************************** -->
+    <!-- 회사 : mcomma  -->
+    <!-- *********************************************** -->  
+    <!-- mdo1 : 조회 -->
+    <select id="selectMcommaList" resultType="com.logistics.md.domain.McommaVO"> 
+		select concat(COMPKEY) as ROWKEY
+			 , COMPKEY, CODELYN, CONAMLC, CONAMKO, CONAMEN
+			 , COADDR1, COADDR2, COADDR3, COMPLAT, COMPLON
+			 , COCIYNM, COREGNM, COTELN1, COTELN2, COTELN3
+			 , COTAXCD, COPOSBX, COPOSCD, COREPNM, COREPTL
+			 , COREPEM, COMANNM, COMANTL, COMANEM, COTMZON
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE,  date_format(str_to_date(CRETIME, '%H%i%s'),'%H:%i:%s') as CRETIME, fn_sy_usernam_test(COMPKEY, CREUSER) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(str_to_date(LMOTIME, '%H%i%s'),'%H:%i:%s') as LMOTIME, fn_sy_usernam_test(COMPKEY, LMOUSER) as LMOUSER
+			 , UPDTCHK
+		  from MCOMMA 
+		 where 1=1
+		<if test='compkey != null and compkey != ""'>
+		   and upper(COMPKEY) like concat('%' , upper(#{compkey}) , '%')
+		</if>
+		<if test='conamlc != null and conamlc != ""'>
+		   and upper(CONAMLC) like concat('%' , upper(#{conamlc}) , '%')
+		</if>
+  	     order by COMPKEY asc
+    </select>     
+    
+    <!-- mdo1 : 수정 -->
+	<update id="updateMcomma" parameterType="com.logistics.md.domain.McommaVO">   
+	<foreach collection="mcommavolist" item="item"  separator=";">																	  
+    	 update MCOMMA 
+   		  set CODELYN = #{item.codelyn}
+		  	, CONAMLC = #{item.conamlc}
+		  	, CONAMKO = #{item.conamko}
+		   	, CONAMEN = #{item.conamen}
+		  	, COADDR1 = #{item.coaddr1}
+		  	, COADDR2 = #{item.coaddr2}
+		    , COADDR3 = #{item.coaddr3}
+		  	, COMPLAT = #{item.complat}
+		  	, COMPLON = #{item.complon}
+		    , COCIYNM = #{item.cociynm}
+		  	, COREGNM = #{item.coregnm}
+		    , COTELN1 = #{item.coteln1}
+		    , COTELN2 = #{item.coteln2}
+		   	, COTELN3 = #{item.coteln3}
+		   	, COTAXCD = #{item.cotaxcd}
+		   	, COPOSBX = #{item.coposbx}
+		   	, COPOSCD = #{item.coposcd}
+		   	, COREPNM = #{item.corepnm}
+		  	, COREPTL = #{item.coreptl}
+		   	, COREPEM = #{item.corepem}
+		   	, COMANNM = #{item.comannm}
+		   	, COMANTL = #{item.comantl}
+		   	, COMANEM = #{item.comanem}
+		   	, COTMZON = #{item.cotmzon}
+		   	, LMODATE = to_char(NOW() ,'YYYYMMDD')
+		   	, LMOTIME = to_char(NOW() ,'hh24miss')
+		   	, LMOUSER = #{userData.useract}
+		where COMPKEY = #{item.compkey}
+		  and UPDTCHK = #{item.updtchk}
+	</foreach>		 
+    </update>		    
+    
+    <!-- mdo1 : 생성 -->
+    <insert id="insertMcomma" parameterType="com.logistics.md.domain.McommaVO">
+	   insert 
+	     into MCOMMA (
+		       COMPKEY, CODELYN, CONAMLC, CONAMKO, CONAMEN
+		     , COADDR1, COADDR2, COADDR3, COMPLAT, COMPLON
+		     , COCIYNM, COREGNM, COTELN1, COTELN2, COTELN3
+		     , COTAXCD, COPOSBX, COPOSCD, COREPNM, COREPTL
+		     , COREPEM, COMANNM, COMANTL, COMANEM, COTMZON
+		     , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER) 
+	   values 
+			<foreach collection="mcommavolist" item="item"  separator=",">
+	  		(  #{item.compkey}, #{item.codelyn}, #{item.conamlc}, #{item.conamko}, #{item.conamen}
+	  		 , #{item.coaddr1}, #{item.coaddr2}, #{item.coaddr3}, #{item.complat}, #{item.complon} 
+	  		 , #{item.cociynm}, #{item.coregnm}, #{item.coteln1}, #{item.coteln2}, #{item.coteln3}
+	  		 , #{item.cotaxcd}, #{item.coposbx}, #{item.coposcd}, #{item.corepnm}, #{item.coreptl}
+	  		 , #{item.corepem}, #{item.comannm}, #{item.comantl}, #{item.comanem}, #{item.cotmzon}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+    		</foreach>
+    </insert>
+    
+    <delete id="deleteMcomma" parameterType="com.logistics.md.domain.McommaVO">
+	    delete from MCOMMA
+		     where COMPKEY = #{item.compkey}
+    </delete>
+    
+    <!-- test 프로시저 -->
+    <select id="sp_mcomma2_test" statementType="CALLABLE" parameterType="java.util.HashMap"> 
+		{ CALL sp_mcomma2_test( #{compkey}, #{loguser},
+			#{O_OMSGKEY, mode=OUT, jdbcType=VARCHAR},
+			#{O_ORESULT, mode=OUT, jdbcType=INTEGER} )
+		}
+	</select>
+    
+    <!-- *********************************************** -->
+    <!-- 창고 : mwarma  -->
+    <!-- *********************************************** -->  
+    <!-- mdo2 : 조회 -->
+    <select id="selectMwarmaList" resultType="com.logistics.md.domain.MwarmaVO"> 
+		select concat(COMPKEY, WAREKEY) as ROWKEY
+			 , COMPKEY , WAREKEY , WHDELYN , WHNAMLC , WHNAMKO , WHNAMEN 
+		  	 , WHADDR1 , WHADDR2 , WHADDR3 , WARELAT , WARELON , WACITNM , WAREGNM 
+		  	 , WATELN1 , WATELN2 , WATELN3 , WATAXCD , WAPOSBX , WAPOSCD , WAREPNM 
+		  	 , WAREPTL , WAREPEM , WAMANNM , WAMANTL , WAMANEM , OVERALL , OVERLOC 
+		  	 , SHPCMUL , INBOKEY , OUBOKEY , WATAREA , WASCAPA , WATMZON 
+		  	 , date_format(CREDATE, '%Y-%m-%d') as CREDATE , date_format(CRETIME, '%H-%i-%s') as CRETIME , fn_sy_usernam_test(COMPKEY, CREUSER) as CREUSER 
+		  	 , date_format(LMODATE, '%Y-%m-%d') as LMODATE , date_format(LMOTIME, '%H-%i-%s') as LMOTIME , fn_sy_usernam_test(COMPKEY, LMOUSER) as LMOUSER
+		  	 , UPDTCHK
+		  from MWARMA
+		 where 1=1
+		   and COMPKEY= #{userData.compkey}
+		  <if test='warekey != null and warekey.length > 0 ' >
+		   and upper(WAREKEY) like concat('%' , upper(#{warekey}) , '%')
+		  </if>
+		  <if test='whnamlc != null and whnamlc.length > 0 ' >
+		   and upper(WHNAMLC) like concat('%' , upper(#{whnamlc}) , '%')
+		  </if>
+		 order by COMPKEY, WAREKEY
+	</select>
+	
+    <!-- mdo2 : 수정 -->
+    <update id="updateMwarma" parameterType="HashMap"> 
+		<foreach collection="list" item="item" separator=";">
+		update MWARMA
+		   set COMPKEY = #{item.compkey}
+		 	 , WAREKEY = #{item.warekey}
+			 , WHDELYN = #{item.whdelyn}
+			 , WHNAMLC = #{item.whnamlc}
+			 , WHNAMKO = #{item.whnamko}
+			 , WHNAMEN = #{item.whnamen}
+			 , WHADDR1 = #{item.whaddr1}
+			 , WHADDR2 = #{item.whaddr2}
+			 , WHADDR3 = #{item.whaddr3}
+			 , WACITNM = #{item.wacitnm}
+			 , WAREGNM = #{item.waregnm}
+			 , WATELN1 = #{item.wateln1}
+			 , WATELN2 = #{item.wateln2}
+			 , WATELN3 = #{item.wateln3}
+			 , WATAXCD = #{item.wataxcd}
+			 , WAPOSBX = #{item.waposbx}
+			 , WAPOSCD = #{item.waposcd}
+			 , WAREPNM = #{item.warepnm}
+			 , WAREPTL = #{item.wareptl}
+			 , WAREPEM = #{item.warepem}
+			 , WAMANNM = #{item.wamannm}
+			 , WAMANTL = #{item.wamantl}
+			 , WAMANEM = #{item.wamanem}
+			 , OVERALL = #{item.overall}
+			 , OVERLOC = #{item.overloc}
+			 , SHPCMUL = #{item.shpcmul}
+			 , INBOKEY = #{item.inbokey}
+			 , OUBOKEY = #{item.oubokey}
+			 , WATAREA = #{item.watarea}
+			 , WASCAPA = #{item.wascapa}
+			 , WATMZON = #{item.watmzon}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		   	 , LMOTIME = to_char(NOW() ,'hh24miss')
+		   	 , LMOUSER = #{userData.useract}
+		 where COMPKEY = #{item.compkey}
+		   and UPDTCHK = #{item.updtchk}
+			<choose>
+				<when test='item.oldwarekey != null and item.oldwarekey != ""'>
+			and WAREKEY = #{item.oldwarekey}
+				</when>		
+				<otherwise>
+			and WAREKEY = #{item.warekey}
+				</otherwise>	
+			</choose>
+		</foreach>
+	</update>
+	
+    <!-- mdo2 : 생성 -->
+    <insert id="insertMwarma" parameterType="com.logistics.md.domain.MwarmaVO">
+	   insert 
+	     into MWARMA (
+			COMPKEY , WAREKEY , WHDELYN , WHNAMLC , WHNAMKO , WHNAMEN 
+	      , WHADDR1 , WHADDR2 , WHADDR3 , WACITNM 
+	      , WAREGNM , WATELN1 , WATELN2 , WATELN3 , WATAXCD , WAPOSBX 
+	      , WAPOSCD , WAREPNM , WAREPTL , WAREPEM , WAMANNM , WAMANTL 
+	      , WAMANEM , OVERALL , OVERLOC , SHPCMUL , INBOKEY , OUBOKEY 
+	      , WATAREA , WASCAPA , WATMZON 
+	      , CREDATE , CRETIME , CREUSER , LMODATE , LMOTIME , LMOUSER ) 
+	   values 
+		<foreach collection="list" item="item" separator=",">
+		(   #{item.compkey} , #{item.warekey} , #{item.whdelyn} , #{item.whnamlc} , #{item.whnamko} , #{item.whnamen} 
+		  , #{item.whaddr1} , #{item.whaddr2} , #{item.whaddr3} , #{item.wacitnm} 
+		  , #{item.waregnm} , #{item.wateln1} , #{item.wateln2} , #{item.wateln3} , #{item.wataxcd} , #{item.waposbx} 
+		  , #{item.waposcd} , #{item.warepnm} , #{item.wareptl} , #{item.warepem} , #{item.wamannm} , #{item.wamantl} 
+		  , #{item.wamanem} , #{item.overall} , #{item.overloc} , #{item.shpcmul} , #{item.inbokey} , #{item.oubokey}
+		  , #{item.watarea} , #{item.wascapa} , #{item.watmzon}
+		  , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		  , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+		</foreach>	
+	</insert>
+	
+	<!-- mdo2 : warehouse Select Box -->
+    <select id="selectWarehouseBox" resultType="HashMap"> 
+		select WAREKEY as combovl
+		     , WHNAMLC as combonm
+		  from MWARMA
+		 where 1=1 
+	  	<if test='compkey != null and compkey != ""'>
+	  	   and COMPKEY = #{compkey}
+	  	</if> 
+	  	<if test='warekey != null and warekey != ""'>
+	  	   and WAREKEY = #{warekey} 
+	  	</if>
+	  	<if test='whdelyn != null and whdelyn != ""'>
+		   and WHDELYN = #{whdelyn}
+		</if>
+	  	 group by WAREKEY, WHNAMLC
+	 	 order by WAREKEY, WHNAMLC
+	</select>
+    
+	
+	<!-- mdo2 : User warehouse Select Box -->
+    <select id="selectWarehouseUserBox" parameterType="map" resultType="java.util.HashMap">
+		select C.WAREKEY as combovl
+			 , C.WHNAMLC as combonm
+		  from SUSRMA S 
+		 inner join SROLGR A on S.COMPKEY = A.COMPKEY and S.ROLGKEY = A.ROLGKEY 
+		 inner join SROLWH B on A.COMPKEY = B.COMPKEY and A.ROLEKEY = B.ROLEKEY
+		 inner join MWARMA C on B.COMPKEY = C.COMPKEY and B.WAREKEY = C.WAREKEY
+		 where S.COMPKEY = #{compkey}
+		   and S.USERACT = #{useract}
+		<if test='whdelyn != null and whdelyn != ""'>
+		   and C.WHDELYN = #{whdelyn}
+		</if>
+		   and B.WAREAVL = 'Y'
+		 order by C.WAREKEY		 
+    </select>
+	
+	
+    <!-- *********************************************** -->
+    <!-- 에어리어: marema  -->
+    <!-- *********************************************** -->  
+    <!-- mdo3 : 조회 -->
+    <select id="selectAreaList" resultType="com.logistics.md.domain.MaremaDTO"> 
+		select concat(MA.COMPKEY, MA.WAREKEY, MA.AREAKEY) as ROWKEY
+		     , MA.COMPKEY, MA.WAREKEY, MA.AREAKEY, MA.AREANAM
+		     , MA.ARDELYN, MA.AREATYP, MA.SYONLYN
+		     , date_format(MA.CREDATE, '%Y-%m-%d') as credate , date_format(MA.CRETIME, '%H-%i-%s') as CRETIME , fn_sy_usernam_test(MA.COMPKEY , MA.CREUSER) as CREUSER
+		     , date_format(MA.LMODATE, '%Y-%m-%d') as LMODATE , date_format(MA.LMOTIME, '%H-%i-%s') as LMOTIME , fn_sy_usernam_test(MA.COMPKEY , MA.LMOUSER) as LMOUSER
+		     , MA.UPDTCHK
+	  	  from MAREMA MA
+	  	 where 1=1
+	  	   and MA.COMPKEY = #{userData.compkey}
+	  	<if test='warekey != null and warekey != ""'>
+	  	   and MA.WAREKEY = #{warekey} 
+	  	</if>
+	 	<if test='areanam != null and areanam != ""'>
+	  	   and upper(MA.AREANAM) LIKE CONCAT('%', upper(#{areanam}), '%')
+	  	</if>
+	 	 order by MA.COMPKEY, MA.WAREKEY, MA.AREAKEY
+ 	</select>
+    
+    <!-- mdo3 : 수정 -->
+	<update id="updateArea" parameterType="com.logistics.md.domain.MaremaDTO"> 
+		<foreach collection="list" item="item"  separator=";">
+		update MAREMA
+		   set WAREKEY = #{item.warekey}
+		     , AREAKEY = #{item.areakey}
+		     , ARDELYN = #{item.ardelyn}
+		     , AREANAM = #{item.areanam}
+		     , AREATYP = #{item.areatyp}
+		     , SYONLYN = #{item.syonlyn}
+		     , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		     , LMOTIME = to_char(NOW() ,'hh24miss')
+		     , LMOUSER = #{userData.useract}
+		 where COMPKEY = #{item.compkey}
+		   and UPDTCHK = #{item.updtchk}
+			<choose>
+		    	<when test="item.oldwarekey != null and item.oldwarekey !=''">
+		   and WAREKEY = #{item.oldwarekey}
+		    	</when>
+		    	<otherwise>
+		   and WAREKEY = #{item.warekey}
+		    	</otherwise>
+			</choose>
+			<choose>
+		    	<when test="item.oldareakey != null and item.oldareakey !=''">
+		   and AREAKEY = #{item.oldareakey}
+		    	</when>
+		    	<otherwise>
+		   and AREAKEY = #{item.areakey} 
+		    	</otherwise>
+			</choose>
+		</foreach>
+	</update>
+    
+    <!-- mdo3 : 생성 -->
+	<insert id="insertArea" parameterType="com.logistics.md.domain.MaremaDTO">
+		insert 
+		  into MAREMA(COMPKEY, WAREKEY, AREAKEY, ARDELYN, AREANAM, AREATYP, SYONLYN, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER)
+	    values 
+	    <foreach collection="list" item="item"  separator=",">
+		 ( #{item.compkey}, #{item.warekey}, #{item.areakey}, #{item.ardelyn}, #{item.areanam}, #{item.areatyp}, #{item.syonlyn}
+		, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+		</foreach>
+	</insert>
+	
+	<!-- mdo3 : Area Select Box -->
+    <select id="selectAreaBox" resultType="HashMap"> 
+		select AREAKEY as combovl
+		     , AREANAM as combonm
+	  	  from MAREMA
+	  	 where 1=1 
+	  	<if test='compkey != null and compkey != ""'>
+	  	   and COMPKEY = #{compkey}
+	  	</if> 
+	  	<if test='warekey != null and warekey != ""'>
+	  	   and WAREKEY = #{warekey} 
+	  	</if>
+	 	<if test='areakey != null and areakey != ""'>
+	  	   and AREAKEY = #{areakey}
+	  	</if>
+	  	<if test='ardelyn != null and ardelyn != ""'>
+	  	   and ARDELYN = #{ardelyn}
+	  	</if>
+	  	 group by AREAKEY, AREANAM
+	 	 order by AREAKEY, AREANAM
+ 	</select>
+    
+    <!-- *********************************************** -->
+    <!-- 존 : mzonma  -->
+    <!-- *********************************************** -->  
+    <!-- mdo4 : 조회 -->
+    <select id="selectMzonmaList" resultType="com.logistics.md.domain.MzonmaVO"> 
+		select concat(MZ.COMPKEY, MZ.WAREKEY, MZ.AREAKEY, MZ.ZONEKEY) as ROWKEY
+		 	 , MZ.COMPKEY, MZ.WAREKEY, MZ.AREAKEY, MA.AREANAM as AREANAM
+			 , MZ.ZONEKEY, MZ.ZODELYN, MZ.ZONENAM, MZ.ZONETYP 
+			 , MZ.FLOORTY, MZ.PUTAWYN, MZ.ALLOCYN, MZ.MOVEOYN, MZ.MOVEIYN, MZ.MIQTYYN, MZ.SYONLYN
+			 , date_format(MZ.CREDATE, '%Y-%m-%d') as CREDATE, date_format(MZ.CRETIME, '%H-%i-%s') as CRETIME, fn_sy_usernam_test(MZ.COMPKEY, MZ.CREUSER) as CREUSER 
+			 , date_format(MZ.LMODATE, '%Y-%m-%d') as LMODATE, date_format(MZ.LMOTIME, '%H-%i-%s') as LMOTIME, fn_sy_usernam_test(MZ.COMPKEY, MZ.LMOUSER) as LMOUSER
+			 , MZ.UPDTCHK
+		  from MZONMA MZ
+		 inner join MWARMA MW 
+		    on MW.COMPKEY = MZ.COMPKEY 
+		   and MW.WAREKEY = MZ.WAREKEY
+		 inner join MAREMA MA 
+		    on MA.COMPKEY = MZ.COMPKEY
+		   and MA.WAREKEY = MZ.WAREKEY
+		   and MA.AREAKEY = MZ.AREAKEY
+		 where 1=1   
+		   and MZ.COMPKEY = #{userData.compkey}
+		<if test='warekey != null and warekey!="" ' >
+		   and MZ.WAREKEY = #{warekey}
+		</if>
+		<if test='areanam != null and areanam != ""'>
+		   and upper(MA.AREANAM) like CONCAT('%', upper(#{areanam}), '%')
+		</if>
+		<if test='zonenam != null and zonenam != ""'>
+		   and upper(MZ.ZONENAM) like CONCAT('%', upper(#{zonenam}), '%')
+		</if>
+		 order by MZ.COMPKEY, MZ.WAREKEY, MZ.AREAKEY, MZ.ZONEKEY 
+	</select>
+	
+	<!-- mdo4 : 수정 -->
+    <update id="updateMzonma" parameterType="HashMap">
+		<foreach collection="list" item="item" separator=";"> 
+		update MZONMA
+		   set COMPKEY = #{item.compkey}
+		   	 , WAREKEY = #{item.warekey}
+		   	 , AREAKEY = #{item.areakey}
+		   	 , ZONEKEY = #{item.zonekey}
+		   	 , ZODELYN = #{item.zodelyn}
+		   	 , ZONENAM = #{item.zonenam}
+		   	 , ZONETYP = #{item.zonetyp}
+		   	 , FLOORTY = #{item.floorty}
+		   	 , PUTAWYN = #{item.putawyn}
+		   	 , ALLOCYN = #{item.allocyn}
+		   	 , MOVEOYN = #{item.moveoyn}
+		   	 , MOVEIYN = #{item.moveiyn}
+		   	 , MIQTYYN = #{item.miqtyyn}
+		   	 , SYONLYN = #{item.syonlyn} 
+		   	 , LMODATE = to_char(NOW() ,'YYYYMMDD') 
+			 , LMOTIME = to_char(NOW() ,'hh24miss') 
+			 , LMOUSER = #{userData.useract} 
+		 where COMPKEY = #{item.compkey}
+		   and UPDTCHK = #{item.updtchk}
+		   <choose>
+			 <when test="item.oldwarekey != null and item.oldwarekey != ''">
+			   and WAREKEY = #{item.oldwarekey}
+			 </when>
+			 <otherwise>
+			   and WAREKEY = #{item.warekey}
+			 </otherwise>
+		  </choose>
+		  <choose>
+			 <when test="item.oldareakey != null and item.oldareakey != ''">
+			  and AREAKEY = #{item.oldareakey}
+			 </when>
+			 <otherwise>
+			  and AREAKEY = #{item.areakey}
+			 </otherwise>
+		  </choose>
+		   <choose>
+			 <when test="item.oldzonekey != null and item.oldzonekey != ''">
+			  and ZONEKEY = #{item.oldzonekey}
+			 </when>
+			 <otherwise>
+			  and ZONEKEY = #{item.zonekey}
+			 </otherwise>
+		  </choose>
+		  </foreach>
+    </update> 
+    
+    <!-- mdo4 : 생성 -->
+    <insert id="insertMzonma" parameterType="HashMap">
+	   insert 
+	     into MZONMA (
+	     	COMPKEY, WAREKEY, AREAKEY, ZONEKEY, ZODELYN, ZONENAM, ZONETYP
+	      , FLOORTY, PUTAWYN, ALLOCYN, MOVEOYN, MOVEIYN, MIQTYYN, SYONLYN 
+	      , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER )
+	   values
+		<foreach collection="list" item="item" separator=","> 
+	    ( #{item.compkey}, #{item.warekey}, #{item.areakey}, #{item.zonekey}, #{item.zodelyn}, #{item.zonenam}, #{item.zonetyp}
+	    , #{item.floorty}, #{item.putawyn}, #{item.allocyn}, #{item.moveoyn}, #{item.moveiyn}, #{item.miqtyyn}, #{item.syonlyn} 
+	    , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+		</foreach>
+    </insert>
+    
+	<!-- mdo4 : Zone Select Box -->
+    <select id="selectZoneBox" resultType="HashMap"> 
+		select ZONEKEY as combovl
+		     , ZONENAM as combonm
+	  	  from MZONMA
+	  	 where 1=1 
+	  	<if test='compkey != null and compkey != ""'>
+	  	   and COMPKEY = #{compkey}
+	  	</if> 
+	  	<if test='warekey != null and warekey != ""'>
+	  	   and WAREKEY = #{warekey} 
+	  	</if>
+	 	<if test='areakey != null and areakey != ""'>
+	  	   and AREAKEY = #{areakey}
+	  	</if>
+	 	<if test='zonekey != null and zonekey != ""'>
+	  	   and ZONEKEY = #{zonekey}
+	  	</if>
+	  	<if test='zonetyp != null and zonetyp != ""'>
+	  	   and ZONETYP = #{zonetyp}
+	  	</if>
+	  	<if test='noZontp != null and noZontp != ""'>
+	  	   and ZONETYP NOT IN (#{noZontp})
+	  	</if>	  	
+	  	<if test='moveiyn != null and moveiyn !=""'>
+	  		and MOVEIYN = #{moveiyn}
+	  	</if>
+	  	 group by ZONEKEY, ZONENAM
+	 	 order by ZONEKEY, ZONENAM
+ 	</select>
+    
+    <!-- *********************************************** -->
+    <!-- 로케이션 : mlocma  -->
+    <!-- *********************************************** -->  
+    <!-- mdo5 : 로케이션 조회 -->
+	<select id="selectMlocmaList" resultType="com.logistics.md.domain.MlocmaVO"> 
+		select concat(ML.COMPKEY, ML.WAREKEY, ML.AREAKEY, ML.ZONEKEY, ML.LOCAKEY) as ROWKEY
+			 , ML.COMPKEY 
+			 , ML.WAREKEY, ML.WAREKEY as WHNAMLC
+			 , ML.AREAKEY, MA.AREANAM as AREANAM
+			 , ML.ZONEKEY, MZ.ZONENAM as ZONENAM
+			 , ML.LOCAKEY, ML.LOCANAM 
+			 , ML.LODELYN, ML.LOCTYPE
+			 , ML.CAPACHK, ML.LOCSTAT , ML.LOCLENG , ML.LOCWIDH
+			 , ML.LOCHEIG, ML.LOCCUBI , ML.INBRTNO , ML.MIXDSKU
+			 , ML.OTBRTNO, ML.MIXDLOT , ML.REMTLOC , ML.USPTLOC
+			 , ML.USPKLOC, ML.BLOCKID , ML.PHYSROW , ML.PHYSSEC , ML.PHYSFLO
+			 , ML.EQUSTAT
+			 , date_format(ML.CREDATE, '%Y-%m-%d') as CREDATE , date_format(ML.CRETIME, '%H-%i-%s') as CRETIME , fn_sy_usernam_test(ML.COMPKEY , ML.CREUSER) as CREUSER
+			 , date_format(ML.LMODATE, '%Y-%m-%d') as LMODATE , date_format(ML.LMOTIME, '%H-%i-%s') as LMOTIME , fn_sy_usernam_test(ML.COMPKEY , ML.LMOUSER) as LMOUSER
+			 , ML.UPDTCHK
+		  from MLOCMA ML
+		 inner join MWARMA MW 
+		    on ML.COMPKEY = MW.COMPKEY 
+		   and ML.WAREKEY = MW.WAREKEY
+		 inner join MAREMA MA
+		    on ML.COMPKEY = MA.COMPKEY
+		   and ML.WAREKEY = MA.WAREKEY
+		   and ML.AREAKEY = MA.AREAKEY
+		 inner join MZONMA MZ
+		    on ML.COMPKEY = MZ.COMPKEY
+		   and ML.WAREKEY = MZ.WAREKEY
+		   and ML.AREAKEY = MZ.AREAKEY
+		   and ML.ZONEKEY = MZ.ZONEKEY
+		 where 1=1
+		   and ML.COMPKEY = #{userData.compkey}
+		<if test='warekey != null and warekey != ""'>
+		   and ML.WAREKEY = #{warekey}
+		</if>
+		<if test='whnamlc != null and whnamlc != ""'>
+		    and upper(MW.WHNAMLC) like CONCAT('%', upper(#{whnamlc}), '%')
+		</if>
+		<if test='areakey != null and areakey != ""'>
+		   and ML.AREAKEY = #{areakey}
+		</if>
+		<if test='areanam != null and areanam != ""'>
+		    and upper(MA.AREANAM) like CONCAT('%', upper(#{areanam}), '%')
+		</if>
+		<if test='zonekey != null and zonekey != ""'>
+		   and ML.ZONEKEY = #{zonekey}
+		</if>
+		<if test='zonenam != null and zonenam != ""'>
+		    and upper(MZ.ZONENAM) like CONCAT('%', upper(#{zonenam}), '%')
+		</if>
+		<if test='locakey != null and locakey != ""'>
+		   and ML.LOCAKEY like CONCAT('%',  upper(#{locakey}), '%')
+		</if>
+		<if test='locanam != null and locanam != ""'>
+		    and upper(ML.LOCANAM) like CONCAT('%', upper(#{locanam}), '%')
+		</if>
+		<if test='lodelyn != null and lodelyn != ""'>
+		   and ML.LODELYN = #{lodelyn}
+		</if>
+		<if test='loctype != null and loctype != ""'>
+		   and ML.LOCTYPE = #{loctype}
+		</if>
+		<if test='locstat != null and locstat != ""'>
+		   and ML.LOCSTAT = #{locstat}
+		</if>
+		<if test='equstat != null and equstat != ""'>
+		   and ML.EQUSTAT = #{equstat}
+		</if>
+		order by ML.COMPKEY, ML.WAREKEY, ML.AREAKEY, ML.ZONEKEY, ML.LOCAKEY
+    </select>
+    
+    <!-- mdo5 : 수정 -->
+	<update id="updateMlocma" parameterType="com.logistics.md.domain.MlocmaVO"> 
+	<foreach collection="list" item="item"  separator=";">	  
+    	 update MLOCMA 
+   		  set WAREKEY = #{item.warekey}
+   		  	, AREAKEY = #{item.areakey}
+   		  	, ZONEKEY = #{item.zonekey}
+   		  	, LOCAKEY = #{item.locakey}
+   		  	, LODELYN = #{item.lodelyn}
+		  	, LOCANAM = #{item.locanam}
+		  	, LOCTYPE = #{item.loctype}
+		   	, CAPACHK = #{item.capachk}
+		  	, LOCSTAT = #{item.locstat}
+		  	, LOCLENG = #{item.locleng}
+		    , LOCWIDH = #{item.locwidh}
+		  	, LOCHEIG = #{item.locheig}
+		  	, LOCCUBI = #{item.loccubi}
+		    , INBRTNO = #{item.inbrtno}
+		  	, MIXDSKU = #{item.mixdsku}
+		    , OTBRTNO = #{item.otbrtno}
+		    , MIXDLOT = #{item.mixdlot}
+		   	, REMTLOC = #{item.remtloc}
+		   	, USPTLOC = #{item.usptloc}
+		   	, USPKLOC=  #{item.uspkloc}
+		   	, BLOCKID = #{item.blockid}
+			, PHYSROW = #{item.physrow}
+			, PHYSSEC = #{item.physsec}
+			, PHYSFLO = #{item.physflo}
+			, EQUSTAT = #{item.equstat}
+			, LMODATE = to_char(NOW() ,'YYYYMMDD')
+			, LMOTIME = to_char(NOW() ,'hh24miss')
+			, LMOUSER = #{userData.useract}
+		where COMPKEY = #{item.compkey}
+		  and UPDTCHK = #{item.updtchk}
+			<choose>
+		    	<when test="item.oldwarekey != null and item.oldwarekey !=''">
+		   and WAREKEY = #{item.oldwarekey}
+		    	</when>
+		    	<otherwise>
+		   and WAREKEY = #{item.warekey}
+		    	</otherwise>
+			</choose>
+			<choose>
+		    	<when test="item.oldareakey != null and item.oldareakey !=''">
+		   and AREAKEY = #{item.oldareakey}
+		    	</when>
+		    	<otherwise>
+		   and AREAKEY = #{item.areakey} 
+		    	</otherwise>
+			</choose>	
+			<choose>
+		    	<when test="item.oldzonekey != null and item.oldzonekey !=''">
+		   and ZONEKEY = #{item.oldzonekey}
+		    	</when>
+		    	<otherwise>
+		   and ZONEKEY = #{item.zonekey}
+		    	</otherwise>
+			</choose>
+			<choose>
+		    	<when test="item.oldlocakey != null and item.oldlocakey !=''">
+		   and LOCAKEY = #{item.oldlocakey}
+		    	</when>
+		    	<otherwise>
+		   and LOCAKEY = #{item.locakey} 
+		    	</otherwise>
+			</choose>			
+	</foreach>
+    </update>     
+    
+    <!-- mdo5 : 생성 -->
+    <insert id="insertMlocma" parameterType="com.logistics.md.domain.MlocmaVO">
+	   insert into MLOCMA 
+	   	 ( COMPKEY , WAREKEY , AREAKEY , ZONEKEY , LOCAKEY
+	   	 , LODELYN , LOCANAM , LOCTYPE , CAPACHK 
+	   	 , LOCSTAT , LOCLENG , LOCWIDH 
+	   	 , LOCHEIG , LOCCUBI , INBRTNO , MIXDSKU , OTBRTNO 
+	   	 , MIXDLOT , REMTLOC , USPTLOC , USPKLOC , BLOCKID 
+	   	 , PHYSROW , PHYSSEC , PHYSFLO , EQUSTAT
+	   	 , CREDATE , CRETIME , CREUSER , LMODATE , LMOTIME , LMOUSER ) 
+	   values	 
+	      	<foreach collection="list" item="item"  separator=",">
+			( #{item.compkey}, #{item.warekey}, #{item.areakey}, #{item.zonekey}, #{item.locakey}
+			, #{item.lodelyn}, #{item.locanam}, #{item.loctype}, #{item.capachk}
+			, #{item.locstat}, #{item.locleng}, #{item.locwidh}
+			, #{item.locheig}, #{item.loccubi}, #{item.inbrtno}, #{item.mixdsku}, #{item.otbrtno}
+			, #{item.mixdlot}, #{item.remtloc}, #{item.usptloc}, #{item.uspkloc}, #{item.blockid}
+			, #{item.physrow}, #{item.physsec}, #{item.physflo}, #{item.equstat}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+			</foreach>  
+    </insert>       
+    
+    <!-- mdo5 : Location Select Box -->
+    <select id="selectLocationBox" resultType="HashMap"> 
+		select LOCAKEY as combovl
+		     , LOCANAM as combonm
+	  	  from MLOCMA
+	  	 where 1=1 
+	  	<if test='compkey != null and compkey != ""'>
+	  	   and COMPKEY = #{compkey}
+	  	</if> 
+	  	<if test='warekey != null and warekey != ""'>
+	  	   and WAREKEY = #{warekey} 
+	  	</if>
+	 	<if test='areakey != null and areakey != ""'>
+	  	   and AREAKEY = #{areakey}
+	  	</if>
+	 	<if test='zonekey != null and zonekey != ""'>
+	  	   and ZONEKEY = #{zonekey}
+	  	</if>
+	 	<if test='locakey != null and locakey != ""'>
+	  	   and LOCAKEY = #{locakey}
+	  	</if>
+	  	<if test='lodelyn != null and lodelyn != ""'>
+		   and LODELYN = #{lodelyn}
+		</if>
+		<if test='notloctypes != null and notloctypes.size != 0'>
+		   and LOCTYPE not in
+		   	<foreach collection="notloctypes" item="item" index="index" open="(" close=")" separator=",">
+		   	 #{item}
+		   	</foreach>
+		</if>
+		<if test='loctype != null and loctype != ""'>
+		   and LOCTYPE = #{loctype}
+		</if>
+		<if test='locstat != null and locstat != ""'>
+		   and LOCSTAT = #{locstat}
+		</if>
+	  	 group by LOCAKEY, LOCANAM
+	 	 order by LOCAKEY, LOCANAM
+ 	</select>    
+    
+    <!-- mdo5 : 로케이션 단건 조회 -->
+	<select id="selectMlocma" resultType="com.logistics.md.domain.MlocmaVO"> 
+		select ML.COMPKEY, ML.WAREKEY, ML.AREAKEY, ML.ZONEKEY
+			 , ML.LOCAKEY, ML.LOCANAM, ML.LODELYN, ML.LOCTYPE
+			 , ML.CAPACHK, ML.LOCSTAT, ML.LOCLENG, ML.LOCWIDH
+			 , ML.LOCHEIG, ML.LOCCUBI, ML.INBRTNO, ML.MIXDSKU
+			 , ML.OTBRTNO, ML.MIXDLOT, ML.REMTLOC, ML.USPTLOC
+			 , ML.USPKLOC, ML.BLOCKID, ML.PHYSROW, ML.PHYSSEC
+			 , ML.PHYSFLO, ML.EQUSTAT
+			 , date_format(ML.CREDATE, '%Y-%m-%d') as CREDATE , date_format(ML.CRETIME, '%H-%i-%s') as CRETIME , fn_sy_usernam_test(ML.COMPKEY , ML.CREUSER) as CREUSER
+			 , date_format(ML.LMODATE, '%Y-%m-%d') as LMODATE , date_format(ML.LMOTIME, '%H-%i-%s') as LMOTIME , fn_sy_usernam_test(ML.COMPKEY , ML.LMOUSER) as LMOUSER
+			 , ML.UPDTCHK
+		  from MLOCMA ML
+		 inner join MWARMA MW 
+		    on ML.COMPKEY = MW.COMPKEY 
+		   and ML.WAREKEY = MW.WAREKEY
+		 inner join MAREMA MA
+		    on ML.COMPKEY = MA.COMPKEY
+		   and ML.WAREKEY = MA.WAREKEY
+		   and ML.AREAKEY = MA.AREAKEY
+		 inner join MZONMA MZ
+		    on ML.COMPKEY = MZ.COMPKEY
+		   and ML.WAREKEY = MZ.WAREKEY
+		   and ML.AREAKEY = MZ.AREAKEY
+		   and ML.ZONEKEY = MZ.ZONEKEY
+		 where 1=1
+		   and ML.COMPKEY = #{compkey}
+		<if test='warekey != null and warekey != ""'>
+		   and ML.WAREKEY = #{warekey}
+		</if>
+		<if test='areakey != null and areakey != ""'>
+		   and ML.AREAKEY = #{areakey}
+		</if>
+		<if test='zonekey != null and zonekey != ""'>
+		   and ML.ZONEKEY = #{zonekey}
+		</if>
+		<if test='locakey != null and locakey != ""'>
+		   and ML.LOCAKEY = #{locakey}
+		</if>
+		<if test='lodelyn != null and lodelyn != ""'>
+		   and ML.LODELYN = #{lodelyn}
+		</if>
+		<if test='loctype != null and loctype != ""'>
+		   and ML.LOCTYPE = #{loctype}
+		</if>
+		<if test='locstat != null and locstat != ""'>
+		   and ML.LOCSTAT = #{locstat}
+		</if>
+		<if test='equstat != null and equstat != ""'>
+		   and ML.EQUSTAT = #{equstat}
+		</if>
+    </select> 
+ </mapper>

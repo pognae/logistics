@@ -1,0 +1,225 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+			</div>
+			<div class="header-right">
+				<button type="button" class="btn default-btn" id="mdu3_save"   th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+				<button type="button" class="btn default-btn" id="mdu3_search" th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" class="btn main-btn"><i class="fa-solid fa-print"></i></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>					
+			</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdu3_uomekey" class="col-md-5 col-xl-2 col-form-label">[[#{md.muomma.uomekey}]]</label> 
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.muomma.uomekey')}" id="mdu3_uomekey" />
+					</div>
+					<label for="mdu3_uomenam" class="col-md-5 col-xl-2 col-form-label">[[#{md.muomma.uomenam}]]</label> 
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.muomma.uomenam')}" id="mdu3_uomenam" />
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="content-inner">
+			<div class="grid-item grid-1">
+				<div class="grid-container">
+					<div id="mdu3_grid"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+<script>
+$(function(){
+	//============================================================	
+	//검색 화면 이벤트
+	//============================================================
+	$("#mdu3_search").click(function () {
+		mdu3List();
+	});
+	
+	$("#mdu3_save").click(function () {
+		var grid = pq.grid("#mdu3_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		var gridChange = grid.getChanges({all:true});
+		
+		if(gridCheck.length > 0){
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+	        for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].uomekey){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "uomekey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].uomenam){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "uomenam" } );
+	    	  		return false;
+	    	  	}
+	    	}
+			
+			//============================================================	 
+	    	//체크된 데이터 충복 체크
+	    	//============================================================
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){
+						if(gridCheck[i].uomekey === grid.getData()[j].uomekey){
+			      			alert((grid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+			//updateList 체크 데이터 정제
+			for(z=0; z<gridChange.updateList.length; z++){
+				if(gridChange.updateList[z].state != true){
+					gridChange.updateList.splice(z, 1);
+					gridChange.oldList.splice(z, 1);
+				}
+			}
+			
+			//addList 체크 데이터 정제
+			for(x=0; x<gridChange.addList.length; x++){
+				if(gridChange.addList[x].state != true){
+					gridChange.addList.splice(x, 1);
+				}
+			}
+			
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { data : gridChange, uomekey : $('#mdu3_uomekey').val(), uomenam : $('#mdu3_uomenam').val() };
+				grid.showLoading();
+				var aul = new AjaxUtil_Order("/md/mdu3Save.do", data);
+				aul.setCallbackSuccess(function (data){
+					grid.option( "dataModel", {data: data.list , recIndx: "rowkey" } );
+			        grid.refreshDataAndView();
+			        alert("[[#{ms.saveSuccess}]]");
+				});
+				aul.setComplete(function(data){
+					grid.hideLoading();
+				});
+				aul.send();
+			}
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+
+
+	var mdu3_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: true }
+     	},
+		{ title: "rowkey", dataType: "string", dataIndx: "rowkey", editable: false, hidden: true },
+		{ title: "[[#{md.muomma.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden: true },
+		{ title: "[[#{md.muomma.uomekey}]]", dataType: "string", dataIndx: "uomekey",		//단위
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			render: function (ui) {
+    			if(ui.cellData){
+    				ui.rowData.uomekey = ui.cellData.toUpperCase();
+    			}
+            },
+            validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.muomma.uomenam}]]", dataType: "string", dataIndx: "uomenam", 		//단위명칭
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.muomma.uodelyn}]]", dataIndx: "uodelyn",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.muomma.credate}]]", dataType: "string", dataIndx: "credate",  editable: false },
+		{ title: "[[#{md.muomma.cretime}]]", dataType: "string", dataIndx: "cretime",  editable: false },
+		{ title: "[[#{md.muomma.creuser}]]", dataType: "string", dataIndx: "creuser",  editable: false },
+		{ title: "[[#{md.muomma.lmodate}]]", dataType: "string", dataIndx: "lmodate",  editable: false },
+		{ title: "[[#{md.muomma.lmotime}]]", dataType: "string", dataIndx: "lmotime",  editable: false },
+		{ title: "[[#{md.muomma.lmouser}]]", dataType: "string", dataIndx: "lmouser",  editable: false }
+	];
+	
+	var mdu3_grid = new GridUtil(mdu3_gridCM, '[[${gprogrid}]]', 'mdu3_grid');
+	mdu3_grid.setFind();
+	mdu3_grid.setReset();
+	
+	mdu3_grid.setAdd(function(evt, ui){
+		var rowIndx = this.addRow({ rowData : { state : true, compkey : "[[${session.compkey}]]" , uodelyn : "N" } , checkEditable : false });
+		this.goToPage({ rowIndx : rowIndx });
+		this.editCell({ rowIndx : rowIndx , dataIndx : "uomekey"});
+	});
+	
+	mdu3_grid.setChange(function (evt, ui) {
+    	if(ui.source === 'edit'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+           		    newRow : { state : true },
+           		    checkEditable: false
+           		});
+    		}
+    	}else if(ui.source === 'paste'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.hasOwnProperty('uomekey') && ui.updateList[i].oldRow.hasOwnProperty('uomekey')){
+    				newRow.uomekey = ui.updateList[i].newRow.uomekey.toUpperCase();
+    			}
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : newRow,
+        		    checkEditable: false
+        		});
+    		}
+    		for(i=0; i<ui.addList.length; i++){
+    			ui.addList[i].newRow.state = true;
+    			ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+    			ui.addList[i].newRow.uodelyn = ui.addList[i].newRow.uodelyn ? ui.addList[i].newRow.uodelyn : "N";
+    		}
+    	}else if(ui.source === 'checkbox'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			if(ui.updateList[i].newRow.hasOwnProperty('uodelyn')){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : true },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+    	}
+    });
+	
+	mdu3_grid.open();
+	mdu3List();
+	
+	function mdu3List(){
+		var grid = pq.grid("#mdu3_grid");
+		grid.showLoading();
+		var aul = new AjaxUtil_Order("/md/selectMuommaList.do", { uomekey : $('#mdu3_uomekey').val(), uomenam : $('#mdu3_uomenam').val() }, "GET");
+		aul.setCallbackSuccess(function (data){
+			grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		});
+		aul.send();
+	}
+});
+
+</script>
+
+</div>
+</html>

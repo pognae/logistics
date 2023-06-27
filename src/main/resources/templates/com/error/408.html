@@ -1,0 +1,30 @@
+<!DOCTYPE html> 
+<html xmlns:th="http://www.thymeleaf.org"  xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+	<head>
+		<meta charset="UTF-8">
+	    <title> Error Page!</title>
+	    <link rel="shortcut icon" href="/img/warehouse1.ico">
+	    <!-- CSS  -->
+	    <link rel="stylesheet" href="/css/sy/error.css">
+	</head> 
+	<body class="err408"> 
+		<div class="terminal">
+			<h2>408 요청 시간 초과 오류</h2>
+		  	<hr> 		
+			<h1>Error <span class="errorcode"><span th:text="${code}"></span></span></h1>
+			<p class="output"><span th:text="${msg}"></span></p>
+			<p class="output">TIMESTAMP: <span th:text="${timestamp}"></span> </p>
+			<p class="output">QueryString: <span th:text="${QueryString}"></span> </p>
+			<p class="output">ParameterMap: <span th:text="${ParameterMap}"></span> </p>
+			<p class="output">referer: <span th:text="${referer}"></span> </p> 
+			  
+			<p class="output"> 
+				<a href="index" th:href="@{/login}"> login </a>    
+				<a href="index" th:href="${referer}">Back to Page</a> 
+			</p>
+		    <br>
+		</div>
+
+	</body>
+</html> 
+ 

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"> 
+<th:block th:fragment="fragments-comHead">
+	<meta charset="utf-8">
+	<meta http-equiv="Content-Language" content="ko" >
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta http-equiv="Pragma" CONTENT="no-cache">
+	<meta http-equiv="Expires" CONTENT="-1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	   
+	<link rel="manifest" href="/manifest.json" />
+	<link rel="apple-touch-icon" href="/img/touch-icon-iphone.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="/img/touch-icon-ipad.png">
+	<link rel="apple-touch-icon" sizes="167x167" href="/img/touch-icon-ipad-retina.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/img/touch-icon-iphone-retina.png">
+	        
+	<title> :: BINBLUR :: </title>	 
+	<link rel="shortcut icon" href="/img/warehouse1.ico">
+	
+	<!-- CSS : bootstrap   -->
+	<link rel="stylesheet" href="/vender/bootstrap/bootstrap-4.1.3/css/bootstrap.css">
+	<link rel="stylesheet" href="/vender/bootstrap/bootstrap-icons.css">
+	<!-- CSS : Scrollbar Custom -->
+	<link rel="stylesheet" href="/vender/malihu-custom-scrollbar-plugin-3.1.5/jquery.mCustomScrollbar.min.css">
+	
+	<!-- css : PQGrid  -->
+    <link rel="stylesheet" href="/vender/paramquery-pro 8.6/pqgrid.min.css" />
+    <link rel="stylesheet" href="/vender/paramquery-pro 8.6/pqgrid.ui.min.css" />
+    <!-- <link rel='stylesheet' href='/vender/paramquery-pro 8.6/themes/bootstrap/pqgrid.css' />  -->
+	<link rel="stylesheet" href="/vender/pggrid/pqselect.min.css" /> 
+		
+	<!-- css : jQuery UI Theme -->
+	<!--  <link rel="stylesheet" href="/vender/jqueryui/jquery-ui-1.11.4/jquery-ui.min.css" /> -->
+	<link rel="stylesheet" href="/vender/jqueryui/jquery-ui-1.11.4/jquery-ui.css" />
+	
+	<!-- CSS : Main 프레임 -->
+	<link rel="stylesheet" href="/css/main/1/common.css">       <!-- main:공통 -->
+	<link rel="stylesheet" href="/css/main/1/mainlayout.css">   <!-- main:layout -->
+	<link rel="stylesheet" href="/css/main/1/mainSideBar.css">  <!-- main:SideBar-->
+	<link rel="stylesheet" href="/css/main/2/mainContent.css">  <!-- main:Content-->
+	<link rel="stylesheet" href="/css/main/2/pqgrid.css">       <!-- main:pggrid  -->
+	<link rel="stylesheet" href="/css/main/2/tabbar.css">       <!-- main:tab bar -->
+	<link rel="stylesheet" href="/css/md/md.css">       		<!-- 공통:md css  -->
+	<link rel="stylesheet" href="/css/om/om.css">       		<!-- 공통:om css  -->
+	<link rel="stylesheet" href="/css/pt/pt.css">       		<!-- 공통:pt css  -->
+	<link rel="stylesheet" href="/css/wm/wm.css">       		<!-- 공통:wm css  -->
+	<link rel="stylesheet" href="/css/wo/wo.css">       		<!-- 공통:wo css  -->
+	<link rel="stylesheet" href="/css/tm/tm.css">       		<!-- 공통:tm css  -->
+	
+	<!-- JavaScript : jsZip for zip and xlsx import/export -->
+	<script src="/vender/pggrid/jsZip-2.5.0/jszip.min.js"></script>
+	
+	<!-- JavaScript : 클라이언트 측에서 파일을 저장하는 라이브러리 -->
+	<script src="/vender/pggrid/FileSaver.js"></script>
+	
+	<!-- JavaScript : jQuery Library -->
+	<!-- <script type="text/javascript" src="/vender/jquery/jquery-3.6.0.js"></script> -->
+	<script type="text/javascript" src="/vender/jquery/jquery-2.2.4.js"></script>
+	
+	<!-- JavaScript : jQuery Migration -->
+	<!-- <script type="text/javascript" src="/vender/jquery/jquery-migrate-3.3.0.js"></script> -->
+	
+	<!-- JavaScript : Bootstrap Library -->
+	<script type="text/javascript" src="/vender/bootstrap/bootstrap-4.1.3/js/bootstrap.bundle.js"></script> 
+	
+	<!-- JavaScript : 날짜 라이브러리 -->
+	<script src="/vender/daterangepicker/moment.js"></script>
+	
+	<!-- JavaScript : 시간 라이브러리 -->
+	<script src="/vender/timepicker/bootstrap-timepicker.js"></script>
+	<link rel = "stylesheet" href = "/vender/timepicker/bootstrap-timepicker.css"> 
+	
+	<!-- JavaScript : Main 프레임  -->
+	<script type="text/javascript" src="/js/main/2/jqueryTab.js"></script>
+	<script type="text/javascript" src="/js/main/2/mainSideBar.js"></script>
+	<script type="text/javascript" src="/js/common.js"></script>
+	<script type="text/javascript" src="/js/main/window_keyEvent.js"></script>
+	<script type="text/javascript" src="/js/pqgrid.js"></script>
+	
+	<!-- JavaScript : jQuery UI -->
+	<script src="/vender/jqueryui/jquery-ui-1.11.4/jquery-ui.js"></script>
+	
+	<!-- JavaScript : pggrid -->
+	<!-- <script src="/vender/pggrid/pqgrid.min.js"></script> -->
+	<script src="/vender/paramquery-pro 8.6/pqgrid.min2.js"></script>
+	<script src="/vender/paramquery-pro 8.6/pqTouch/pqtouch.min.js"></script><!--for touch devices-->
+	<script src="/vender/pggrid/pqselect.min.js"></script>
+	
+	<!-- JavaScript : QR코드 라이브러리 -->
+	<script type="text/javascript" src="/vender/qr/jquery-qrcode-0.18.0.js"></script>
+	
+	<!-- JavaScript : jqueryPrint 라이브러리 -->
+	<script type="text/javascript" src="/vender/printThis/printThis.js"></script>
+	
+	<!-- JavaScript : font, icon Library -->
+	<script type="text/javascript" src="/vender/fontAwesomeKit/fontAwesome-6.2.js"></script>
+	
+
+	
+  
+	<!-- JavaScript : 최신 jquery와 호완성 필요 --> 
+	<script type="text/javascript" src="/vender/malihu-custom-scrollbar-plugin-3.1.5/jquery.mCustomScrollbar.js"></script>
+	
+	<!-- JavaScript : 위젯 라이브러리 -->
+	<link rel="stylesheet" href="/css/om/widget.css">
+	<link rel="stylesheet" href="/css/om/gridstack-extra.css"/>
+	<script type="text/javascript" src="/js/om/gridstack-all.js"></script>
+	<script type="text/javascript" src="/js/om/gridstackoms2Events.js"></script>
+	
+	<!-- JavaScript : bootstrap 토글 라이브러리 -->
+	<link rel="stylesheet" href="/vender/bootstrap/bootstrap-4.1.3/css/bootstrap4-toggle.css"/>
+	<script type="text/javascript" src="/vender/bootstrap/bootstrap-4.1.3/js/bootstrap4-toggle.js"></script>
+	
+	<!--  차트 스타일 & 스크립트 -->
+	<link rel="stylesheet" href="/css/main/echart.css">
+	<script src="/vender/echarts/echarts5.4.0/echarts.min.js"></script>
+	<script src="/js/main/dashboard_binblur.js"></script>
+</th:block>
+
+</html> 

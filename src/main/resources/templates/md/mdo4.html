@@ -1,0 +1,427 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+			</div>
+			<div class="header-right">
+	  			<button type="button" class="btn default-btn" id="mdo4_save"    th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+		  		<button type="button" class="btn default-btn" id="mdo4_search"  th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+	  		</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdo4_warekey" class="col-md-5 col-xl-2 col-form-label">[[#{md.mzonma.warekey}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<select class="custom-select" id="mdo4_warekey"></select>
+					</div>
+					<label for="mdo4_areanam" class="col-md-5 col-xl-2 col-form-label">[[#{md.mzonma.areanam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mzonma.areanam')}" id="mdo4_areanam"/>
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label for="mdo4_zonenam" class="col-md-5 col-xl-2 col-form-label">[[#{md.mzonma.zonenam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mzonma.zonenam')}" id="mdo4_zonenam"/>
+					</div>
+				</div>
+			</div>
+			<div class="btn-fold-wrap">
+				<button class="btn-fold" onclick="onSearchExpand(this)"><i class="fa-solid fa-angle-down"></i></button>
+			</div>
+		</div>
+		<div class="content-inner">
+		 	<div class="grid-item grid-1">
+		 		<div class="grid-container">
+		 			<div id="mdo4_grid"></div>
+		 		</div>
+		 	</div>
+		 </div>
+	</div>
+		
+<script>
+$(function(){
+	//===============================================================================
+	// 검색 이벤트 
+	// ==============================================================================
+	var mdo4_init = mdo4Init();
+	
+	$('#mdo4_search').click(function() {
+		mdo4List();
+	});
+	
+	$('#mdo4_save').click(function(){
+		var grid = pq.grid("#mdo4_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		var gridChange = grid.getChanges({all:true});
+		
+		if(gridCheck.length > 0){
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+			for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].warekey){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "warekey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].areakey){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "areakey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].zonekey){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "zonekey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].zonenam){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "zonenam" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].zonetyp){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "zonetyp" } );
+	    	  		return false;
+	    	  	}
+	    	}
+				
+			//============================================================	 
+	    	//체크된 데이터 충복 체크
+	    	//============================================================
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){
+						if(gridCheck[i].warekey === grid.getData()[j].warekey && gridCheck[i].areakey === grid.getData()[j].areakey && gridCheck[i].zonekey === grid.getData()[j].zonekey){
+			      			alert((grid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+			
+			//updateList 체크 데이터 정제
+			for(z=0; z<gridChange.updateList.length; z++){
+				if(gridChange.updateList[z].state != true){
+					gridChange.updateList.splice(z, 1);
+					gridChange.oldList.splice(z, 1);
+				}
+			}
+			
+			//addList 체크 데이터 정제
+			for(x=0; x<gridChange.addList.length; x++){
+				if(gridChange.addList[x].state != true){
+					gridChange.addList.splice(x, 1);
+				}
+			}
+			
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { data : gridChange, warekey : $('#mdo4_warekey option:selected').val(), areanam : $('#mdo4_areanam').val(), zonenam : $('#mdo4_zonenam').val() };
+			    grid.showLoading();
+				var aul =  new AjaxUtil_Order("/md/mdo4Save.do", data);
+				aul.setCallbackSuccess(function(data){ 
+					grid.option( "dataModel", { data: data.mzonmaList, recIndx: "rowkey" } );
+			   		grid.refreshDataAndView();
+			        alert("[[#{ms.saveSuccess}]]");
+				});
+				aul.setComplete(function(data){
+					grid.hideLoading();
+				})
+				aul.send();
+			}
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	var mdo4_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+             cb: { all: false, header: true }
+        },
+        { title: "rowkey", dataType: "string", dataIndx: "rowkey", editable: false, hidden: true },
+		{ title: "[[#{md.mzonma.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false , hidden: true},
+		{ title: "[[#{md.mzonma.warekey}]]", dataType: "string", dataIndx: "warekey",	//창고
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : "";
+            }
+		},
+        { title: "[[#{md.mzonma.areakey}]]", dataType: "string", dataIndx: "areakey",	//Area key
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	if(ui.cellData == ""){
+                	ui.rowData.areanam = "";
+                }
+            	return option ? option[ui.cellData] : ui.rowData.areanam;
+            }
+        },
+		{ title: "[[#{md.mzonma.zonekey}]]", dataType: "string", dataIndx: "zonekey",		//Zone Key
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			render: function (ui) {
+    			if(ui.cellData){
+    				ui.rowData.locakey = ui.cellData.toUpperCase();
+    			}
+            },
+            validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mzonma.zodelyn}]]", dataType: "string", dataIndx: "zodelyn",		//Zone Deletion YN
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mzonma.zonenam}]]", dataType: "string", dataIndx: "zonenam",		//Zone Name
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mzonma.zonetyp}]]", dataType: "string", dataIndx: "zonetyp", 		//Zone type
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : "";
+            }
+		},
+		{ title: "[[#{md.mzonma.floorty}]]", dataType: "integer", dataIndx: "floorty",		//실제 층 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mzonma.putawyn}]]", dataType: "string", dataIndx: "putawyn",		//적치 가능여부
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mzonma.allocyn}]]", dataType: "string", dataIndx: "allocyn",		//할당 가능여부
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mzonma.moveoyn}]]", dataType: "string", dataIndx: "moveoyn",		//이동출발 가능여부
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mzonma.moveiyn}]]", dataType: "string", dataIndx: "moveiyn",		//이동도착 가능여부
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}	
+		},
+		{ title: "[[#{md.mzonma.miqtyyn}]]", dataType: "string", dataIndx: "miqtyyn",		//Minus Qty가능여부
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mzonma.syonlyn}]]", dataType: "string", dataIndx: "syonlyn",		//시스템 Zone 여부
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mzonma.credate}]]", dataType: "string", dataIndx: "credate", editable: false },
+		{ title: "[[#{md.mzonma.cretime}]]", dataType: "string", dataIndx: "cretime", editable: false },
+		{ title: "[[#{md.mzonma.creuser}]]", dataType: "string", dataIndx: "creuser", editable: false },
+		{ title: "[[#{md.mzonma.lmodate}]]", dataType: "string", dataIndx: "lmodate", editable: false },
+		{ title: "[[#{md.mzonma.lmotime}]]", dataType: "string", dataIndx: "lmotime", editable: false },
+		{ title: "[[#{md.mzonma.lmouser}]]", dataType: "string", dataIndx: "lmouser", editable: false }
+	];
+	
+	var mdo4_grid = new GridUtil(mdo4_gridCM, '[[${gprogrid}]]', 'mdo4_grid');
+	mdo4_grid.setFind();
+	mdo4_grid.setReset();
+	
+	mdo4_grid.setAdd(function(evt, ui){
+		var rowData = { 
+				state : true, 
+				compkey: "[[${session.compkey}]]",
+				zodelyn : "N",
+				floorty : 1,
+				putawyn : "N",
+				allocyn : "N", 
+				moveoyn : "N", 
+				moveiyn : "N",
+				miqtyyn : "N", 
+				syonlyn : "N"
+			};
+		var rowIndx = this.addRow({ rowData: rowData, checkEditable: false });
+        this.goToPage({ rowIndx: rowIndx });
+        this.editCell({ rowIndx : rowIndx , dataIndx : "warekey"});
+	});
+	
+	mdo4_grid.setCreate(function (evt, ui) {
+		var keys = Object.keys(mdo4_init);
+		for(key of keys){
+			var gData = mdo4_init[key];
+			var column = this.getColumn({ dataIndx: key });
+			var options = gData.map(function(obj){
+	        	var rObj = {};
+	        	rObj[obj.combovl] = obj.combonm;
+	        	return rObj;
+			});
+	    	column.editor.options = options;
+		}
+	});
+	
+	mdo4_grid.setChange(function (evt, ui) {
+    	if(ui.source === 'edit' || ui.source == 'clear'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.hasOwnProperty('warekey') && ui.updateList[i].oldRow.hasOwnProperty('warekey')){
+    				newRow.areakey = [];
+    			}
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : newRow,
+        		    checkEditable: false
+        		});
+    		}
+    	}else if(ui.source === 'paste'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.hasOwnProperty('warekey') && ui.updateList[i].oldRow.hasOwnProperty('warekey')){
+    				newRow.areakey = [];
+    			}
+    			if(ui.updateList[i].newRow.hasOwnProperty('zonekey') && ui.updateList[i].oldRow.hasOwnProperty('zonekey')){
+    				newRow.zonekey = ui.updateList[i].newRow.zonekey.toUpperCase();
+    			}
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : newRow,
+        		    checkEditable: false
+        		});
+    		}
+    		for(i=0; i<ui.addList.length; i++){
+    			ui.addList[i].newRow.state = true;
+    			ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+    			ui.addList[i].newRow.zodelyn = ui.addList[i].newRow.zodelyn ? ui.addList[i].newRow.zodelyn : "N";
+    			ui.addList[i].newRow.floorty = ui.addList[i].newRow.floorty ? ui.addList[i].newRow.floorty : 1;
+    			ui.addList[i].newRow.putawyn = ui.addList[i].newRow.putawyn ? ui.addList[i].newRow.putawyn : "N";
+    			ui.addList[i].newRow.allocyn = ui.addList[i].newRow.allocyn ? ui.addList[i].newRow.allocyn : "N"; 
+    			ui.addList[i].newRow.moveoyn = ui.addList[i].newRow.moveoyn ? ui.addList[i].newRow.moveoyn : "N"; 
+    			ui.addList[i].newRow.moveiyn = ui.addList[i].newRow.moveiyn ? ui.addList[i].newRow.moveiyn : "N";
+    			ui.addList[i].newRow.miqtyyn = ui.addList[i].newRow.miqtyyn ? ui.addList[i].newRow.miqtyyn : "N"; 
+    			ui.addList[i].newRow.syonlyn = ui.addList[i].newRow.syonlyn ? ui.addList[i].newRow.syonlyn : "N";
+    		}
+    	}else if(ui.source == 'checkbox'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			if(ui.updateList[i].newRow.hasOwnProperty('zodelyn') || ui.updateList[i].newRow.hasOwnProperty('putawyn') || 
+    			   ui.updateList[i].newRow.hasOwnProperty('allocyn') || ui.updateList[i].newRow.hasOwnProperty('moveoyn') ||
+    			   ui.updateList[i].newRow.hasOwnProperty('miqtyyn') || ui.updateList[i].newRow.hasOwnProperty('syonlyn') ){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : true },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+    	}
+    });
+	
+	mdo4_grid.setCellClick(function (evt, ui) {
+		if(ui.dataIndx =='areakey'){
+			if(ui.rowData.warekey){
+				Combo("mdo4_grid", "areakey", { warekey : ui.rowData.warekey } , "/md/areaSelectBox.do");
+			}else{
+				var column = this.getColumn({ dataIndx: ui.dataIndx });
+           		column.editor.options = [];
+			}
+		}
+    });
+	
+	mdo4_grid.open();
+	mdo4List();
+	
+	function mdo4List(){
+		var grid = pq.grid("#mdo4_grid");
+		grid.showLoading();
+		var data = { warekey : $('#mdo4_warekey option:selected').val(), areanam : $('#mdo4_areanam').val(), zonenam : $('#mdo4_zonenam').val() };
+		var aul = new AjaxUtil_Order('/md/mdo4Select.do', data , "GET");
+		aul.setCallbackSuccess(function(data){
+			grid.option( "dataModel", { data: data.mzonmaList, recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		})
+		aul.send();
+	}
+	
+	function mdo4Init(){
+		var initData = callAjax('data', 'GET', "/md/mdo4Init.do" , {});
+		if(initData){
+			var list = initData.warekey;
+			for(item of list){
+				$('#mdo4_warekey').append("<option value='" + item.combovl + "'>" + item.combonm +"</option>");	
+			}
+		}
+		return initData
+	}
+});
+
+</script>
+		
+</div>
+</html>

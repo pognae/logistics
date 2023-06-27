@@ -1,0 +1,330 @@
+<div class="modal fade" id="receiptWmpt10ModalLayerPopup" tabindex="-1">
+	<div class="modal-dialog modal-330">
+		<div class="modal-content">
+			<div class="modal-body">
+				<div class="modal-top-btn-area">
+		      		<button type="button" id="wmpt10ModalLayerPopupPrintBtn" class="btn btn-primary"><i class="fa-solid fa-print"></i></button>
+					<button type="button" id="wmpt10ModalLayerPopupCloseBtn" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+	      		</div>
+				<div class="wmpt10-roll">
+					<div class="layout-roll" id="wmpt10_print_wrap">
+						<div class="layout-top">
+							<div class="title">영수증</div>
+							<div class="info">
+								<div class="orders">
+									<p class="right">
+										<span class="order-name" name="wmpt10_receipt_cunamlc"></span>
+										<span>귀하</span>
+									</p>
+								</div>
+								<div class="vh-3">
+									<p class="left"><span class="order-num" name="wmpt10_receipt_number">0000</span></p>
+									<p class="right"><span class="date" name="wmpt10_receipt_date"></span><span class="week" name="wmpt10_receipt_week"></span><span class="time" name="wmpt10_receipt_time"></span></p>
+								</div>
+							</div>
+						</div>
+						<div class="layout-double-line">====================</div>
+						<div class="layout-store">
+							<div class="qr-code"></div>
+							<div class="store-info-top">
+								<p class="brand"><span name="wmpt10_receipt_cunamen"></span> <span name="wmpt10_receipt_cunamko"></span></p>
+								<p class="detail"><span name="wmpt10_receipt_cuaddr3"></span></p>
+							</div>
+							<div class="store-info-middle">
+								<div class="center-block">
+									<p name="wmpt10_receipt_invhead"></p>
+									<!-- p><span>▶TEL </span><span name="wmpt10_receipt_cuteln1"></span></p>
+									<p><span>▶MOB </span><span name="wmpt10_receipt_cuteln2"></span></p>
+									<p><span>KAKAO TALK ID : </span><span>FRILLMOND5129</span></p>
+									<p><span>KAKAO STORY ID : </span><span>FRILLMOND</span></p>
+									<p><span>신상마켓 ID : </span><span>FRRLLMOND</span></p>
+									<p><span>WECHAT ID : </span><span>FRRLLMOND24</span></p-->
+								</div>
+							</div>
+							<!--  div class="store-info-bottom">
+								<p class="head-line">＜카카오스토리 소식받기♡＞</p>
+								<div class="center-block">
+									<p>▶매장오픈 밤12시 이전 카톡주문시 일찍상품을 준비해드릴수 있어요</p>
+									<p>▶온라인 입금 거래시 필히 '세금계산서' 발행 해주셔야 합니다.</p>
+								</div>
+							</div-->
+						</div>
+						<div class="layout-double-line">====================</div>
+						<div class="layout-price">
+							<div class="layout-content">
+								<div class="dtw">
+									<span class="date" name="wmpt10_receipt_halfdate"></span>
+									<span class="week" name="wmpt10_receipt_halfweek"></span>
+								</div>
+								<div class="price" id="wmpt10_total_price">24,000</div>
+								<div class="text">샘플</div>
+							</div>
+						</div>
+						<div class="layout-double-line">====================</div>
+						<div class="layout-sku-table">
+							<table>
+								<thead>
+									<tr class="dash-block vh-4">
+										<th class="text-left text-weight-normal wd-40">품명</th>
+										<th class="text-weight-normal">단가</th>
+										<th class="text-weight-normal">수량</th>
+										<th class="text-right text-weight-normal">금액</th>
+									</tr>				
+								</thead>
+								<tbody id="wmpt10ItemList">
+									
+									
+								</tbody>
+							</table>
+						</div>
+						<div class="layout-sku-info">
+							<div class="sku-composion">
+								<div class="title">[혼용률정보]</div>
+								<div class="data">*리마인더반팔T[면100]</div>
+							</div>
+							<div class="sku-detail-info">
+								<div class="title">[동일상품 칼라/사이즈 정보]</div>
+								<div class="data">*리마인더반팔T 칼라 - 군청, 백색, 연노랑, 연보라</div>
+							</div>
+						</div>
+						<div class="layout-double-line">====================</div>
+						<div class="layout-bottom-notice" name="wmpt10_receipt_invfoot"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script th:inline="javascript">
+$(function(){
+	var parentParam = /*[[${params}]]*/ null;
+	    
+	var wmpt10ModalOBject = $("#receiptWmpt10ModalLayerPopup");
+	wmpt10ModalOBject.modal("show");
+
+	initData();
+
+	function initData(){
+		if(parentParam.progrid == "wmoa2"){
+			initDom();
+			initDate();
+			
+			var rData = callAjax("data", "GET", "/wm/wmpt10ReceiptItemList.do", parentParam);
+			
+			if(rData.code == "200"){
+				initUserData(rData);
+				qrCreate(rData);
+				initViewData(rData.list[0]);
+				initListData(rData);
+			}
+		}
+	}
+	
+	function initDate(){
+		var today = new Date();
+		var date = today.getFullYear()+'.'+(today.getMonth()+1).toString().padStart(2,"0")+'.'+today.getDate().toString().padStart(2,"0");
+		var time = today.getHours().toString().padStart(2,"0")+':'+today.getMinutes().toString().padStart(2,"0")+':'+today.getSeconds().toString().padStart(2,"0");
+		$(".wmpt10-print-date-span").text(date);
+		$(".wmpt10-print-time-span").text(time);
+	}
+	
+	function initUserData(data){
+		$("#wmpt10_useract").text(data.useract);
+	}
+	
+	function initDom()
+	{
+		//========초기화
+		$("span[name='wmpt10_receipt_cunamlc']").text("");		//귀하
+		$("span[name='wmpt10_receipt_date']").text("");			//날짜
+		$("span[name='wmpt10_receipt_week']").text("");			//요일
+		$("span[name='wmpt10_receipt_time']").text("");			//시간
+		$("span[name='wmpt10_receipt_cunamen']").text("");		//브랜드 영문명
+		$("span[name='wmpt10_receipt_cunamko']").text("");		//브랜드 한글명
+		$("span[name='wmpt10_receipt_cuaddr3']").text("");		//주소3
+		$("span[name='wmpt10_receipt_cuteln1']").text("");		//연락처1
+		$("span[name='wmpt10_receipt_cuteln2']").text("");		//연락처2
+		$("p[name='wmpt10_receipt_invhead']").text("");			//장끼 상단
+		$("div[name='wmpt10_receipt_invfoot']").text("");			//장끼 하단
+		$("span[name='wmpt10_receipt_halfdate']").text("");		//년-월-일 22-01-01
+		$("span[name='wmpt10_receipt_halfweek']").text("");		//요일 (일)
+	}
+	
+	function initViewData(data){
+		//========값 세팅
+		$("span[name='wmpt10_receipt_number']").text(parentParam.refsodc.slice(-4));	//전표번호
+		$("span[name='wmpt10_receipt_cunamlc']").text(data.cunamlc);			//귀하
+		$("span[name='wmpt10_receipt_date']").text(dateFunction("date"));			//날짜
+		$("span[name='wmpt10_receipt_week']").text(dateFunction("week"));			//요일
+		$("span[name='wmpt10_receipt_time']").text(dateFunction("time"));			//시간
+		$("span[name='wmpt10_receipt_cunamen']").text(data.cunamen);			//브랜드 영문명
+		$("span[name='wmpt10_receipt_cunamko']").text(data.cunamko);			//브랜드 한글명
+		$("span[name='wmpt10_receipt_cuaddr3']").text(data.cuaddr3);			//주소3
+		$("span[name='wmpt10_receipt_cuteln1']").text(data.cuteln1);			//연락처1
+		$("span[name='wmpt10_receipt_cuteln2']").text(data.cuteln2);			//연락처2
+		$("p[name='wmpt10_receipt_invhead']").text(data.invhead);				//장끼 상단
+		$("div[name='wmpt10_receipt_invfoot']").text(data.invfoot);				//장끼 하단
+		$("span[name='wmpt10_receipt_halfdate']").text(dateFunction("halfdate"));
+		$("span[name='wmpt10_receipt_halfweek']").text(dateFunction("week"));
+	}
+	
+	function initListData(data){
+		var list = data.list;
+		var listCount = list.length;
+		var summarySkuCountSum = 0;
+		var summarySkuPriceSum = 0; 
+		var tbodyDom = $("#wmpt10ItemList");
+		
+		for(var i=0; i<list.length; i++){
+			
+			summarySkuCountSum = summarySkuCountSum + list[i].fordqty;
+			summarySkuPriceSum = summarySkuPriceSum + list[i].itmpric;
+			
+			var trDom = $("<tr></tr>",{
+				"class" : "under-line vh-5"
+			});
+			
+			var td1Dom = $("<td></td>",{
+				"text" : list[i].skudesc
+			});
+			var td2Dom = $("<td></td>",{
+				"class" : "text-right",
+				"text" : comma(list[i].itmcost)
+			});
+			var td3Dom = $("<td></td>",{
+				"class" : "text-center",
+				"text" : comma(list[i].fordqty)
+			});
+			var td4Dom = $("<td></td>",{
+				"class" : "text-right",
+				"text" : comma(list[i].itmpric)
+			});
+			
+			trDom.append(
+				td1Dom,
+				td2Dom,
+				td3Dom,
+				td4Dom
+			);
+			
+			tbodyDom.append(trDom);
+		}
+		
+		var summarytrDom = $("<tr></tr>",{
+			"class" : "summary under-line vh-5"
+		});
+		
+		var summarytd1Dom = $("<td></td>",{
+			"text" : "--- 소계 ---"
+		});
+		var summarytd2Dom = $("<td></td>",{
+			"class" : "text-right",
+			"text" : comma(listCount)+"건"
+		});
+		var summarytd3Dom = $("<td></td>",{
+			"class" : "text-center",
+			"text" : comma(summarySkuCountSum)
+		});
+		var summarytd4Dom = $("<td></td>",{
+			"class" : "text-right",
+			"text" : comma(summarySkuPriceSum)
+		});
+		
+		summarytrDom.append(
+			summarytd1Dom,
+			summarytd2Dom,
+			summarytd3Dom,
+			summarytd4Dom
+		);
+			
+		tbodyDom.append(summarytrDom);
+		
+		$("#wmpt10_total_price").text(comma(summarySkuPriceSum));
+	}
+		
+	function qrCreate(url){
+		var urlText = url ? url : "http://www.naver.com"; 
+		$(".qr-code").children().remove();
+		$(".qr-code").qrcode({   //qrcode 시작        
+			render : "canvas",      //table, canvas 형식 두 종류가 있다.         
+			width : 150,            //넓이 조절        
+			height : 150,           //높이 조절        
+			text   : urlText
+		});
+	}
+
+	function dateFunction(type){
+		
+		var result;
+		var today = new Date();
+		
+		switch(type){
+		
+			case "halfdate":
+				var year = today.getFullYear();
+				var month = ('0' + (today.getMonth() + 1)).slice(-2);
+				var day = ('0' + today.getDate()).slice(-2);
+	
+				var dateString = year.toString().substring(2) + '-' + month  + '-' + day;
+				
+				result = dateString;
+			break;
+			
+			case "date":
+				var year = today.getFullYear();
+				var month = ('0' + (today.getMonth() + 1)).slice(-2);
+				var day = ('0' + today.getDate()).slice(-2);
+
+				var dateString = year + '-' + month  + '-' + day;
+				
+				result = dateString;
+			break;
+			
+			case "week":
+				const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+				var week = WEEKDAY[today.getDay()];
+				
+				result = "("+week+")";
+			break;
+			
+			case "time":
+				var hours = ('0' + today.getHours()).slice(-2); 
+				var minutes = ('0' + today.getMinutes()).slice(-2);
+				var seconds = ('0' + today.getSeconds()).slice(-2); 
+
+				var timeString = hours + ':' + minutes  + ':' + seconds;
+				
+				result = timeString;
+			break;
+		}
+		
+		return result;
+	}
+	
+	
+	/*
+	 * Event 영역
+ 	 */
+	$("#wmpt10ModalLayerPopupCloseBtn").click(function(){
+		wmpt10ModalOBject.modal("hide");
+	});
+	
+	$("#wmpt10ModalLayerPopupPrintBtn").click(function(){
+		pickingPrint();
+	});
+
+	function pickingPrint(){
+		/*
+		2022-08-02 페이징 번호 넣기 방법 찾아야함..
+		*/
+		
+		$(".layout-roll").printThis({
+			importCSS:false,
+			loadCSS: "/css/pt/pt.css",
+			//loadCSS : ,
+			//importStyle : true 
+			//'<style media="print">@page {size:80mm; margin:0;}</style>'
+		});
+	}
+});
+</script>

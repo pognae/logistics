@@ -1,0 +1,351 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<form method="post" id="frmmdo2" onsubmit="return false;"> 
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+			</div>
+			<div class="header-right">
+				<button type="button" class="btn default-btn" id="mdo2_save"   th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+				<button type="button" class="btn default-btn" id="mdo2_search" th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+			</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="inputGroupSelect01" class="col-md-5 col-xl-2 col-form-label" >[[#{md.mwarma.warekey}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mwarma.warekey')}" id="mdo2_warekey" name="mdo2_warekey"/>
+					</div>
+					<label for="inputGroupSelect01" class="col-md-5 col-xl-2 col-form-label" >[[#{md.mwarma.whnamlc}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mwarma.whnamlc')}" id="mdo2_whnamlc" name="mdo2_whnamlc"/>
+					</div>
+				</div>
+			</div>
+			<div class="btn-fold-wrap">
+				<button class="btn-fold" onclick="onSearchExpand(this)"><i class="fa-solid fa-angle-down"></i></button>
+			</div>
+		</div>	
+		<div class="content-inner">
+			<div class="grid-item grid-1">
+				<div class="grid-container">
+					<div id="mdo2_grid"></div>
+				</div>
+			</div>		
+		</div>
+	</div>
+	</form>
+
+<script>
+$(function() {
+	//===============================================================	
+	// 검색 이벤트
+	//===============================================================
+	$('#mdo2_search').click(function() {
+		 mdo2List();
+	});
+
+	
+	$('#mdo2_save').click(function(){
+		var grid = pq.grid("#mdo2_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		var gridChange = grid.getChanges({all:true});
+		
+		if(gridCheck.length > 0 ){
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+			for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].warekey){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "warekey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].whnamlc){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "whnamlc" } );
+	    	  		return false;
+	    	  	}
+	    	}	
+	    		
+			//===============================================================	
+			//체크된 데이터 충복 체크
+			//===============================================================
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){
+						if(gridCheck[i].warekey === grid.getData()[j].warekey){
+			      			alert((grid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+
+			//updateList 체크 데이터 정제
+			for(z=0; z<gridChange.updateList.length; z++){
+				if(gridChange.updateList[z].state != true){
+					gridChange.updateList.splice(z, 1);
+					gridChange.oldList.splice(z, 1);
+				}
+			}
+			
+			//addList 체크 데이터 정제
+			for(x=0; x<gridChange.addList.length; x++){
+				if(gridChange.addList[x].state != true){
+					gridChange.addList.splice(x, 1);
+				}
+			}
+		
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { data : gridChange, warekey : $('#mdo2_warekey').val(), whnamlc : $('#mdo2_whnamlc').val() };
+				grid.showLoading();
+				var aul = new AjaxUtil_Order("/md/mdo2Save.do", data);
+				aul.setCallbackSuccess(function(data){
+					grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+			   		grid.refreshDataAndView(); 
+					alert("[[#{ms.saveSuccess}]]");
+				});
+				aul.setComplete(function(data){
+					grid.hideLoading();
+				})
+				aul.send();
+			}
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	var mdo2_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: true }
+        },
+        { title: "rowkey", dataType: "string", dataIndx: "rowkey", hidden: true, editable: false},
+		{ title: "[[#{md.mwarma.compkey}]]", dataType: "string", dataIndx: "compkey", hidden: true, editable: false},
+		{ title: "[[#{md.mwarma.warekey}]]", dataType: "string", dataIndx: "warekey",
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			render: function (ui) {
+    			if(ui.cellData){
+    				ui.rowData.warekey = ui.cellData.toUpperCase();
+    			}
+            },
+            validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.whdelyn}]]", dataType: "string", dataIndx: "whdelyn", 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type : "checkbox", editor : false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render : function(ui){
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mwarma.whnamlc}]]", dataType: "string", dataIndx: "whnamlc" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.whnamko}]]", dataType: "string", dataIndx: "whnamko" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },	
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.whnamen}]]", dataType: "string", dataIndx: "whnamen",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },	
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.whaddr1}]]", dataType: "string", dataIndx: "whaddr1" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },	
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.whaddr2}]]", dataType: "string", dataIndx: "whaddr2" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]'  },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.whaddr3}]]", dataType: "string", dataIndx: "whaddr3" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },	
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.wacitnm}]]", dataType: "string", dataIndx: "wacitnm" , hidden: true, 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.waregnm}]]", dataType: "string", dataIndx: "waregnm" , hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.wateln1}]]", dataType: "string", dataIndx: "wateln1" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },	
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 3, msg: "[[#{ms.validations.maxLenLength(3)}]]" }]
+		 },
+		{ title: "[[#{md.mwarma.wateln2}]]", dataType: "string", dataIndx: "wateln2" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 4, msg: "[[#{ms.validations.maxLenLength(4)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.wateln3}]]", dataType: "string", dataIndx: "wateln3" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },	
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 3, msg: "[[#{ms.validations.maxLenLength(3)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.wataxcd}]]", dataType: "string", dataIndx: "wataxcd" , hidden: true, 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },	
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.waposbx}]]", dataType: "string", dataIndx: "waposbx" , hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },	
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.waposcd}]]", dataType: "string", dataIndx: "waposcd" , hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },	
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.warepnm}]]", dataType: "string", dataIndx: "warepnm" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.wareptl}]]", dataType: "string", dataIndx: "wareptl" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.warepem}]]", dataType: "string", dataIndx: "warepem" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.wamannm}]]", dataType: "string", dataIndx: "wamannm" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.wamantl}]]", dataType: "string", dataIndx: "wamantl" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.wamanem}]]", dataType: "string", dataIndx: "wamanem" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.overall}]]", dataType: "string", dataIndx: "overall" , hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type : "checkbox", editor : false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render : function(ui){
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mwarma.overloc}]]", dataType: "string", dataIndx: "overloc" , hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.shpcmul}]]", dataType: "string", dataIndx: "shpcmul" , hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type : "checkbox", editor : false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render : function(ui){
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mwarma.inbokey}]]", dataType: "string", dataIndx: "inbokey" , hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.oubokey}]]", dataType: "string", dataIndx: "oubokey" , hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.watarea}]]", dataType: "integer", dataIndx: "watarea" , format: "#,###", 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.wascapa}]]", dataType: "integer", dataIndx: "wascapa" , format: "#,###", 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.watmzon}]]", dataType: "integer", dataIndx: "watmzon" , format: "#,###", hidden: true, 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mwarma.credate}]]", dataType: "string", dataIndx: "credate", editable:false },
+		{ title: "[[#{md.mwarma.cretime}]]", dataType: "string", dataIndx: "cretime", editable:false },
+		{ title: "[[#{md.mwarma.creuser}]]", dataType: "string", dataIndx: "creuser", editable:false },
+		{ title: "[[#{md.mwarma.lmodate}]]", dataType: "string", dataIndx: "lmodate", editable:false },
+		{ title: "[[#{md.mwarma.lmotime}]]", dataType: "string", dataIndx: "lmotime", editable:false },
+		{ title: "[[#{md.mwarma.lmouser}]]", dataType: "string", dataIndx: "lmouser", editable:false }
+	];
+	
+	var mdo2_grid = new GridUtil(mdo2_gridCM, '[[${gprogrid}]]', 'mdo2_grid');
+	mdo2_grid.setFind();
+	mdo2_grid.setReset();
+	
+	mdo2_grid.setAdd(function(evt, ui){
+		var rowData = { state : true, compkey : "[[${session.compkey}]]" , whdelyn : "N" };
+		var rowIndx = this.addRow({ rowData : rowData , checkEditable : false });
+		this.goToPage({ rowIndx : rowIndx });
+		this.editCell({ rowIndx : rowIndx , dataIndx : "warekey"});
+	});
+		
+	mdo2_grid.setChange(function(evt, ui){
+		if(ui.source === 'edit'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+           		    newRow : { state : true },
+           		    checkEditable: false
+           		});
+    		}
+    	}else if(ui.source === 'paste'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.hasOwnProperty('warekey') && ui.updateList[i].oldRow.hasOwnProperty('warekey')){
+    				newRow.warekey = ui.updateList[i].newRow.warekey.toUpperCase();
+    			}
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : newRow,
+        		    checkEditable: false
+        		});
+    		}
+    		for(i=0; i<ui.addList.length; i++){
+    			ui.addList[i].newRow.state = true;
+    			ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+    			ui.addList[i].newRow.whdelyn = ui.addList[i].newRow.whdelyn ? ui.addList[i].newRow.whdelyn : "N";
+    		}
+    	}else if(ui.source === 'checkbox'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			if(ui.updateList[i].newRow.hasOwnProperty('whdelyn') || ui.updateList[i].newRow.hasOwnProperty('overall') || ui.updateList[i].newRow.hasOwnProperty('shpcmul')){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : true },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+    	}
+	});
+
+	mdo2_grid.open();
+	mdo2List();
+	
+	function mdo2List(){
+		var grid = pq.grid("#mdo2_grid");
+		grid.showLoading();
+		var data = { warekey : $('#mdo2_warekey').val(), whnamlc : $('#mdo2_whnamlc').val() };
+		var aul = new AjaxUtil_Order("/md/wareHouseSelect.do", data, "GET");
+		aul.setCallbackSuccess(function (data){
+			if(data.list.length == 0){
+				alert("[[#{ms.getDataZero}]]");	
+			}
+			grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		})
+		aul.send();
+	}
+});
+
+</script>
+
+</div>
+</html>

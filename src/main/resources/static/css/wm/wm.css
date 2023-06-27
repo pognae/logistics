@@ -1,0 +1,107 @@
+/* ----------------------------------
+wmop1 - modal
+-------------------------------------*/
+.wmop1-print-wrap{width:94%; margin:2rem;}
+.wmop1-print-top{width:100%; overflow:hidden;}
+.wmop1-print-top .wmop1-print-title{height:6rem; line-height:6rem; text-align:center; font-weight:bold; font-size:2rem;}
+
+.wmop1-print-info{width:100%; font-size:0.9rem; margin:2rem 0;}
+.wmop1-print-info div{width:100%;}
+.wmop1-print-info .wmop1-print-date{width:100%; overflow:hidden; margin:0.25rem 0;}
+.wmop1-print-info .wmop1-print-useract{width:100%; overflow:hidden; margin:0.25rem 0;}
+.wmop1-print-info .wmop1-print-counting{width:100%; overflow:hidden; margin:0.25rem 0;}
+
+.wmop1-print-info .wmop1-print-right-box{width:25%; float:right;}
+.wmop1-print-info .wmop1-print-right-box p{margin:0;float:left;}
+.wmop1-print-info .wmop1-print-right-box p:first-child{width:40%; text-align:left;}
+.wmop1-print-info .wmop1-print-right-box p:last-child{width:60%; text-align:right;}
+.wmop1-print-content{width:100%; overflow:hidden;}
+
+.wmop1-print-content table{margin:1rem 0; width:100%; font-size:0.7rem; word-break: keep-all;}
+.wmop1-print-content table thead{text-align:center;}
+
+.wmop1-print-content table .txt-left{text-align:left;}
+.wmop1-print-content table .txt-center{text-align:center;}
+.wmop1-print-content table .txt-right{text-align:right;}
+.wmop1-print-content table .txt-bold{font-weight:bold;}
+.wmop1-print-content table th{padding:0.1rem 0.5rem; border-bottom:0.01rem solid #000; line-height:1rem;}
+.wmop1-print-content table td{padding:0.4rem 0.5rem; border-bottom:0.01rem solid #000; line-height:1rem;}
+
+
+/* ----------------------------------
+wmop2
+-------------------------------------*/
+.das-auth{display:none;}
+
+
+
+/*----------------------------------
+receipt
+-------------------------------------*/
+
+/* receipt Common */
+.wd-40{width:40%;}
+.wd-50{width:50%;}
+.vh-3{height:3vh !important;}
+.vh-4{height:4vh !important;}
+.vh-5{height:5vh !important;}
+.layout-double-line{font-size:2vh; text-align:center;}
+.text-weight-normal{font-weight:normal !important;}
+.text-left{text-align:left; padding-left:1vw;}
+.text-center{text-align:center;}
+.text-right{text-align:right;}
+table{border-collapse: collapse;}
+tr{height:100%; line-height:3vh;}
+
+
+.dash-block{border-bottom: 2px dashed #000;}
+.under-line{border-bottom: 0.2px solid #000;}
+.layout-roll{max-width:80mm; margin:0 auto; font-family: 'Nanum Gothic', sans-serif;}
+
+
+/* layout-top */
+.layout-top{height:auto; width:92%; margin:0 auto;}
+.layout-top .title{width:60%; margin:0 auto; font-size:2vh; font-weight:bold; text-align:center;}
+.layout-top .info{width:100%;}
+.layout-top .info div{width:100%; height:5vh;}
+.layout-top .info div p{display:inline-block; margin-bottom:0px;}
+.layout-top .info div p.left{float:left;}
+.layout-top .info div p.right{float:right;}
+.layout-top .info div p.right .time{margin-left:1vh;}
+.layout-top .info div p .order-name{font-size:2vh; font-weight:bold;}
+
+/* layout-store */
+.layout-store{width:92%; margin:0 auto;}
+.layout-store .qr-code{width:150px; margin:2vh auto;} 
+
+.layout-store .store-info-top{width:90%; margin:0 auto;}
+.layout-store .store-info-top p{text-align:center; margin-bottom:0px;}
+.layout-store .store-info-top p.brand{font-size:2vh; font-weight:bold;}
+.layout-store .store-info-top p.detail{font-size:1vh; }
+
+.layout-store .store-info-middle{width:90%; margin:0 auto; margin-top:3vh;}
+.layout-store .store-info-middle .center-block{width:83%; margin:0 auto; letter-spacing:-1px;}
+.layout-store .store-info-middle .center-block p {margin-bottom:0px; white-space:pre-line;}
+
+.layout-store .store-info-bottom{width:90%; margin:0 auto; margin-top:3vh;}
+.layout-store .store-info-bottom .head-line{margin:2vh auto; text-align:center;}
+.layout-store .store-info-bottom .center-block{width:90%; margin:0 auto; letter-spacing:-1px;}
+.layout-store .store-info-bottom .center-block p{margin:1vh auto;}
+
+/* layout-price */
+.layout-price{width:92%; margin:0 auto;}
+.layout-price .content div{display:inline-block; font-weight:bold; height:3vh; line-height:3vh;}
+.layout-price .content div.dtw{float:left; width:40%;}
+.layout-price .content div.dtw .week{margin-left:-5px; }
+.layout-price .content div.price{text-align:center; width:40%; font-size:2.5vh;}
+.layout-price .content div.text{float:right; width:15%;}
+
+.layout-sku-table{width:92%; margin:0 auto;}
+/* layout-sku-info */
+.layout-sku-info{width:92%; margin:0 auto;}
+.layout-sku-info{margin-top:3vh;}
+.layout-sku-info>div{margin-top:2vh;}
+
+/* layout-bottom-notice */
+.layout-bottom-notice{width:92%; margin:0 auto;}
+.layout-bottom-notice{white-space:pre-line;}

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.logistics.md.mapper.DocumentMapper">
+	<select id="selectMdocmaList" resultType="com.logistics.md.domain.MdocmaDTO">
+		select
+			COMPKEY,
+			DOCCATE,
+			DOCTYPE,
+			DOCCTNM,
+			DOCTYNM,
+			MVTGLOC,
+			RECELOC,
+			DOCTLKY,
+			DOCTICO,
+			DOCTOBJ,
+			CREDATE,
+			CRETIME,
+			CREUSER,
+			LMODATE,
+			LMOTIME,
+			LMOUSER
+		from MDOCMA
+	</select>
+	
+	<select id="selectMdocmaDoccateGroupList" resultType="com.logistics.md.domain.MdocmaDTO">
+		select
+			DOCCATE, DOCCTNM
+		from MDOCMA
+		where 1=1
+		and COMPKEY = #{userData.compkey}
+		<if test='warekey != null and warekey != ""'>
+		and WAREKEY = #{warekey}
+		</if>
+		group by DOCCATE, DOCCTNM
+	</select>
+	
+	<select id="selectMdocmaDoctypeList" resultType="com.logistics.md.domain.MdocmaDTO"> <!-- 해당 쿼리 사용하는 페이지가 없어서 수정 ( 박소희 ) -->
+		select DOCTYPE as combovl 
+		     , DOCTYNM as combonm
+		  from MDOCMA
+		 where 1=1
+		   and COMPKEY = #{userData.compkey}
+		<if test='dodelyn != null and dodelyn != ""'>
+		   and DODELYN = #{dodelyn}
+		</if> 
+		<if test='warekey != null and warekey != ""'>
+		   and WAREKEY = #{warekey}
+		</if>
+		<if test='doccate != null and doccate != ""'>
+		   and DOCCATE = #{doccate}
+		</if>
+		<if test='doctypes != null and doctypes.size != 0'>
+		   and DOCTYPE in
+		   	<foreach collection="doctypes" item="item" index="index" open="(" close=")" separator=",">
+		   	 #{item}
+		   	</foreach>
+		</if>
+		<if test='dtcate1 != null and dtcate1 != ""'>
+		   and DTCATE1 = #{dtcate1}
+		</if>
+		<if test='dtcate2 != null and dtcate2 != ""'>
+		   and DTCATE2 = #{dtcate2}
+		</if>
+		<if test='dtcate3 != null and dtcate3 != ""'>
+		   and DTCATE3 = #{dtcate3}
+		</if>
+		<if test='dtcate4 != null and dtcate4 != ""'>
+		   and DTCATE4 = #{dtcate4}
+		</if>
+		<if test='dtcate5 != null and dtcate5 != ""'>
+		   and DTCATE5 = #{dtcate5}
+		</if>
+		 group by DOCTYPE, DOCTYNM
+		 order by DOCTYPE, DOCTYNM
+	</select>
+	
+	<select id="selectMrscmaSelectBox" resultType="com.logistics.md.domain.MrscmaDTO">
+		select RSNCODE as combovl 
+			 , RSNCDNM as combonm
+		  from MRSCMA
+		 where 1=1
+		<if test='userData.compkey != null and userData.compkey != ""'>
+		   and COMPKEY = #{userData.compkey}
+		</if>
+		<if test='warekey != null and warekey != ""'>
+		   and WAREKEY = #{warekey}
+		</if>
+		<if test='doccate != null and doccate != ""'>
+		   and DOCCATE = #{doccate}
+		</if>
+		<if test='doctype != null and doctype != ""'>
+		   and DOCTYPE = #{doctype}
+		</if>
+		<if test='rsdelyn != null and rsdelyn != ""'>
+		   and RSDELYN = #{rsdelyn}
+		</if>
+		group by RSNCODE, RSNCDNM
+	</select>
+</mapper>

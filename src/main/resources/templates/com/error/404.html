@@ -1,0 +1,35 @@
+<!DOCTYPE>
+<html xmlns:th="http://www.thymeleaf.org"  xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="Content-Language" content="ko" >
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title> Error Page!</title>
+    <link rel="shortcut icon" href="/img/warehouse1.ico">
+    <!-- CSS  -->
+    <link rel="stylesheet" href="/css/sy/error.css">
+</head> 
+<body class="err404"> 
+	<div class="terminal">
+		<h2>404 페이지 없음 오류</h2>
+	  	클라이언트가 서버와 통신상태 : 정상   <br> 요청한 서비스를 찾을 수 없음.
+	  	<hr> 		
+		<h1>Error <span class="errorcode"><span th:text="${code}"></span></span></h1>
+		<p class="output"><span th:text="${msg}"></span></p>
+		<p class="output">TIMESTAMP: <span th:text="${timestamp}"></span> </p>
+		<p class="output">QueryString: <span th:text="${QueryString}"></span> </p>
+		<p class="output">ParameterMap: <span th:text="${ParameterMap}"></span> </p>
+		<p class="output">referer: <span th:text="${referer}"></span> </p> 
+		  
+		<p class="output"> 
+			<a href="index" th:href="@{/login}"> login </a>    
+			<a href="index" th:href="${referer}">Back to Page</a> 
+		</p>
+		<br>
+	</div>
+
+</body>
+</html> 
+
+ 

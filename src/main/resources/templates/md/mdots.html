@@ -1,0 +1,394 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<form method="post" id="frmmdots" onsubmit="return false;">  
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+	  		<div class="header-right">
+	  			<button type="button" class="btn default-btn" id="mdots_save"    th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+		  		<button type="button" class="btn default-btn" id="mdots_search"  th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+<!-- 		  		<button type="button" class="btn default-btn" id="mdots_add"     th:if="${userRole.getPutactv() == 'Y'}"><i class="fa-regular fa-plus"></i><span>[[#{bt.add}]]</span></button> -->
+<!-- 		  		<button type="button" class="btn default-btn" id="mdots_delete"  th:if="${userRole.getDelactv() == 'Y'}"><i class="fa-regular fa-trash-can"></i><span>[[#{bt.delete}]]</span></button> -->
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}"  th:pprogrid="${gprogrid}"  onclick="bookmarkclick(this );"><i class="fa-solid fa-star"></i></button>
+	  		</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdots_compkey" class="col-md-5 col-xl-2 col-form-label">[[#{md.mcomma.compkey}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control"  th:placeholder="${#messages.msg('md.mcomma.compkey')}" id="mdots_compkey" name="mdots_compkey" />
+					</div>
+					<label for="mdots_conamlc" class="col-md-5 col-xl-2 col-form-label">[[#{md.mcomma.conamlc}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control"  th:placeholder="${#messages.msg('md.mcomma.conamlc')}" id="mdots_conamlc" name="mdots_conamlc" />
+					</div>
+				</div>
+		 	</div>
+		 </div>
+		 <div class="content-inner">
+		 	<div class="grid-item grid-1">
+		 		<div class="grid-container">
+		 			<div id="mdots_grid"></div>
+		 		</div>
+		 	</div>
+		 </div>
+	</div>
+	</form>
+<script>
+$(function(){
+	const regexKo = /^[ㄱ-ㅎ|가-힣|0-9]+$/;
+	const regexEn = /^[a-z|A-Z|0-9]+$/;
+	const region = [
+		 {'':''},
+         {name: '서울시', regions: ['강남구','강동구','강북구','강서구','구로구','금천구','관악구','광진구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','용산구','은평구','종로구','중구','중랑구']},
+         {name: '경기도', regions: ['고양시','구리시','군포시','과천시','광명시','광주시','김포시','남양주시','동두천시','부천시','성남시','수원시','시흥시','안산시','안성시','안양시','양주시','여주시','오산시','용인시','이천시','의왕시','의정부시','파주시','평택시','포천시','하남시','화성시','양평군','연천군','가평군']},
+         {name: '인천광역시', regions: ['계양구','남동구','동구','미추홀구','부평구','서구','연수구','중구','강화군','옹진군']},
+         {name: '강원도', regions: ['강릉시','동해시','삼척시','속초시','원주시','춘천시','태백시','고성군','양구군','양양군','영월군','인제군','정선군','철원군','평창군','홍청군','화천군','횡성군']},
+         {name: '충청남도', regions: ['공주시','계룡시','논산시','당진시','보령시','서산시','아산시','천안시','금산군','부여군','서천군','예산군','청양군','태안군','홍성군']},
+         {name: '충청북도', regions: ['제천시','청주시','충주시','괴산군','단양군','보은군','영동군','옥천군','음성군','증평군','진천군']},
+      ];
+	
+	$('#mdots_search').click(function(){
+		var grid = pq.grid('#mdots_grid'); // querySelect
+		grid.showLoading(); // 로딩창
+		var aul = new AjaxUtil_Order('/md/CompanyTaeSearch.do',{compkey : $('#mdots_compkey').val(), conamlc : $('#mdots_conamlc').val() }, 'GET')
+		//common.js xhr // unique parameters(compkey, comnamlc)
+		aul.setCallbackSuccess(function(data){
+			// when xhr.readyState===4(DONE) and xhr.status===200 then, data => JSON.stringify
+			if(data.length===0){
+				alert('[[#{ms.getDataZero}]]');
+			} // 데이터 없을시
+			grid.option('dataModel',{data:data, recIndx:'rowkey'});
+			grid.refreshDataAndView(); // 그리드 새로고침
+		});
+		
+		aul.setComplete(function(data){
+			grid.hideLoading(); // 끝났으면 로딩창 없앰
+		});
+		aul.send(); // ajax send
+	});
+	
+	$('#mdots_save').click(function () {
+		var grid = pq.grid('#mdots_grid');
+		var gridCheck = grid.Checkbox('state').getCheckedNodes();
+		//grid = 생성 및 할당, gridCheck = 체크박스가 체크 상태인 node들 가져옴 
+		if(gridCheck.length > 0){ // 업로드할 데이터가 있으면(체크된 데이터)
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+			for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].compkey){ // compkey = 회사코드
+					alert((gridCheck[i].pq_ri + 1) + ' Row ' + '[[#{ms.requiredValue}]]');	//필수입력 값을 입력해주세요.
+					// 해당 rowIndex에 입력하라고 alert창 띄움
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: 'compkey' } );
+					// 해당 rowIndex의 compkey 컬럼에 수정하게 함
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].conamlc){ // conamlc = 회사이름
+	    	  		alert((gridCheck[i].pq_ri + 1) + ' Row ' + '[[#{ms.requiredValue}]]');	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: 'conamlc' } ); // 로직은 위와 같음
+	    	  		return false;
+	    	  	}
+			}
+			//============================================================	 
+	    	//체크된 데이터 중복 체크
+	    	//============================================================	
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){ // 체크된 데이터와 그리드 전체 데이터 비교
+						if(gridCheck[i].compkey === grid.getData()[j].compkey){ // 회사코드를 비교(primaryKey)
+			      			alert((grid.getData()[j].pq_ri + 1) + '[[#{ms.rowDataDuplication}]]'); // 중복이면 alert
+							return false;
+						}
+					}
+				}
+			}
+			
+			var result = confirm('[[#{ms.checksave}]]'); // 확인창 
+			if(result == true){ // 확인 눌렀다면
+				var data = { data : gridCheck, compkey : $('#mdots_compkey').val(), conamlc : $('#mdots_conamlc').val() };
+			    grid.showLoading();
+				var aul = new AjaxUtil_Order('/md/mdo1TaeSave.do', data);
+				aul.setCallbackSuccess(function (data){
+					grid.option( 'dataModel', { data: data, recIndx: 'rowkey' } );
+				   	grid.refreshDataAndView();
+				   	alert('[[#{ms.saveSuccess}]]');
+				});
+				aul.setComplete(function(data){
+					grid.hideLoading();
+				});
+			    aul.send();
+			} else if(result===false) { // 취소 눌렀다면
+				alert('취소');
+			}
+		}else{
+			alert('[[#{ms.choiceRowZero}]]'); // 선택 row 없음
+		}
+	});	
+	
+	var mdots_gridCM = [ // 그리드 컬럼모델 변수 // 각 컬럼의 설정값을 가지고 있는 구조체 배열
+		{ title: '', dataType: 'bool', dataIndx:'state', align: 'center',
+			type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: true }
+     	},
+		{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', hidden: true, editable: false},
+		{ title: '[[#{md.mcomma.compkey}]]', dataType: 'string', dataIndx: 'compkey',
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			render: function (ui) {
+    			if(ui.cellData){
+    				ui.rowData.compkey = ui.cellData.toUpperCase();
+    			}
+            },
+			editable: function (ui) {
+				return editable = (ui.rowData.rowkey) ? false : true;
+    		},
+    		validations: [{ type: 'minLen', value: 1, msg: '[[#{ms.validations.minLenLength(1)}]]' },{ type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.codelyn}]]', dataType: 'string', dataIndx: 'codelyn',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: 'center', type: 'checkbox', editor: false,
+            cb: { all: false, header: true, check: 'Y', uncheck: 'N' },
+            render: function (ui) {
+                var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+            }
+		},
+		{ title: '[[#{md.mcomma.conamlc}]]', dataType: 'string', dataIndx: 'conamlc',
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations: [{ type: 'minLen', value: 1, msg: '[[#{ms.validations.minLenLength(1)}]]' },{ type: 'maxLen', value: 60, msg: '[[#{ms.validations.maxLenLength(60)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.conamko}]]', dataType: 'string', dataIndx: 'conamko',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: '[[#{ms.validations.maxLenLength(60)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.conamen}]]', dataType: 'string', dataIndx: 'conamen',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: '[[#{ms.validations.maxLenLength(60)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.coaddr1}]]', dataType: 'string', dataIndx: 'coaddr1',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+	         editor : {
+	             type : 'select',
+	             options : []
+	          },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.coaddr2}]]', dataType: 'string', dataIndx: 'coaddr2',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+	         editor : {
+	             type : 'select',
+	             options : []
+	          },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.coaddr3}]]', dataType: 'string', dataIndx: 'coaddr3',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.complat}]]', dataType: 'float', dataIndx: 'complat', format: '###,###,###,###,###.0000000000', hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+		},
+		{ title: '[[#{md.mcomma.complon}]]', dataType: 'float', dataIndx: 'complon', format: '###,###,###,###,###.0000000000', hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+		},
+		{ title: '[[#{md.mcomma.cociynm}]]', dataType: 'string', dataIndx: 'cociynm', 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.coregnm}]]', dataType: 'string', dataIndx: 'coregnm',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: '[[#{ms.validations.maxLenLength(100)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.coteln1}]]', dataType: 'string', dataIndx: 'coteln1', 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.coteln2}]]', dataType: 'string', dataIndx: 'coteln2',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.coteln3}]]', dataType: 'string', dataIndx: 'coteln3',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.cotaxcd}]]', dataType: 'string', dataIndx: 'cotaxcd',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.coposbx}]]', dataType: 'string', dataIndx: 'coposbx',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: '[[#{ms.validations.maxLenLength(10)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.coposcd}]]', dataType: 'string', dataIndx: 'coposcd',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: '[[#{ms.validations.maxLenLength(10)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.corepnm}]]', dataType: 'string', dataIndx: 'corepnm',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: '[[#{ms.validations.maxLenLength(60)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.coreptl}]]', dataType: 'string', dataIndx: 'coreptl',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.corepem}]]', dataType: 'string', dataIndx: 'corepem',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: '[[#{ms.validations.maxLenLength(60)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.comannm}]]', dataType: 'string', dataIndx: 'comannm',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: '[[#{ms.validations.maxLenLength(60)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.comantl}]]', dataType: 'string', dataIndx: 'comantl',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: '[[#{ms.validations.maxLenLength(20)}]]' }]
+		},  
+		{ title: '[[#{md.mcomma.comanem}]]', dataType: 'string', dataIndx: 'comanem',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: '[[#{ms.validations.maxLenLength(60)}]]' }]
+		},  
+		{ title: '[[#{md.mcomma.cotmzon}]]', dataType: 'integer', dataIndx: 'cotmzon', format: '#,###',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: '[[#{ms.validations.maxLenLength(9)}]]' }]
+		},
+		{ title: '[[#{md.mcomma.credate}]]', dataType: 'string', dataIndx: 'credate',  editable: false },  
+		{ title: '[[#{md.mcomma.cretime}]]', dataType: 'string', dataIndx: 'cretime',  editable: false },  
+		{ title: '[[#{md.mcomma.creuser}]]', dataType: 'string', dataIndx: 'creuser',  editable: false },  
+		{ title: '[[#{md.mcomma.lmodate}]]', dataType: 'string', dataIndx: 'lmodate',  editable: false },
+		{ title: '[[#{md.mcomma.lmotime}]]', dataType: 'string', dataIndx: 'lmotime',  editable: false },
+		{ title: '[[#{md.mcomma.lmouser}]]', dataType: 'string', dataIndx: 'lmouser',  editable: false }
+	];
+	
+	var mdots_grid = new GridUtil(mdots_gridCM, '[[${gprogrid}]]', 'mdots_grid'); // 그리드 생성
+	//colModel, 프로그램 id, 그리드 id 
+	mdots_grid.setFind(); // 검색(그리드 내) 이벤트
+	mdots_grid.setReset(); // 새로고침 이벤트
+	mdots_grid.setTitle('Taeshin Grid Test'); // 제목 설정 이벤트
+
+	mdots_grid.setCellDblClick(async function(evt, ui){
+		if(ui.dataIndx === 'coaddr1'){
+//			console.log(ui);
+				var coaddr1List = [];
+				region.forEach(e => coaddr1List.push(e.name)); // 구조체 name 키값을 coaddr1에 푸시
+				var coaddr1Col = this.getColumn({dataIndx : 'coaddr1'});
+				coaddr1Col.editor.options = coaddr1List;
+				
+				if(ui.rowData.coaddr1 !== null || ui.rowData.coaddr1 !== ''){ // coaddr1에 데이터가 있으면
+	               var coaddr2Col = this.getColumn({dataIndx : 'coaddr2'});
+	               coaddr2Col.editor.options = await function(){
+	            	   var rData = region.find(function(e){
+			                 return e.name === ui.rowData.coaddr1; // 키값이 있는 구조체를 가져오고
+			            });	
+	            	   return rData.regions;
+	               }
+				}
+		} 
+	});
+	
+	mdots_grid.setCellBeforeSave(function(evt, ui){
+		var dataIndx = ui.dataIndx;
+		var newVal = ui.newVal;
+		
+		if(dataIndx === 'coaddr1'){
+    		if(newVal === '' || newVal === null){
+        		alert((ui.rowIndx+1) + '번째 row ' + ui.column.title + '셀에 데이터 입력하세요');
+        		let grid = pq.grid('#mdots_grid');
+        		grid.focus({ rowIndxPage: ui.rowIndx, colIndx:  grid.getColumn({dataIndx:dataIndx}) });
+        		return false;
+            }
+		}
+	});
+	
+	mdots_grid.setBeforeValidate(function(evt, ui){
+		var grid = pq.grid('#mdots_grid');
+		
+		if (ui.source === 'edit' || ui.source === 'paste'){
+			var cellData = ui.updateList;
+			checkCompName(grid, cellData);
+    	}
+	});
+	
+	let checkCompName = function(gridVar, cellData){
+		for(let i=0; i<cellData.length;i++){
+			if(cellData[i].newRow.hasOwnProperty('conamko')){
+					if(!regexKo.test(cellData[i].newRow['conamko'])){
+						cellData[i].newRow.conamko = null;
+						alert((cellData[i].rowIndx+1) + 'row ' + 'conamko에 한글만');
+					}
+				}
+			if(cellData[i].newRow.hasOwnProperty('conamen')){
+				if(!regexEn.test(cellData[i].newRow['conamen'])){
+						cellData[i].newRow.conamen = null;
+						alert((cellData[i].rowIndx+1) + 'row ' + 'conamen에 영어만');
+				}
+			}
+		}
+	}
+	
+	mdots_grid.setAdd(function(evt, ui){ // row 추가버튼 이벤트
+    	var rowIndx = this.addRow({ rowData: { state : true, codelyn : 'N'  }, checkEditable: false });
+		// state 체크박스, codelyn 기본값
+    	this.goToPage({ rowIndx: rowIndx }); // 마지막 row로 이동
+    	this.editCell({ rowIndx : rowIndx , dataIndx : 'compkey'}); // 마지막 row의 compkey 수정상태로
+	});
+		
+	mdots_grid.setChange(function (evt, ui) { // 변경리스트 추가 이벤트
+//		console.log('Here is ' + ui.source);
+    	if(ui.source === 'edit'){ // 그리드 내부 데이터를 수정했을 때 작동
+    		for(i=0; i<ui.updateList.length; i++){
+                var newRow = ui.updateList[i].newRow;
+                var oldRow = ui.updateList[i].oldRow;
+                
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : {state : true},
+        		    checkEditable: false
+        		});
+    			
+                if(oldRow.hasOwnProperty('coaddr1') && newRow.hasOwnProperty('coaddr1')){ // coaddr1이 비어있으면 2도 초기화
+                    if(oldRow.coaddr1 !== null){
+                       this.updateRow({
+                          rowIndx : ui.updateList[i].rowIndx,
+                            newRow : {coaddr2 : ''},
+                       })   
+                    }
+                 }
+    		}
+    	} else if(ui.source === 'paste'){ // 그리드에 데이터를 붙여넣기 했을 때 작동(ctrl+v) 
+    		for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.hasOwnProperty('compkey') && ui.updateList[i].oldRow.hasOwnProperty('compkey')){
+    				// hasOwnProperty = 값을 가지고 있는지 확인하는 function // 수정된 row와 이전 row 모두 compkey의 값이 있으면
+    				newRow.compkey = ui.updateList[i].newRow.compkey.toUpperCase();
+    			}
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : newRow,
+        		    checkEditable: false
+        		});
+    		}
+    		for(i=0; i<ui.addList.length; i++){
+    			ui.addList[i].newRow.state = true;
+    			ui.addList[i].newRow.codelyn = ui.addList[i].newRow.codelyn ? ui.addList[i].newRow.codelyn : 'N';
+    		}
+    	}else if(ui.source === 'checkbox'){  // 체크박스 체크했을 때 작동함
+    		for(i=0; i<ui.updateList.length; i++){
+    			if(ui.updateList[i].newRow.hasOwnProperty('codelyn')){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : true },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+    	}
+    });
+	mdots_grid.open(); // 그리드 open -> pq.grid('#' + this.gridId, obj)
+});
+</script>
+</div>
+</html>

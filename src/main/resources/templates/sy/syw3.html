@@ -1,0 +1,120 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">  			
+	    		<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+	  		<div class="header-right">
+	  			<button type="button" class="btn default-btn" id="syw3_search"  th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+	  		</div>
+	  	</div>
+	  	<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+			  	<div class="form-group row col">
+					<label for="syw3_useract" class="col-md-5 col-xl-2 col-form-label">[[#{sy.sloghi.useract}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.sloghi.useract')}" id="syw3_useract"/>
+					</div>
+					<label for="syw3_usernam" class="col-md-5 col-xl-2 col-form-label">[[#{sy.susrma.usernam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.susrma.usernam')}" id="syw3_usernam"/>
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label class="col-md-5 col-xl-2 col-form-label">[[#{sy.sloghi.logindt}]]</label>
+					<div class="col-md-7 col-xl-4 date-group">
+						<input type="date" max="2999-12-31" class="form-control" id="syw3_logindt_from" onkeyup="setInputDateDel(this)"/>
+						<span>~</span>
+						<input type="date" max="2999-12-31" class="form-control" id="syw3_logindt_to" onkeyup="setInputDateDel(this)"/>
+					</div>
+					<label class="col-md-5 col-xl-2 col-form-label">[[#{sy.sloghi.logintm}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="time" class="form-control" id="syw3_logintm"/>
+					</div>
+				</div>
+	  		</div>
+		</div>
+		<div class="content-inner">
+		 	<div class="grid-1">
+		 		<div class="grid-container">
+		 			<div id="syw3_grid"></div>
+		 		</div>
+		 	</div>
+		 </div>
+	</div>
+	
+<script>
+$(function(){
+	//============================================================	
+	//검색 화면 이벤트
+	//============================================================
+	$('#syw3_logindt_from').val(moment().subtract(1, "d").format("YYYY-MM-DD"));	// 1일전
+	$('#syw3_logindt_to').val(moment().format("YYYY-MM-DD"));
+	
+	$("#syw3_search").click(function () {
+		if(!$('#syw3_logindt_from').val() || !$('#syw3_logindt_to').val()){
+			alert("[[#{sy.sloghi.logindt}]]" + "[[#{ms.choiceValue}]]");
+			return;
+		}
+		
+		var grid = pq.grid("#syw3_grid");
+		var data = { 
+			useract : $('#syw3_useract').val()
+		  , usernam : $('#syw3_usernam').val()
+		  , logindtfrom : $('#syw3_logindt_from').val()
+		  , logindtto : $('#syw3_logindt_to').val()
+		  , logintm : $('#syw3_logintm').val()
+		};
+		
+		grid.showLoading();
+		var aul = new AjaxUtil_Order("/sy/selectSyw3List.do", data, "GET");
+		aul.setCallbackSuccess(function (data){
+			if(data.list.length == 0){
+				alert("[[#{ms.getDataZero}]]");
+			}
+			grid.option( "dataModel", { data: data.list } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		});
+		aul.send();
+	});
+	
+	var syw3_gridCM = [
+       	{ title: "[[#{sy.sloghi.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden: true},
+       	{ title: "[[#{sy.sloghi.loginsq}]]", dataType: "string", dataIndx: "loginsq", editable: false},	//접속일련번호
+       	{ title: "[[#{sy.sloghi.useract}]]", dataType: "string", dataIndx: "useract", editable: false},	//User Account ID
+       	{ title: "[[#{sy.susrma.usernam}]]", dataType: "string", dataIndx: "usernam", editable: false},	//사용자이름
+    	{ title: "[[#{sy.sloghi.warekey}]]", dataType: "string", dataIndx: "warekey", editable: false},	//Warehouse Key
+    	{ title: "[[#{sy.sloghi.logindt}]]", dataType: "string", dataIndx: "logindt", editable: false},	//접속일자
+    	{ title: "[[#{sy.sloghi.logintm}]]", dataType: "string", dataIndx: "logintm", editable: false},	//접속시간
+    	{ title: "[[#{sy.sloghi.loginip}]]", dataType: "string", dataIndx: "loginip", editable: false},	//접속IP
+    	{ title: "[[#{sy.sloghi.secchua}]]", dataType: "string", dataIndx: "secchua", editable: false},	//브라우져
+    	{ title: "[[#{sy.sloghi.secchmb}]]", dataType: "string", dataIndx: "secchmb", editable: false},	//모바일
+    	{ title: "[[#{sy.sloghi.navplat}]]", dataType: "string", dataIndx: "navplat", editable: false},	//접솝브라우져 및 OS 정보
+    	{ title: "[[#{sy.sloghi.secchpf}]]", dataType: "string", dataIndx: "secchpf", editable: false},	//platform OS
+    	{ title: "[[#{sy.sloghi.haccept}]]", dataType: "string", dataIndx: "haccept", editable: false},	//http header accept
+    	{ title: "[[#{sy.sloghi.navvers}]]", dataType: "string", dataIndx: "navvers", editable: false},	//접속브라우져 정보  
+    	{ title: "[[#{sy.sloghi.loginsf}]]", dataType: "string", dataIndx: "loginsf", editable: false},	//접속성공실패여부
+    	{ title: "[[#{sy.sloghi.credate}]]", dataType: "string", dataIndx: "credate", editable: false},
+		{ title: "[[#{sy.sloghi.cretime}]]", dataType: "string", dataIndx: "cretime", editable: false},
+		{ title: "[[#{sy.sloghi.creuser}]]", dataType: "string", dataIndx: "creuser", editable: false},
+		{ title: "[[#{sy.sloghi.lmodate}]]", dataType: "string", dataIndx: "lmodate", editable: false},
+		{ title: "[[#{sy.sloghi.lmotime}]]", dataType: "string", dataIndx: "lmotime", editable: false},
+		{ title: "[[#{sy.sloghi.lmouser}]]", dataType: "string", dataIndx: "lmouser", editable: false}
+	];
+	
+	var syw3_grid = new GridUtil(syw3_gridCM, '[[${gprogrid}]]', 'syw3_grid');
+	syw3_grid.setFind();
+	syw3_grid.open();
+});
+		
+</script>
+
+</div>
+</html>

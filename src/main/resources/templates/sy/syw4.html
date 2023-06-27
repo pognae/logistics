@@ -1,0 +1,118 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">  			
+	    		<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+	  		<div class="header-right">
+	  			<button type="button" class="btn default-btn" id="syw4_search"  th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+	  		</div>
+	  	</div>
+	  	<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+			  	<div class="form-group row col">
+					<label class="col-md-5 col-xl-2 col-form-label">[[#{sy.sprthi.prtdate}]]</label>
+					<div class="col-md-7 col-xl-4 date-group">
+						<input type="date" max="2999-12-31" class="form-control" id="syw4_prtdate_from" onkeyup="setInputDateDel(this)"/>
+						<span>~</span>
+						<input type="date" max="2999-12-31" class="form-control" id="syw4_prtdate_to" onkeyup="setInputDateDel(this)"/>
+					</div>
+					<label for="syw4_prtuser" class="col-md-5 col-xl-2 col-form-label">[[#{sy.sprthi.prtuser}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('sy.sprthi.prtuser')}" id="syw4_prtuser"/>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="content-inner">
+		 	<div class="grid-1">
+		 		<div class="grid-container">
+		 			<div id="syw4_grid"></div>
+		 		</div>
+		 	</div>
+		 </div>
+	</div>
+	
+<script>
+$(function(){
+	//============================================================	
+	//검색 화면 이벤트
+	//============================================================
+	$('#syw4_prtdate_from').val(moment().subtract(1, "d").format("YYYY-MM-DD"));	// 1일전
+	$('#syw4_prtdate_to').val(moment().format("YYYY-MM-DD"));
+		
+	$("#syw4_search").click(function () {
+		if(!$('#syw4_prtdate_from').val() || !$('#syw4_prtdate_to').val()){
+			alert("[[#{sy.sprthi.prtdate}]]" + "[[#{ms.choiceValue}]]");
+			return;
+		}
+		
+		var grid = pq.grid("#syw4_grid");
+		var data = { 
+			prtdatefrom : $('#syw4_prtdate_from').val()
+		  , prtdateto : $('#syw4_prtdate_to').val()
+		  , prtuser : $('#syw4_prtuser').val()
+		};
+		
+		grid.showLoading();
+		var aul = new AjaxUtil_Order("/sy/selectSyw4List.do", data, "GET");
+		aul.setCallbackSuccess(function (data){
+			if(data.list.length == 0){
+				alert("[[#{ms.getDataZero}]]");
+			}
+			grid.option( "dataModel", { data: data.list } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		});
+		aul.send();
+	});
+	
+	var syw4_gridCM = [
+       	{ title: "[[#{sy.sprthi.compkey}]]", dataType: "string",  dataIndx: "compkey", editable: false, hidden: true},
+       	{ title: "[[#{sy.sprthi.printsq}]]", dataType: "string",  dataIndx: "printsq", editable: false},	//인쇄이력번호
+       	{ title: "[[#{sy.sprthi.eoasnky}]]", dataType: "string",  dataIndx: "eoasnky", editable: false},	//ASN No
+       	{ title: "[[#{sy.sprthi.eoasnit}]]", dataType: "integer", dataIndx: "eoasnit", editable: false},	//ASN item number
+       	{ title: "[[#{sy.sprthi.rcvdcky}]]", dataType: "string",  dataIndx: "rcvdcky", editable: false},	//입고문서 번호
+       	{ title: "[[#{sy.sprthi.rcvdcit}]]", dataType: "integer", dataIndx: "rcvdcit", editable: false},	//입고문서 아이템
+       	{ title: "[[#{sy.sprthi.taskoky}]]", dataType: "string",  dataIndx: "taskoky", editable: false},	//Task Key
+       	{ title: "[[#{sy.sprthi.taskoit}]]", dataType: "integer", dataIndx: "taskoit", editable: false},	//Task Item Key
+       	{ title: "[[#{sy.sprthi.adjsoky}]]", dataType: "string",  dataIndx: "adjsoky", editable: false},	//조정문서 번호
+       	{ title: "[[#{sy.sprthi.adjsoit}]]", dataType: "integer", dataIndx: "adjsoit", editable: false},	//조정문서 Item Key
+       	{ title: "[[#{sy.sprthi.physoky}]]", dataType: "string",  dataIndx: "physoky", editable: false},	//실사문서 번호
+       	{ title: "[[#{sy.sprthi.physoit}]]", dataType: "integer", dataIndx: "physoit", editable: false},	//실사문서 Item Key
+       	{ title: "[[#{sy.sprthi.shpdcky}]]", dataType: "string",  dataIndx: "shpdcky", editable: false},	//출고문서 번호
+       	{ title: "[[#{sy.sprthi.shpdcit}]]", dataType: "integer", dataIndx: "shpdcit", editable: false},	//출고문서 아이템
+       	{ title: "[[#{sy.sprthi.copodky}]]", dataType: "string",  dataIndx: "copodky", editable: false},	//ref ERP PO
+       	{ title: "[[#{sy.sprthi.copodit}]]", dataType: "integer", dataIndx: "copodit", editable: false},	//ref ERP PO Item
+       	{ title: "[[#{sy.sprthi.refsodc}]]", dataType: "string",  dataIndx: "refsodc", editable: false},	//ref ERP SO
+       	{ title: "[[#{sy.sprthi.refsoit}]]", dataType: "integer", dataIndx: "refsoit", editable: false},	//ref ERP SO Item
+       	{ title: "[[#{sy.sprthi.refdndc}]]", dataType: "string",  dataIndx: "refdndc", editable: false},	//ref ERP DN
+       	{ title: "[[#{sy.sprthi.refdnit}]]", dataType: "integer", dataIndx: "refdnit", editable: false},	//ref ERP DN Item
+       	{ title: "[[#{sy.sprthi.refsddc}]]", dataType: "string",  dataIndx: "refsddc", editable: false},	//ref ERP SD
+       	{ title: "[[#{sy.sprthi.refsdit}]]", dataType: "integer", dataIndx: "refsdit", editable: false},	//ref ERP SD Item
+       	{ title: "[[#{sy.sprthi.prtdate}]]", dataType: "string",  dataIndx: "prtdate", editable: false},	//인쇄일자
+       	{ title: "[[#{sy.sprthi.prttime}]]", dataType: "string",  dataIndx: "prttime", editable: false},	//인쇄시간
+       	{ title: "[[#{sy.sprthi.prtuser}]]", dataType: "string",  dataIndx: "prtuser", editable: false},	//인쇄사용자
+    	{ title: "[[#{sy.sprthi.credate}]]", dataType: "string",  dataIndx: "credate", editable: false},
+		{ title: "[[#{sy.sprthi.cretime}]]", dataType: "string",  dataIndx: "cretime", editable: false},
+		{ title: "[[#{sy.sprthi.creuser}]]", dataType: "string",  dataIndx: "creuser", editable: false},
+		{ title: "[[#{sy.sprthi.lmodate}]]", dataType: "string",  dataIndx: "lmodate", editable: false},
+		{ title: "[[#{sy.sprthi.lmotime}]]", dataType: "string",  dataIndx: "lmotime", editable: false},
+		{ title: "[[#{sy.sprthi.lmouser}]]", dataType: "string",  dataIndx: "lmouser", editable: false}
+	];
+	
+	var syw4_grid = new GridUtil(syw4_gridCM, '[[${gprogrid}]]', 'syw4_grid');
+	syw4_grid.setFind();
+	syw4_grid.open();
+});	
+		
+</script>
+
+</div>
+</html>

@@ -1,0 +1,37 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div id="mainFooter" th:fragment="fragments-mainFooter">
+	<!--  Footer 시작  -->
+	<!--  Copyright 시작  -->
+	<span class="footer-logo"><img src="/img/binblur_footer_logo.png" alt="binblur"></span>
+	<ul class="footer-list">
+		<li><a href="#">회사소개</a></li>
+		<li><a href="/policy/accessService" target="_policy" >이용약관</a></li>
+		<li><a href="/policy/accessPrivacy" target="_policy" >개인정보처리방침</a></li>
+	</ul>
+	<div class="footer-line">
+		<span>대표이사 : 백병근</span>
+		<span>서울 종로구 종로65길 7 (빈블러/Binblur)</span>
+		<span>대표전화 : 02-2232-5129  </span>
+	</div>
+	<div class="footer-line">
+		<span>사업자등록번호 : 299-88-02187</span>
+		<span>info@binblur.com</span>
+		<span>개인정보 관리책임자 : 송아름 </span>
+	</div>
+	<span class="copyright">(주)빈블러  Copyright © <em> BINBLUR Corp.</em> All Rights Reserved.</span>
+	<!--  Copyright 종료  -->
+
+	<!-- Modal 공통 DIV start -->	
+	<div id="modalCommon"></div>
+	<div id="modalsyu6"></div>
+	<div id="modalsyu10"></div>
+	
+<script>
+$("#modalsyu6").load('/main/modalLoad?gprogurl=/com/modal/syu6.html');
+$("#modalsyu10").load('/main/modalLoad?gprogurl=/com/modal/syu10.html');
+	
+</script>
+	  
+<!--  Footer 종료  -->
+</div>
+</html>

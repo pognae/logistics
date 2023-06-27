@@ -1,0 +1,596 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<!-- JavaScript : 바코드 라이브러리 -->
+	<script type="text/javascript" src="/vender/jquery/jquery-barcode/jquery-barcode.js"></script>
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+			</div>
+			<div class="header-right">
+	  			<button type="button" class="btn default-btn" id="mdo5_save"    th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+		  		<button type="button" class="btn default-btn" id="mdo5_search"  th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+	  		</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdo5_warekey" class="col-md-5 col-xl-2 col-form-label">[[#{md.mlocma.warekey}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<select class="custom-select" id="mdo5_warekey"></select>
+					</div>
+					<label for="mdo5_areanam" class="col-md-5 col-xl-2 col-form-label">[[#{md.mlocma.areanam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mlocma.areanam')}" id="mdo5_areanam"/>
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label for="mdo5_zonenam" class="col-md-5 col-xl-2 col-form-label">[[#{md.mlocma.zonenam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mlocma.zonenam')}" id="mdo5_zonenam"/>
+					</div>
+					<label for="mdo5_locanam" class="col-md-5 col-xl-2 col-form-label">[[#{md.mlocma.locakey}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mlocma.locakey')}" id="mdo5_locakey"/>
+					</div>
+				</div>
+				<div class="form-group row col">
+					<label for="mdo5_locanam" class="col-md-5 col-xl-2 col-form-label">[[#{md.mlocma.locanam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mlocma.locanam')}" id="mdo5_locanam"/>
+					</div>
+				</div>
+			</div>
+			<div class="btn-fold-wrap">
+				<button class="btn-fold" onclick="onSearchExpand(this)"><i class="fa-solid fa-angle-down"></i></button>
+			</div>
+		</div>
+		<div class="content-inner">
+		 	<div class="grid-item grid-1">
+		 		<div class="grid-container">
+		 			<div id="mdo5_grid"></div>
+		 		</div>
+		 	</div>
+		 </div>
+	</div>
+	
+	<!-- 바코드 모달 부분 -->
+	<div class="modal fade" id="BCModalMain" tabindex="-1" role="dialog" aria-labelledby="BCModalTitle" aria-hidden="true">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="BCModalTitle">[[#{bt.preview}]]</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body" style="position: relative; -webkit-box-flex: 1; flex: 1 1 auto; padding: 1rem;">
+	      	<div id="mdo5_barcode" class="row">
+	      	</div>
+	      </div>
+	      <div class="modal-footer" style="display: flex; -webkit-box-align: center; align-items: center; -webkit-box-pack: end; justify-content: flex-end; padding: 1rem; border-top: 1px solid #e9ecef;">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal">[[#{bt.close}]]</button>
+	        <button type="button" class="btn btn-primary">[[#{bt.print}]]</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	<!-- 바코드 모달 부분 -->
+	
+<script>
+$(function(){
+	var mdo5_init = mdo5Init();
+	
+	//============================================================	
+	//모달 화면 이벤트
+	//============================================================
+	$("#mdo5_preview").click(function () {
+		var grid = pq.grid("#mdo5_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		if(gridCheck.length > 0){
+			for( var i in gridCheck ){
+				$("#mdo5_barcode").append('<div class="col-xs-4"><div id="b_' + i + '"></div></div>')
+				$("#b_" + i).barcode(gridCheck[i].locakey, 'code128');
+			}
+			$("#BCModalMain").modal("show");
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	//============================================================	
+	//검색 화면 이벤트
+	//============================================================
+	$("#mdo5_search").click(function () {
+		mdo5List();
+	});
+	
+	$("#mdo5_save").click(function () {
+		var grid = pq.grid("#mdo5_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		var gridChange = grid.getChanges({all:true});
+		
+		if(gridCheck.length > 0){
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+	        for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].warekey){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "warekey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].areakey){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "areakey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].zonekey){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "zonekey" } );
+	    	  		return false;
+	    	  	}
+				if(!gridCheck[i].locakey){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+	    	  		grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "locakey" } );
+	    	  		return false;
+				}
+				if(!gridCheck[i].locanam){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+	    	  		grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "locanam" } );
+	    	  		return false;
+				}
+				if(!gridCheck[i].loctype){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+	    	  		grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "loctype" } );
+	    	  		return false;
+				}
+	    	}
+			
+			//============================================================	 
+	    	//체크된 데이터 충복 체크
+	    	//============================================================
+	        for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){
+						if(gridCheck[i].warekey === grid.getData()[j].warekey && gridCheck[i].locakey === grid.getData()[j].locakey){
+			      			alert((grid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+		
+			//updateList 체크 데이터 정제
+			for(z=0; z<gridChange.updateList.length; z++){
+				if(gridChange.updateList[z].state != true){
+					gridChange.updateList.splice(z, 1);
+					gridChange.oldList.splice(z, 1);
+				}
+			}
+			
+			//addList 체크 데이터 정제
+			for(x=0; x<gridChange.addList.length; x++){
+				if(gridChange.addList[x].state != true){
+					gridChange.addList.splice(x, 1);
+				}
+			}
+			
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { data : gridChange, warekey : $('#mdo5_warekey option:selected').val(), areanam : $('#mdo5_areanam').val(), zonenam : $('#mdo5_zonenam').val() , locakey : $('#mdo5_locakey').val() , locanam : $('#mdo5_locanam').val() };
+			    grid.showLoading();
+				var aul = new AjaxUtil_Order("/md/mdo5Save.do", data);
+				aul.setCallbackSuccess(function (data){
+					grid.option( "dataModel", { data: data.locationList, recIndx: "rowkey" } );
+			   		grid.refreshDataAndView();
+			        alert("[[#{ms.saveSuccess}]]");
+				});
+				aul.setComplete(function(data){
+					grid.hideLoading();
+				});
+			    aul.send();
+			}
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	var mdo5_gridCM = [
+    	{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: true }
+     	},
+		{ title: "rowkey", dataType: "string", dataIndx: "rowkey", editable: false, hidden: true },
+		{ title: "[[#{md.mlocma.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden: true },
+		{ title: "[[#{md.mlocma.warekey}]]", dataType: "string", dataIndx: "warekey", 
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : "";
+            }
+		},
+		{ title: "[[#{md.mlocma.areakey}]]", dataType: "string", dataIndx: "areakey" , 
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	if(ui.cellData == ""){
+                	ui.rowData.areanam = "";
+                }
+            	return option ? option[ui.cellData] : ui.rowData.areanam;
+            }
+		},
+		{ title: "[[#{md.mlocma.zonekey}]]", dataType: "string", dataIndx: "zonekey" , 
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	if(ui.cellData == ""){
+                	ui.rowData.zonenam = "";
+                }
+            	return option ? option[ui.cellData] : ui.rowData.zonenam;
+            }
+		},
+		{ title: "[[#{md.mlocma.locakey}]]", dataType: "string", dataIndx: "locakey", 
+        	styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+        	render: function (ui) {
+    			if(ui.cellData){
+    				ui.rowData.locakey = ui.cellData.toUpperCase();
+    			}
+            },
+            validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.lodelyn}]]", dataType: "string", dataIndx: "lodelyn",		//Location Deletion YN
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mlocma.locanam}]]", dataType: "string", dataIndx: "locanam",		//Location Name
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations : [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.loctype}]]", dataType: "string", dataIndx: "loctype",		//Location type
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : "";
+            }
+		},
+		{ title: "[[#{md.mlocma.capachk}]]", dataType: "string", dataIndx: "capachk", 		//Capacity check
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mlocma.locstat}]]", dataType: "string", dataIndx: "locstat",		//Location Status
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : "";
+            }
+		},
+		{ title: "[[#{md.mlocma.locleng}]]", dataType: "integer", dataIndx: "locleng",		//Length
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.locwidh}]]", dataType: "integer", dataIndx: "locwidh",		//Width 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.locheig}]]", dataType: "integer", dataIndx: "locheig",		//Height 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.loccubi}]]", dataType: "integer", dataIndx: "loccubi",		//Cubic meter 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.inbrtno}]]", dataType: "integer", dataIndx: "inbrtno",		//Route for inbound 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.otbrtno}]]", dataType: "integer", dataIndx: "otbrtno",		//Route for outbound 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.mixdsku}]]", dataType: "string", dataIndx: "mixdsku",		//Mixed stock by SKU
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mlocma.mixdlot}]]", dataType: "string", dataIndx: "mixdlot",		//Mixed stock by Lot 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mlocma.remtloc}]]", dataType: "string", dataIndx: "remtloc",		//Replenishment Loc 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mlocma.usptloc}]]", dataType: "string", dataIndx: "usptloc",		//Use for putaway 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mlocma.uspkloc}]]", dataType: "string", dataIndx: "uspkloc",		//Use for picking 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+			cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+				var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mlocma.blockid}]]", dataType: "string", dataIndx: "blockid",		//Block
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.physrow}]]", dataType: "string", dataIndx: "physrow",		//Row X열 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 3, msg: "[[#{ms.validations.maxLenLength(3)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.physsec}]]", dataType: "string", dataIndx: "physsec",		//Section Y행 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 3, msg: "[[#{ms.validations.maxLenLength(3)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.physflo}]]", dataType: "string", dataIndx: "physflo",		//floor Z단 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 3, msg: "[[#{ms.validations.maxLenLength(3)}]]" }]
+		},
+		{ title: "[[#{md.mlocma.equstat}]]", dataType: "string", dataIndx: "equstat",		//Bin 상태 (보관,이동,PORT,제거)
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) { 
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : "";
+            }
+		},
+		{ title: "[[#{md.mlocma.credate}]]", dataType: "string", dataIndx: "credate",  editable: false},
+		{ title: "[[#{md.mlocma.cretime}]]", dataType: "string", dataIndx: "cretime",  editable: false},
+		{ title: "[[#{md.mlocma.creuser}]]", dataType: "string", dataIndx: "creuser",  editable: false},
+		{ title: "[[#{md.mlocma.lmodate}]]", dataType: "string", dataIndx: "lmodate",  editable: false},
+		{ title: "[[#{md.mlocma.lmotime}]]", dataType: "string", dataIndx: "lmotime",  editable: false},
+		{ title: "[[#{md.mlocma.lmouser}]]", dataType: "string", dataIndx: "lmouser",  editable: false}
+	];
+	
+	var mdo5_grid = new GridUtil(mdo5_gridCM, '[[${gprogrid}]]', 'mdo5_grid');
+	mdo5_grid.setFind();
+	mdo5_grid.setReset();
+	
+	mdo5_grid.setAdd(function(evt, ui){
+		var rowData = { 
+				state : true, 
+				compkey : "[[${session.compkey}]]",
+				lodelyn : "N",
+				capachk : "N",
+				mixdsku : "N",
+				mixdlot : "N",
+				remtloc : "N",
+				usptloc : "N",
+				uspkloc : "N"
+			};
+		var rowIndx = this.addRow({ rowData: rowData, checkEditable: false });
+        this.goToPage({ rowIndx: rowIndx });
+        this.editCell({ rowIndx : rowIndx , dataIndx : "warekey"});
+	});
+	
+	mdo5_grid.setCreate(function (evt, ui) {
+		var keys = Object.keys(mdo5_init);
+		for(key of keys){
+			var gData = mdo5_init[key];
+			var column = this.getColumn({ dataIndx: key });
+			var options = gData.map(function(obj){
+	        	var rObj = {};
+	        	rObj[obj.combovl] = obj.combonm;
+	        	return rObj;
+			});
+	    	column.editor.options = options;
+		}
+	});
+        
+	mdo5_grid.setChange(function (evt, ui) {
+    	if(ui.source === 'edit' || ui.source === 'clear'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.hasOwnProperty('warekey') && ui.updateList[i].oldRow.hasOwnProperty('warekey')){
+    				newRow.areakey = [];
+    				newRow.zonekey = [];
+    			}
+    			
+    			if(ui.updateList[i].newRow.hasOwnProperty('areakey') && ui.updateList[i].oldRow.hasOwnProperty('areakey')){
+    				newRow.zonekey = [];
+    			}
+    			this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+           		    newRow : newRow,
+           		    checkEditable: false
+           		});
+    		}
+    	}else if(ui.source === 'paste'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.hasOwnProperty('warekey') && ui.updateList[i].oldRow.hasOwnProperty('warekey')){
+    				newRow.areakey = [];
+    				newRow.zonekey = [];
+    			}
+    			
+    			if(ui.updateList[i].newRow.hasOwnProperty('areakey') && ui.updateList[i].oldRow.hasOwnProperty('areakey')){
+    				newRow.zonekey = [];
+    			}
+    			if(ui.updateList[i].newRow.hasOwnProperty('locakey') && ui.updateList[i].oldRow.hasOwnProperty('locakey')){
+    				newRow.locakey = ui.updateList[i].newRow.locakey.toUpperCase();
+    			}
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : newRow,
+        		    checkEditable: false
+        		});
+    		}
+    		for(i=0; i<ui.addList.length; i++){
+    			ui.addList[i].newRow.state = true;
+    			ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+    			ui.addList[i].newRow.lodelyn = ui.addList[i].newRow.lodelyn ? ui.addList[i].newRow.lodelyn : "N";
+    			ui.addList[i].newRow.capachk = ui.addList[i].newRow.capachk ? ui.addList[i].newRow.capachk : "N";
+    			ui.addList[i].newRow.mixdsku = ui.addList[i].newRow.mixdsku ? ui.addList[i].newRow.mixdsku : "N";
+    			ui.addList[i].newRow.mixdlot = ui.addList[i].newRow.mixdlot ? ui.addList[i].newRow.mixdlot : "N";
+    			ui.addList[i].newRow.remtloc = ui.addList[i].newRow.remtloc ? ui.addList[i].newRow.remtloc : "N";
+    			ui.addList[i].newRow.usptloc = ui.addList[i].newRow.usptloc ? ui.addList[i].newRow.usptloc : "N";
+    			ui.addList[i].newRow.uspkloc = ui.addList[i].newRow.uspkloc ? ui.addList[i].newRow.uspkloc : "N";
+    		}
+    	}else if(ui.source === 'checkbox'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			if(ui.updateList[i].newRow.hasOwnProperty('lodelyn') || ui.updateList[i].newRow.hasOwnProperty('capachk') || 
+    			   ui.updateList[i].newRow.hasOwnProperty('mixdsku') || ui.updateList[i].newRow.hasOwnProperty('mixdlot') ||
+    			   ui.updateList[i].newRow.hasOwnProperty('remtloc') || ui.updateList[i].newRow.hasOwnProperty('usptloc') ||
+    			   ui.updateList[i].newRow.hasOwnProperty('uspkloc') ){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : true },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+    	}
+	});
+        
+	mdo5_grid.setCellClick(function (evt, ui) {
+       	if(ui.dataIndx == "areakey"){
+       		if(ui.rowData.warekey){
+       			Combo("mdo5_grid", "areakey", { warekey : ui.rowData.warekey }, "/md/areaSelectBox.do");
+       		}else{
+       			var column = this.getColumn({ dataIndx: ui.dataIndx });
+           		column.editor.options = [];
+       		}
+       	}else if(ui.dataIndx == "zonekey"){
+       		if(ui.rowData.warekey && ui.rowData.areakey){
+       			Combo("mdo5_grid", "zonekey", { warekey : ui.rowData.warekey, areakey : ui.rowData.areakey }, "/md/zoneSelectBox.do");
+       		}else{
+       			var column = this.getColumn({ dataIndx: ui.dataIndx });
+           		column.editor.options = [];
+       		}
+       	}
+	});
+    
+	mdo5_grid.open();
+	mdo5List();
+	
+	function mdo5List(){
+		var grid = pq.grid("#mdo5_grid");
+		grid.showLoading();
+		var data = { warekey : $('#mdo5_warekey option:selected').val(), areanam : $('#mdo5_areanam').val(), locakey : $('#mdo5_locakey').val().toUpperCase() , zonenam : $('#mdo5_zonenam').val(), locanam : $('#mdo5_locanam').val()}; 
+		var aul = new AjaxUtil_Order("/md/selectMlocmaList.do", data, "GET");
+		aul.setCallbackSuccess(function (data){
+			grid.option( "dataModel", { data: data.locationList, recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		});
+		aul.send();
+	}
+	
+	function mdo5Init(){
+		var initData = callAjax('data', 'GET', "/md/mdo5Init.do" , {});
+		console.log(initData)
+		if(initData){
+			var list = initData.warekey;
+			for(item of list){
+				$('#mdo5_warekey').append("<option value='" + item.combovl + "'>" + item.combonm +"</option>");	
+			}
+		}
+		return initData
+	}
+});
+
+</script>
+
+</div>
+</html>

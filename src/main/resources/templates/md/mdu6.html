@@ -1,0 +1,270 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent">
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+			</div>	
+			<div class="header-right">
+				<button type="button" class="btn default-btn" id="mdu6_save"   th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.signOn}]]</span></button>
+				<button type="button" class="btn default-btn" id="mdu6_search" th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" class="btn main-btn"><i class="fa-solid fa-arrows-rotate"></i></button>
+				<button type="button" class="btn main-btn"><i class="fa-solid fa-print"></i></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+			</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdu6_ownerky" class="col-md-5 col-xl-1 col-form-label">[[#{md.mskusp.ownerky}]]</label>
+					<div class="col-md-7 col-xl-3">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mskusp.ownerky')}" id="mdu6_ownerky" readonly/>
+					</div>
+					<label for="mdu6_designe" class="col-md-5 col-xl-1 col-form-label">[[#{md.mskusp.designe}]]</label>
+					<div class="col-md-7 col-xl-3">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mskusp.designe')}" id="mdu6_designe"/>
+					</div>
+					<label for="mdu6_skudesc" class="col-md-5 col-xl-1 col-form-label">[[#{md.mskusp.skudesc}]]</label>
+					<div class="col-md-7 col-xl-3">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mskusp.skudesc')}" id="mdu6_skudesc"/>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="content-inner">
+			<div class="grid-item grid-2">
+				<div class="grid-container">
+					<div id="mdu6_pqgrid" style="height:500px;"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+<script>
+$(function(){
+	var pageId = "mdu6";
+
+	//페이지 초기화 데이터 호출
+	var initData = mdu6InitData();
+
+	Combo(null, pageId+"_warekey", {}, "/md/warehouseUserSelectBox.do", {});
+	
+	//============================================================	 
+	//영역 검색 버튼 이벤트
+	//============================================================	
+	$('#'+pageId+'_search').click(function() {
+		searchMdu6List();
+	});
+	
+	$('#'+pageId+'_save').click(function() {
+		mdu6_saveChanges();
+	});
+	
+	function mdu6InitData(){
+		var rData = callAjax("data", "GET", "/md/mdu6InitData.do", {});
+		
+		$("#"+pageId+"_ownerky").val(rData.data.ownerky);
+		return rData.data;
+	}
+	
+	var mdu6ColModel = [
+		{ title: "", dataType: "String",  dataIndx: "state", type: "checkBoxSelection"
+			, align: "center"
+			, maxWidth:"30", maxHeight:"30"
+			, menuIcon: false
+			, cls: 'ui-state-default', sortable: false, editor: false,
+			cb: {all: false, header: true, check:"Y", uncheck:"N"}
+		},
+		{ title: "[[#{md.mskusp.rowkey}]]",  dataType: "string", dataIndx: "rowkey",  hidden: true, editable:false },					
+		{ title: "[[#{md.mskusp.compkey}]]", dataType: "string", dataIndx: "compkey", hidden: true, editable:false },
+		{ title: "[[#{md.mskusp.ownerky}]]", dataType: "string", dataIndx: "ownerky", hidden: true, editable:false },
+		{ title: "[[#{md.mskusp.btnmodi}]]", dataType: "string", dataIndx: "btnmodi", editable:false,
+			render: function (ui) {
+				var button = "<button class='btnmodi-btn'>[[#{md.mdu6.btnmodi}]]</button>";
+				return button;
+            },
+            postRender: function (ui) {
+                var rowIndx = ui.rowIndx, grid = this, $cell = grid.getCell(ui);
+				$cell.find("button").button({ icons: { primary: 'ui-icon-contact' } }).click(function () {
+					var data = {
+						compkey : ui.rowData.compkey,
+						brandnm : ui.rowData.brandnm,
+						skuskey : ui.rowData.skuskey,
+						skutkey : ui.rowData.skutkey
+					};
+					moveProgram("[[${session.themety}]]", 'mdu1', data);
+                });
+            }
+		},	
+		{ title: "[[#{md.mskusp.skuskey}]]", dataType: "string", dataIndx: "skuskey", editable:false },	
+		{ title: "[[#{md.mskusp.brandnm}]]", dataType: "string", dataIndx: "brandnm", editable:false },	
+		{ title: "[[#{md.mskusp.skudesc}]]", dataType: "string", dataIndx: "skudesc", editable:false },	
+		{ title: "[[#{md.mskusp.designe}]]", dataType: "string", dataIndx: "designe", editable:false },	
+		{ title: "[[#{md.mskusp.skutkey}]]", dataType: "string", dataIndx: "skutkey", editable:false },	
+		{ title: "[[#{md.mskusp.itmcost}]]", dataType: "integer", dataIndx: "itmcost", format: "#,###", editable:false,
+			summary: { type: "sum" }
+		},	
+		{ title: "[[#{md.mskusp.selpric}]]", dataType: "integer", dataIndx: "selpric", format: "#,###", editable:false,
+			summary: { type: "sum" }
+		},	
+		{ title: "[[#{md.mskusp.skuborn}]]", dataType: "string", dataIndx: "skuborn", editable:false },
+		{ title: "[[#{md.mdu6.mainprint}]]", dataType: "string", dataIndx:"mainprint", editable:false,
+			render: function (ui) {
+				var button = "<button class='receipt-btn'>[[#{md.mdu6.mainprint}]]</button>";
+				return button;
+            },
+            postRender: function (ui) {
+            	var progId = "wmpt1";
+            	var param = {
+            		skuskey : ui.rowData.skuskey,
+            		skutkey : ui.rowData.skutkey
+				}
+
+                $cell = this.getCell(ui);
+                $cell.find(".receipt-btn").on("click", function () {
+                    return callModalPopup(progId, param);
+                });
+			}
+		},
+		{ title: "[[#{md.mdu6.processprint}]]", dataType: "string", dataIndx:"sprocno", editable:false,
+			render: function (ui) {
+				var sprocnoData = ui.rowData.sprocno;
+				var button = "";
+				
+				if(sprocnoData != null){
+					var sprocnoList = sprocnoData.split(",");
+					for(var i=0; i<sprocnoList.length; i++){
+						button += "<button class='receipt-btn' data-sprocno='"+sprocnoList[i]+"'>[[#{md.mdu6.processprint}]]</button> ";
+					}
+				}
+
+				return button;
+            },
+            postRender: function (ui) {
+            	var progId = "wmpt2";
+            	var param = {
+            		compkey : ui.rowData.compkey,
+            		skuskey : ui.rowData.skuskey,
+            		skutkey : ui.rowData.skutkey
+				}
+
+                $cell = this.getCell(ui);
+                $cell.find(".receipt-btn").on("click", function () {
+                	param.sprocno = $(this).data("sprocno");
+                    return callModalPopup(progId, param);
+                });
+			}
+		},
+		{ title: "[[#{md.mskusp.credate}]]", dataType: "string", dataIndx: "credate",  editable: false },  
+		{ title: "[[#{md.mskusp.cretime}]]", dataType: "string", dataIndx: "cretime",  editable: false },  
+		{ title: "[[#{md.mskusp.creuser}]]", dataType: "string", dataIndx: "creuser",  editable: false },  
+		{ title: "[[#{md.mskusp.lmodate}]]", dataType: "string", dataIndx: "lmodate",  editable: false },
+		{ title: "[[#{md.mskusp.lmotime}]]", dataType: "string", dataIndx: "lmotime",  editable: false },
+		{ title: "[[#{md.mskusp.lmouser}]]", dataType: "string", dataIndx: "lmouser",  editable: false }
+	]
+	
+	var mdu6GridObject = new GridUtil(mdu6ColModel, '[[${param.gprogrid}]]', pageId+"_pqgrid");
+    
+	mdu6GridObject.setBeforeValidate = function (evt, ui) {
+		if (ui.source != 'undo' && (ui.source == 'edit' || ui.source == 'paste' || ui.source == 'checkbox')){
+       		var rownum 		= ui.updateList[0].rowIndx;
+       		var state		= ui.updateList[0].newRow.state;
+       	
+	       	this.updateRow( {
+	   			rowIndx : rownum,
+	   		    newRow : { 
+	   		    	"state": state
+	   		    },
+	   		    checkEditable: false
+	   		});
+		}
+    };
+
+    mdu6GridObject.open();
+
+    
+	function comboDocumentData(doccateList, doctypeList){
+		
+		var documentDataArr = [];
+
+		for(var i=0; i<doccateList.length; i++)
+		{
+			var doctypeArr = [];
+			var doccateObject = new Object();
+			doccateObject.doccate = doccateList[i].doccate;
+			doccateObject.docctnm = doccateList[i].docctnm;
+			
+			for(var j=0; j<doctypeList.length; j++){
+				if(doctypeList[j].combovl.substring(0,1) == doccateList[i].doccate.substring(0,1)){
+					var doctypeObject = new Object();
+					doctypeObject.doctype = doctypeList[j].combovl;
+					doctypeObject.doctynm = doctypeList[j].combonm;
+					doctypeArr.push(doctypeObject);
+				}
+			}
+			
+			doccateObject.doctypeArr = doctypeArr;
+			documentDataArr.push(doccateObject);
+		}
+		
+		return documentDataArr;
+	}
+	//============================================================	 
+	//영역 검색 버튼 이벤트
+	//============================================================
+	function searchMdu6List(){
+		var ownerky = $("#"+pageId+"_ownerky").val();
+		
+		if(ownerky.trim() == ""){
+			alert("[[#{ms.mdu6.notOwnerky}]]");
+			return;
+		}
+		
+		var param = { 
+			ownerky : $("#"+pageId+"_ownerky").val(),
+			custkey : "[[${session.custkey}]]",
+			designe : $("#"+pageId+"_designe").val(),
+			skudesc : $("#"+pageId+"_skudesc").val()
+		};
+
+		var rdata = callAjax("data", "GET", "/md/mdu6List.do", param);
+		mdu6GridObject.searchList(rdata.item);
+	}
+
+	//============================================================	 
+	//그리드 세이브 버튼 이벤트
+	//============================================================
+	function mdu6_saveChanges(){
+		var gridData = mdu6GridObject.getChanges({all:true});
+		
+    	var checkList = gridData.updateList.filter(function(e){
+    		return e.state == "Y";
+    	});
+    	
+    	if(checkList.length > 0){
+    		var list = new Object();
+	    	list.updateList = checkList;
+	    	
+	    	var data = {
+		        list : list
+		    };
+    	}
+    	else{
+    		alert("[[#{ms.choiceRowZero}]]");
+    		return;
+    	}
+    	
+        var rData = callAjax("data", "POST", "/md/mdu6Save.do", data);
+        
+        if(rData.code == "200"){
+        	alert("[[#{ms.saveSuccess}]]");
+        	searchMdu6List();
+        }
+	}
+});
+</script>
+	<!--  mainConten 종료 -->
+</div>
+</html>

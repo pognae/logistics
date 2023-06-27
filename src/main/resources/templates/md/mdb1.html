@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+	<div th:fragment="fragments-mainContent">
+		<div class="tab-inner">
+			<div class="modal fade" id="imgMdb1ModalLayerPopup" style="display: none;" tabindex="-1">
+				<div class="modal-dialog modal-xl">
+					<div class="modal-content full-content">
+						<div class="modal-header">
+							<h5 class="modal-title h4"></h5>
+						</div>
+						<div class="modal-body">
+							<div class="img-slide-box">
+								<input type="hidden" name="modal_battfnm1"> <input type="hidden" name="modal_battfnm2"> <input type="hidden" name="modal_battfnm3">
+								<div id="imgSlider" class="carousel slide carousel-dark"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- 세부정보 Modal Popup -->
+			<div class="modal fade" id="mdb1_dt_modalPopup" tabindex="-1" style="display: none;" aria-hidden="true" >
+				<div class="modal-dialog modal-lg" >
+					<div class="modal-content full-content">
+						<div class="modal-header">
+							<h5 class="modal-title h4" th:text="${#messages.msg('md.mboard.showBoard')}"></h5>
+							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</div>
+						<div class="modal-body">
+							<div class="modal-inbody">
+								<div class="row gx-3">
+									<div class="col-md-6 mb-3">
+										<label class="small mb-2" th:text="${#messages.msg('md.mboard.boidseq')}"></label> <input class="form-control" name="mdb1_dt_boidseq" id="mdb1_dt_boidseq" type="text" disabled>
+									</div>
+									<div class="col-md-6 mb-3">
+										<label class="small mb-2" th:text="${#messages.msg('md.mboard.creuser')}"></label> <input class="form-control" name="mdb1_dt_creuser" id="mdb1_dt_creuser" type="text" disabled>
+									</div>
+								</div>
+								<div class="row gx-3 mb-3">
+									<div class="col-md-12 mb-2">
+										<label class="small mb-2" th:text="${#messages.msg('md.mboard.botitle')}"></label> <input class="form-control" name="mdb1_dt_botitle" placeholder="" id="mdb1_dt_botitle" disabled>
+									</div>
+								</div>
+								<div class="row gx-3 mb-3">
+									<div class="col-md-12">
+										<label class="small mb-2" th:text="${#messages.msg('md.mboard.boconte')}"></label>
+										<textarea class="form-control" name="mdb1_dt_boconte" placeholder="" id="mdb1_dt_boconte" style="height: 200px;"></textarea>
+									</div>
+									<div class="col-md-12" id="mdb1_dt_imageDiv"></div>
+									<div class="col-md-12" id="mdb1_dt_fileDownloadDiv"></div>
+									<div class="col-md-12" id="mdb1_dt_attfnm">
+										<label class="small mb-1" th:text="${#messages.msg('md.mboard.attfnm1')}"></label> 
+										<input class="form-control" name="mdb1_dt_attfnm1" type="file" id="mdb1_dt_attfnm1" onchange="uploadImgLoad(this.id)" accept="image/*"> 
+										<label class="small mb-1" th:text="${#messages.msg('md.mboard.attfnm2')}"></label> 
+										<input class="form-control" name="mdb1_dt_attfnm2" type="file" id="mdb1_dt_attfnm2" onchange="uploadImgLoad(this.id)" accept="image/*"> 
+										<label class="small mb-1" th:text="${#messages.msg('md.mboard.attfnm3')}"></label> 
+										<input class="form-control" name="mdb1_dt_attfnm3" type="file" id="mdb1_dt_attfnm3" onchange="uploadImgLoad(this.id)" accept="image/*">
+									</div>
+								</div>
+								<div class="row gx-3 mb-3">
+									<div class="col-md-12">
+										<label class="small mb-1 mt-4 mb-2" th:text="${#messages.msg('md.mboard.refcont')}"></label>
+										<div class="comment-box">
+											<span class="user-thumb"><img src="/img/ex/ex_user.png"></span>
+											<textarea class="form-control" name="mdb1_dt_newRefcont" id="mdb1_dt_newRefcont" style="height: 55px;"></textarea>
+											<button type="button" id="mdb1_refcontSaveBtn" class="btn btn-pen"><i class="fa-solid fa-pen"></i></button>
+										</div>
+										
+									</div>
+									<div class="col-md-12">
+										<div class="comemnt-list">
+											<ul id="mdb1_dt_refcont"></ul>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" id="mdb1_detailModalCloseBtn" class="btn btn-border-lg" data-bs-dismiss="modal" th:text="${#messages.msg('bt.close')}" onclick="mdb1_modalCloseBtn('dt')"></button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- 글쓰기 Modal Popup -->
+			<div class="modal fade" id="mdb1_wr_modalPopup" tabindex="-1" style="display: none;" aria-hidden="false">
+				<div class="modal-dialog modal-lg">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 class="modal-title h4" th:text="${#messages.msg('md.mboard.writeBoard')}"></h5>
+							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</div>
+						<div class="modal-body">
+							<div class="modal-inbody">
+								<div class="row gx-3">
+									<div class="col-md-12 mb-3">
+										<label class="small mb-2" th:text="${#messages.msg('md.mboard.botitle')}"></label> 
+										<input class="form-control" name="mdb1_wr_botitle" data-modal="botitle" id="mdb1_wr_botitle" type="text" placeholder="제목"  maxLength="100">
+									</div>
+									<div class="col-md-12 mb-3">
+										<label class="small mb-2" th:text="${#messages.msg('md.mboard.boconte')}"></label>
+										<textarea class="form-control" name="mdb1_wr_boconte" data-modal="boconte" id="mdb1_wr_boconte" style="height: 200px;" th:placeholder="${#messages.msg('md.mboard.boconte')}" maxLength="2000"></textarea>
+									</div>
+									<div class="col-md-12" id="mdb1_imageDiv"></div>
+									<div class="col-md-12 mb-3">
+										<span class="label small mb-2" th:text="${#messages.msg('md.mboard.attfnm1')}"></span> 
+										<div class="input-file-group">
+											<span class="file-name form-control" id="mdb1_wr_filenam1" data-modal="attfnm1" >[[#{md.mboard.file}]]<span class="placeholder" th:text="${#messages.msg('md.mboard.file')}"></span></span>
+											<label for="mdb1_wr_attfnm1" class="btn btn-grey" th:text="${#messages.msg('md.mobard.fileSelect')}"></label>
+											<input class="form-control file-input" type="file" name="mdb1_wr_attfnm1" id="mdb1_wr_attfnm1" onchange="uploadImgLoad(this.id)" accept="image/*">
+										</div>
+									</div>
+									<div class="col-md-12 mb-3">
+										<span class="label small mb-2" th:text="${#messages.msg('md.mboard.attfnm2')}"></span> 
+										<div class="input-file-group">
+											<span class="file-name form-control" id="mdb1_wr_filenam2" data-modal="attfnm2" >[[#{md.mboard.file}]]<span class="placeholder" th:text="${#messages.msg('md.mboard.file')}"></span></span>
+											<label for="mdb1_wr_attfnm2" class="btn btn-grey" th:text="${#messages.msg('md.mobard.fileSelect')}"></label>
+											<input class="form-control file-input" type="file" name="mdb1_wr_attfnm2" id="mdb1_wr_attfnm2" onchange="uploadImgLoad(this.id)" accept="image/*">
+										</div>
+									</div>
+									<div class="col-md-12 mb-3">
+										<span class="label small mb-2" th:text="${#messages.msg('md.mboard.attfnm3')}"></span> 
+										<div class="input-file-group">
+											<span class="file-name form-control" id="mdb1_wr_filenam3" data-modal="attfnm3" >[[#{md.mboard.file}]]<span class="placeholder"  th:text="${#messages.msg('md.mboard.file')}"></span></span>
+											<label for="mdb1_wr_attfnm3" class="btn btn-grey" th:text="${#messages.msg('md.mobard.fileSelect')}"></label>
+											<input class="form-control file-input" type="file" name="mdb1_wr_attfnm3" id="mdb1_wr_attfnm3" onchange="uploadImgLoad(this.id)" accept="image/*">
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-main-lg" id="mdb1_modalSaveBtn" th:text="${#messages.msg('bt.save')}"></button>
+							<button type="button" class="btn btn-border-lg" id="mdb1_modalCloseBtn" data-dismiss="modal" th:text="${#messages.msg('bt.close')}" onclick="mdb1_modalCloseBtn('wr')"></button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- mainContent 시작 -->
+			<div class="content-header">
+				<div class="header-left">
+					<div class="page-title">
+						<h1 th:text="${#messages.msg('menu.md.mdb1')}"></h1>
+					</div>
+				</div>
+				<div class="header-right">
+					<button class="btn default-btn" onclick="mdb1_openPopUp()"><i class="fa-solid fa-pen-clip"></i><span th:text="${#messages.msg('md.mboard.writeBoard')}"></span></button>
+					<button th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}"  th:pprogrid="${gprogrid}"  onclick="bookmarkclick(this );"><i class="fa-solid fa-star"></i></button>			
+				</div>
+			</div>
+			<div class="content-inner">
+				<div class="list-container">
+					<div class="list-search-container">
+						<div class="list-search-inner">
+							<select class="form-control md-4" id="searchBox">
+								<option value="botitle" selected th:text="${#messages.msg('md.mboard.botitle')}"></option>
+								<option value="creuser" th:text="${#messages.msg('md.mboard.creuser')}"></option>
+							</select>
+							<input type="text" class="form-control" id="searchValue">
+							<button id="mdb1_btnSearch" class="btn btn-dark" th:text="${#messages.msg('bt.search')}"></button>
+						</div>
+					</div>
+<!-- 					<div id="contentForm"> -->
+						<div role="group" class="table-scroll-container"> 
+							<table class="table table-custom table-conatiner" id="mdb1_table">
+								<thead id="mdb1_thead">
+									<tr>
+										<th data-col-name="boidseq" th:with="seq=${#messages.msg('md.mboard.boidseq')}" th:text="${#strings.substring(seq,5)}"></th>
+										<th data-col-name="botitle" th:text="${#messages.msg('md.mboard.botitle')}"></th>
+										<th data-col-name="creuser" th:text="${#messages.msg('md.mboard.creuser')}"></th>
+										<th data-col-name="credate" th:text="${#messages.msg('md.mboard.credate')}"></th>
+										<th data-col-name="viewcnt" th:text="${#messages.msg('md.mboard.viewcnt')}"></th>
+										<th data-col-name="refcnt" th:text="${#messages.msg('md.mboard.refcont')}"></th>
+									</tr>
+								</thead>
+								<tbody id="tbody"></tbody>
+							</table>
+						</div>
+<!-- 					</div> -->
+					<nav aria-label="Page navigation example" style="justify-content: space-around;">
+						<ul class="type-card">
+						</ul>
+					</nav>
+			</div>
+		</div>
+	</div>
+	<script>
+		$(function(){
+		//============================================================
+		// 게시글 조회
+		//============================================================
+			mdb1Init();
+			
+		//=================================================================
+		// 검색
+		//=================================================================
+		$("#mdb1_btnSearch").click(function(){
+			var key = $("#searchBox option:selected").val();
+			var value = $("#searchValue").val().toUpperCase();	
+			var data = { [key] : value };
+			var aul = new AjaxUtil_Order("/md/boardSelect.do", data , "GET");
+			aul.setCallbackSuccess(setBoardCallback);
+			aul.send();
+		});
+		
+		//=================================================================
+		// 글쓰기 저장
+		//=================================================================
+		$("#mdb1_modalSaveBtn").click(function(){
+			if($("#mdb1_botitle").val() == ""){
+				alert("[[#{md.mboard.chkTitle}]]");
+				return;
+			}
+			
+			if($("#mdb1_boconte").val() == ""){
+				alert("[[#{md.mboard.chkQuconte}]]");
+				return;
+			}
+			
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				fileInput = $("#mdb1_wr_modalPopup").find("input[type=file]");
+				if(typeof fileInput.eq(0)[0].files[0] !== "undefined" ||
+				   typeof fileInput.eq(1)[0].files[0] !== "undefined" ||
+				   typeof fileInput.eq(2)[0].files[0] !== "undefined" ){
+					saveFileCallback("wr");
+				}else{
+					var botitle = charcterEncoding($("#mdb1_wr_botitle").val());
+					var boconte = charcterEncoding($("textarea[name='mdb1_wr_boconte']").val());
+					var data = { botitle : botitle , boconte : boconte ,
+					 			 noticyn : $("#mdb1_wr_noticyn").is(":checked") };
+					var aul = new AjaxUtil_Order("/md/mdb1Save.do" , data);
+					aul.setCallbackSuccess(setBoardSaveCallback);
+					aul.send(); 
+				}
+			}
+		});
+				
+		//=================================================================
+		// 페이지별 상세 조회
+		//=================================================================			
+		 $("#mdb1_table #tbody").on("click", "tr", function(e){
+			var seq = $(this).data("seq");
+			var data = { "boidseq" : seq };
+			$("#mdb1_dt_modalPopup").modal("show");
+			
+			$("#mdb1_dt_imageDiv").children().remove();
+			
+			var aul = new AjaxUtil_Order("/md/boardDetail.do", data ,"GET");	
+			aul.setCallbackSuccess(setBoardDetailCallback);
+			aul.send();
+		});
+				
+		//=================================================================
+		// 게시판 댓글 작성
+		//=================================================================		
+		$("#mdb1_refcontSaveBtn").on("click", function(){
+			var result = confirm("[[#{ms.checksave}]]");
+			if($("#mdb1_dt_newRefcont").val() == ""){
+				alert("[[#{md.mboard.chkRefCont}]]");
+				return false;
+			}
+			if(result == true){
+				var refContData= $("#mdb1_dt_newRefcont").val();
+				var boidseq = $("#mdb1_dt_boidseq").val();
+				var data = { "refcont" : refContData , "boidseq" : boidseq };
+				var aul = new AjaxUtil_Order('/md/setRefcont.do', data , 'POST');
+				aul.setCallbackSuccess(setRefcont);
+				aul.send();
+			}
+		});
+					
+		//=================================================================
+		// 게시글 삭제
+		//=================================================================
+		$(".modal-footer").on("click", "#mdb1_dt_modalDelBtn", function(){
+			var result = confirm("[[#{md.mboard.chkDelt}]]");
+			if(result == true){
+				var seq = $("#mdb1_dt_boidseq").val();
+				var data = { "boidseq" : seq };
+				var aul = new AjaxUtil_Order("/md/boardDelete.do" , data , "POST");
+				aul.setCallbackSuccess(setBoardDelete);
+				aul.send();
+			}
+		});
+				
+		//=================================================================
+		// 게시글 상세페이지 수정
+		//=================================================================		
+		$(".modal-footer").on("click", "#mdb1_dt_modalSaveBtn" ,function(){
+			if($("#mdb1_dt_botitle").val() == ""){
+				alert("[[#{md.mboard.chkTitle}]]");
+				return false;
+			}
+			
+			if($('textarea[name="mdb1_dt_boconte"]').val() == ""){
+				alert("[[#{md.mboard.chkQuconte}]]");
+				return false;
+			}
+			
+			var result = confirm("[[#{md.mboard.chkUpdate}]]");
+			if(result == true){
+				fileInput = $("#mdb1_dt_modalPopup").find("input[type=file]");
+				if(typeof fileInput.eq(0)[0].files[0] !== "undefined" ||
+				   typeof fileInput.eq(1)[0].files[0] !== "undefined" ||
+				   typeof fileInput.eq(2)[0].files[0] !== "undefined" ){
+					saveFileCallback("dt");
+				}else{
+					var botitle = charcterEncoding($("#mdb1_dt_botitle").val());
+					var boconte = charcterEncoding($("textarea[name='mdb1_dt_boconte']").val());
+					data = { "boidseq" : $("#mdb1_dt_boidseq").val() , botitle : botitle , boconte : boconte ,
+				 			 "noticyn" : $("#mdb1_dt_noticyn").is(":checked") };
+					var aul = new AjaxUtil_Order("/md/updateBoardDetail.do" , data);
+					aul.setCallbackSuccess(setBoardSaveCallback);
+					aul.send(); 
+				}
+			}
+		});
+	});
+		
+	//=================================================================
+	// 게시판 조회 콜백
+	//=================================================================	
+		function setBoardCallback(data){
+			var list = data.boardList.list;
+			var page = data.page;
+			$("#mdb1_table #tbody").children().remove();
+			if(list.length > 0){
+				$(".pagination").find(":not(:first)").remove();
+				var tr = "";
+				$(list).each(function(i){
+					var trData = $("#mdb1_thead").children("tr").children();
+					tr += '<tr data-seq="' + list[i].boidseq + '">';
+					for(tData of trData){
+						var datasetName = tData.dataset.colName;
+						if(datasetName == "botitle"){
+							if(list[i]["newCnt"] == 0){
+								tr += '<td class="text-left">' + list[i][datasetName] + "&nbsp" + "<span>N</span>"; 
+ 							}else{
+ 								tr += "<td>" + list[i][datasetName] + "</td>";
+ 							}
+						}else{
+							tr += "<td>" + list[i][datasetName] + "</td>";
+						}
+					}
+					tr += "</tr>";
+				});
+				$("#mdb1_table #tbody").html(tr);
+				$(".type-card").html(page);
+			}else{
+				alert("[[#{ms.getDataZero}]]");
+				return false;
+			}
+		};	
+		
+		$(".type-card").on("click", ".page-link" , function(e){
+			data = { pageNum : e.target.name };
+			var aul = new AjaxUtil_Order("/md/boardSelect.do", data , "GET");
+			aul.setCallbackSuccess(setBoardCallback);
+			aul.send();
+		});
+		 
+	//=================================================================
+	// 상세페이지
+	//=================================================================		
+		function setBoardDetailCallback(data){
+			var boardData = data.dataList.boardData;
+			var refData = data.dataList.refData;
+			
+			$("#mdb1_dt_boidseq").val(boardData.boidseq);
+			$("#mdb1_dt_creuser").val(boardData.creuser);
+			$("#mdb1_dt_botitle").val(boardData.botitle);
+			$("#mdb1_dt_boconte").val(boardData.boconte);
+			
+			// 첨부파일 insert 저장 후, 상세페이지 modal show하는 경우
+			$("#mdb1_dt_attfnm1").val("");
+			$("#mdb1_dt_attfnm2").val("");
+			$("#mdb1_dt_attfnm3").val("");
+			$("#mdb1_dt_refcont").children().remove();
+			
+// 			initMdb1ImgLoad(boardData); //이미지 불러오기
+			initMdb1FileDownload(boardData); // 파일 다운로드
+		
+			var div = "";
+			if(data.dataList.refData.length > 0) {
+				// 댓글
+				$(data.dataList.refData).each(function(i){
+					div += '<li><div><span class="thumb"><img src="/img/ex/ex_user.png"></span><span>' + refData[i].creuser.substring(0,1) + '*************' +
+						   '</span><span class="comment-date">' + refData[i].credate + '</span></div>' +
+						   '<span class="comment">' + refData[i].refcont + '</span></li>';
+				});
+			}
+				$("#mdb1_dt_refcont").html(div);
+			
+			// 유저 권한에 따른 동적 태그 생성			
+			if("[[${session.useract}]]" == boardData.writer){
+				//첨부파일
+				$("#mdb1_dt_attfnm").removeClass("td-check");
+				$("#mdb1_dt_attfnm").addClass("inline-block");
+
+				$("#mdb1_dt_boconte").attr("disabled", false);
+				//버튼
+				$("#mdb1_detailModalCloseBtn").prev().prev().remove();
+				$("#mdb1_detailModalCloseBtn").prev().remove();
+				$("#mdb1_detailModalCloseBtn").before('<button type="button" id="mdb1_dt_modalSaveBtn" class="btn btn-main-lg">[[#{bt.save}]]</button>' +
+													  '<button type="button" id="mdb1_dt_modalDelBtn" class="btn btn-main-lg">[[#{bt.delete}]]</button>');
+			}else{
+				//첨부파일
+				$("#mdb1_dt_attfnm").removeClass("inline-block");
+				$("#mdb1_dt_attfnm").addClass("td-check"); 
+				
+				$("#mdb1_dt_boconte").attr("disabled", true);
+				
+				$("#mdb1_detailModalCloseBtn").prev().prev().remove(); // 삭제 버튼
+				$("#mdb1_detailModalCloseBtn").prev().remove(); // 수정 버튼
+			}
+		};
+		
+	//=================================================================
+	// 게시판 댓글 저장
+	//=================================================================	
+		function setRefcont(data){
+			if(data.result == true){
+				alert("[[#{ms.saveSuccess}]]");
+				$("#mdb1_dt_modalPopup").modal("hide");
+				$("#mdb1_dt_newRefcont").val("");
+				$("#mdb1_dt_modalPopup").on("hidden.bs.modal", function (e) {   
+					var aul = new AjaxUtil_Order("/md/boardSelect.do", data , "GET");
+					aul.setCallbackSuccess(setBoardCallback);
+					aul.send();
+				});
+			}else{
+				alert("[[#{ms.saveErr}]]");
+				return;
+			}
+		};
+		
+	//=================================================================
+	// 게시판 댓글 삭제
+	//=================================================================		
+		function setRefconDelete(data){
+			alert("[[#{md.mboard.delBoard}]]");
+			$("#mdb1_dt_modalPopup").modal("hide");
+			$("#mdb1_dt_modalPopup").on("hidden.bs.modal", function (e) {   
+				var aul = new AjaxUtil_Order("/md/boardSelect.do", {} , "GET");
+				aul.setCallbackSuccess(setBoardCallback);
+				aul.send();
+			});
+		};
+		
+		
+	//=================================================================
+	// 이미지 불러오기
+	//=================================================================
+		function initMdb1ImgLoad(boardData){
+			var imgArr = new Array();
+			var boardDetailFileData = $("#mdb1_dt_modalPopup").find("input[type=file]");
+			//상세페이지
+			var imageDiv = $("#mdb1_dt_imageDiv");
+			imageDiv.children().remove();
+			imageDiv.removeClass("img-box");
+			for(var i=1; i<= boardDetailFileData.length; i++){
+				var columnName ="attfnm"+i , columnValue = boardData["attfnm"+i];
+				
+				if(columnValue !== null){
+					var fileTypeIdx = columnValue.lastIndexOf('.'),  fileType = columnValue.substring(fileTypeIdx+1);
+					if(fileType === "jpg" || fileType === "jpeg" || fileType === "png"){
+						if($('#' + columnName).length == 0){
+							imageDiv.append(['<img src="' + columnValue + '" id="imgName' + i + '"/>'].join(''));
+							imageDiv.addClass("img-box");
+							imageDiv.children().addClass("img-card1");
+						}
+					}
+				}
+			} 
+		};
+		
+		
+	//=================================================================
+	// 업로드 이미지 미리보기
+	//=================================================================	
+		function uploadImgLoad(param){
+			var input = $("#" + param)[0]; 
+			var file = input.files[0];
+			if(input.files && file){ //파일 선택 시
+				// MIME 타입 확인
+				if(file.type){
+					fileTypeCheck(param, file);
+// 					else{
+// 						alert("[[#{md.mboard.notFileType}]]");
+// 						$("#" + param).val("")
+// 						return;
+// 					}
+			    }
+// 				else{
+			    	// 브라우저별 file Type 인식불가한 경우 (Edge)
+// 			    	fileTypeCheck(param, file);
+// 				}
+			}
+		};
+		
+	//=================================================================
+	// 파일 불러오기
+	//=================================================================
+		function initMdb1FileDownload(boardData){
+			var boardDetailFileData = $("#mdb1_dt_modalPopup").find("input[type=file]");
+			var fileImageDiv = $("#mdb1_dt_fileDownloadDiv");
+			fileImageDiv.children().remove();
+			
+			for(var i=1; i<=boardDetailFileData.length; i++){
+				var columnName ="attfnm"+i; 
+				var originName ="orgfnm"+i; 
+				var columnValue = boardData["attfnm"+i]; // UUID명
+				var originValue = boardData["orgfnm"+i]; // 파일명
+				if(columnValue !== null){
+					var fileTypeIdx = columnValue.lastIndexOf("."),  fileType = columnValue.substring(fileTypeIdx+1);
+					if(fileType === "txt" || fileType === "xlsx" || fileType === "xlsm" || fileType === "xls" || fileType === "pdf" ||
+					   fileType === "jpg" || fileType === "jpeg" || fileType === "png"){
+						if($("#" + columnName).length == 0){
+							var originalName = columnValue.substring(0 , columnValue.lastIndexOf("."));
+							fileImageDiv.append('<a id="' + 'file'+ (i-1) +'" href="' + columnValue +'" >' + originValue + '</a>');
+					        $("#file"+ (i-1)).attr("download", originalName);
+					        fileImageDiv.addClass("file-box");
+						    $("#mdb1_dt_fileDownloadDiv a").click();	
+						}
+					}
+				}
+			} 
+	 	};
+		
+	//=================================================================
+	// 게시글 삭제
+	//=================================================================	
+		function setBoardDelete(data){
+			if(data.dataList = true){
+				alert("[[#{ms.deleteSuccess}]]");
+				$("#mdb1_dt_modalPopup").modal("hide");
+				var aul = new AjaxUtil_Order("/md/boardSelect.do", data , "GET");
+				aul.setCallbackSuccess(setBoardCallback);
+				aul.send();
+			}else{
+				alert("[[#{ms.deleteErr}]]");
+				return;
+			}
+		};
+	
+	//=================================================================
+	// 첨부파일 저장 콜백
+	//=================================================================
+		function saveFileCallback(param){
+			var formData = new FormData();
+			var data 	= new Object() , domData = new Object() , newObject = new Object();
+			var fileInput = $("#mdb1_" + param + "_modalPopup").find("input[type=file]");
+			for(var i=0; i<fileInput.length; i++){
+				if(typeof fileInput.eq(i)[0].files[0] !== "undefined"){
+					var orgfnmArr = "orgfnm" + (i+1);
+					domData[orgfnmArr] =  fileInput.eq(i)[0].files[0].name;
+					if(fileInput.eq(i).attr("name").includes(param) == true){ //상세 페이지
+						formData.append(fileInput.eq(i).attr("name").substring(8), fileInput.eq(i)[0].files[0]);
+					}else{ //글쓰기
+						formData.append(fileInput.eq(i).attr("name").substring(5), fileInput.eq(i)[0].files[0]);
+					}
+				}
+			}
+			
+			formData.append("fileNameType", "UUID");
+			formData.append("uploadPath", "board");
+			var rdata = callAjax("form", "POST", "/com/upload/fileUpload", formData);
+			if(rdata.data !== null){
+				var columnPathData = rdata.data;
+				var botitle = charcterEncoding($("#mdb1_" + param + "_botitle").val());
+				var boconte = charcterEncoding($("textarea[name='mdb1_" + param + "_boconte']").val());
+
+				domData.botitle = botitle;
+				domData.boconte = boconte;
+				domData.boidseq = $("#mdb1_" + param + "_boidseq").val(); 
+				domData.noticyn = $("#mdb1_" + param + "_noticyn").is(":checked");
+				//파일 업로드 리턴데이터 json merge
+
+				for(var i=0; i< columnPathData.length; i++){
+					var robj = columnPathData[i];
+					Object.assign(newObject, robj);		//파일 업로드 컬럼 머지
+				}
+				Object.assign(data , newObject , domData);
+				var url = $("#mdb1_" + param + "_boidseq").val() == undefined ? "/md/mdb1Save.do" : "/md/updateBoardDetail.do";
+				var aul = new AjaxUtil_Order(url , data);
+				aul.setCallbackSuccess(setBoardSaveCallback);
+				aul.send();  
+			 }
+		};
+		
+		
+	//=================================================================
+	// 게시글 저장 콜백
+	//=================================================================
+		function setBoardSaveCallback(data){
+			var moalPopUp = null;
+			if(data !== null){
+				if(data.updateResult == true){	
+					alert("[[#{ms.saveSuccess}]]");
+					moalPopUp = $("#mdb1_dt_modalPopup");
+				}else if(data.insertResult == true){
+					alert("[[#{ms.saveSuccess}]]");
+					moalPopUp  = $("#mdb1_wr_modalPopup");
+				}
+				
+				moalPopUp.modal("hide");
+				moalPopUp.on("hidden.bs.modal", function (e) {   
+					var aul = new AjaxUtil_Order("/md/boardSelect.do", { } , "GET");
+					aul.setCallbackSuccess(setBoardCallback);
+					aul.send();
+				});
+			}else{
+				alert("[[#{ms.saveErr}]]");
+				return;
+			}
+		};
+		
+		
+	//=================================================================
+	// 모달 CLOSE
+	//=================================================================	
+		function mdb1_modalCloseBtn(param){
+			$("#mdb1_" + param + "_modalPopup").modal("hide");
+		}
+		
+	//============================================================	
+	// 글쓰기 OPEN 
+	//============================================================	
+		function mdb1_openPopUp(){
+			$("#mdb1_wr_modalPopup").modal("show");
+		};
+		
+		$("#mdb1_wr_modalPopup").on("show.bs.modal" , function(){
+			var modalDoms = $("#mdb1_wr_modalPopup").find("[data-modal]");
+			for(modalDom of modalDoms){
+				var domId = modalDom.id;
+				if($("#" + domId).prop("nodeName") === "INPUT"){
+					$("#" + domId).val($("#" + domId).prop("defaultValue"));
+				}else if($("#" + domId).prop("nodeName") === "SPAN"){
+					$("#" + domId).text("[[#{md.mboard.file}]]");
+				}else{
+					$("#" + domId).val("");
+				}
+			}
+			$("#mdb1_imageDiv").children().remove();
+		});
+		
+		//============================================================	
+		// 이미지 업로드 파일 타입 체크
+		//============================================================	
+		function fileTypeCheck(param , file){
+			var num = parseInt(param.substring(param.length-1));
+			var imageDiv = param.includes("dt") ? $("#mdb1_dt_imageDiv") : $("#mdb1_imageDiv"); 
+			var fileImageDiv = param.includes("dt") ? $("#mdb1_dt_fileDownloadDiv") : $("#mdb1_fileDownloadDiv");
+			var typeIndex = file.type.lastIndexOf("/");
+			var fileType = file.type.substring(typeIndex+1);
+			
+			if(fileType === "pdf" || fileType === "jpg" || fileType === "jpeg" || fileType === "png"){
+				const reader = new FileReader(); // 파일 읽는 객체
+				this.enabled = false;
+				reader.onload = function(e){
+					if(imageDiv.children().eq(num-1).length == 0){
+						imageDiv.append(['<img src="' + e.target.result + '" id="' + imageDiv[0].id + (num-1) + '"/>'].join(''));
+						imageDiv.addClass("img-box");
+						imageDiv.children().addClass("img-card1");
+					}else{
+						imageDiv.children().eq(num-1).attr("src", e.target.result);
+					}
+					$("#file"+ (num-1)).remove();
+					fileImageDiv.removeClass("img-box");
+				};
+				reader.readAsDataURL(file);
+			}else{
+				alert("[[#{md.mboard.notFileType}]]");
+				$("#" + param).val("")
+				return;
+			}
+		}
+		
+		//============================================================	
+		// 특수문자 치환
+		//============================================================	
+		function charcterEncoding(str){
+			 str = str.replace(/</g,"＜");
+			 str = str.replace(/>/g,"＞");
+			 return str;
+		}
+		
+		function mdb1Init(){
+			var mdb1_aul = new AjaxUtil_Order("/md/boardSelect.do", {} , "GET");
+			mdb1_aul.setCallbackSuccess(setBoardCallback);
+			mdb1_aul.send();
+		}
+	</script>
+</div>	
+</html>

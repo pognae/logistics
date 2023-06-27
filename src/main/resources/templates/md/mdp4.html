@@ -1,0 +1,377 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+ 	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+			</div>
+			<div class="header-right">
+				<button type="button" class="btn default-btn" id="mdo4_save"   th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+				<button type="button" class="btn default-btn" id="mdp4_search" th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" class="btn main-btn"><i class="fa-solid fa-print"></i></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+			</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdp4_ownerky" class="col-md-5 col-xl-2 col-form-label">[[#{md.mptnma.ownerky}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<select class="custom-select" id="mdp4_ownerky">
+							<option value="" selected></option>
+						</select>
+					</div>
+					<label for="mdp4_cunamlc" class="col-md-5 col-xl-2 col-form-label">[[#{wm.mdp4.custnam}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('wm.mdp4.custnam')}" id="mdp4_cunamlc" />
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="content-row-inner">
+			<div class="grid-row-1 mgr20"> 
+				<div class="grid-container">
+					<div id="mdp4_h_grid"></div>
+				</div>
+			</div>
+			<div class="grid-row-1">
+				<div class="grid-container">
+					<div id="mdp4_i_grid"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+    
+<script>
+$(function(){
+	var mdp4_init = mdp4Init();
+	
+	//============================================================
+	// 검색 이벤트
+	//============================================================
+	$('#mdp4_search').click(function(){
+		mdp4List();
+	});	
+
+	//============================================================
+	// 저장 이벤트
+	//============================================================	
+	$('#mdo4_save').click(function(){
+		var itemGrid = pq.grid("#mdp4_i_grid"), itemCheck = itemGrid.Checkbox('state').getCheckedNodes();
+		var itemChang = itemGrid.getChanges({all:true});
+		var headGrid = pq.grid("#mdp4_h_grid"), headCheck = headGrid.Checkbox('state').getCheckedNodes();
+		
+		if(headCheck.length > 0 && (itemCheck.length > 0 || ( itemGrid.isDirty() && itemGrid.isValidChange({ focusInvalid: true }).valid ) )){
+			//============================================================	 
+	    	//체크된 item 데이터 중 필수 값 체크
+	    	//============================================================
+			for(i=0; i< itemCheck.length; i++){
+	    	  	if(!itemCheck[i].mngwhky){
+					alert((itemCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					itemGrid.editCell( { rowIndx: itemCheck[i].pq_ri, dataIndx: "mngwhky" } );
+	    	  		return false;
+	    	  	}
+			}
+	    	
+			//============================================================	 
+	    	//체크된 item 데이터 충복 체크
+	    	//============================================================
+			for(i=0; i<itemCheck.length; i++){
+				for(j=0; j < itemGrid.getData().length; j++){
+					if(itemCheck[i].pq_ri != itemGrid.getData()[j].pq_ri){
+						if(itemCheck[i].custkey === itemGrid.getData()[j].custkey && itemCheck[i].mngwhky === itemGrid.getData()[j].mngwhky){
+			      			alert((itemGrid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+			
+			//itemGrid updateList 체크 데이터 정제
+			for(z=0; z<itemChang.updateList.length; z++){
+				if(itemChang.updateList[z].state != true){
+					itemChang.updateList.splice(z, 1);
+					itemChang.oldList.splice(z, 1);
+				}
+			}
+			
+			//itemGrid addList 체크 데이터 정제
+			for(x=0; x<itemChang.addList.length; x++){
+				if(itemChang.addList[x].state != true){
+					itemChang.addList.splice(x, 1);
+				}
+			}
+			
+			//itemGrid deleteList 체크 데이터 정제
+			for(y=0; y<itemChang.deleteList.length; y++){
+				if(!itemChang.deleteList[y].rowkey){
+					itemChang.deleteList.splice(y, 1);
+				}
+			}
+	    	
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { data : itemChang, compkey : headCheck[0].compkey, custkey : headCheck[0].custkey };
+				itemGrid.showLoading();
+				var aul = new AjaxUtil_Order("/md/mdp4Save.do", data);
+				aul.setCallbackSuccess(function(data){
+					itemGrid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+					itemGrid.refreshDataAndView();
+			        alert("[[#{ms.saveSuccess}]]");
+				});
+				aul.setComplete(function(data){
+					itemGrid.hideLoading();
+				});
+				aul.send();
+			}
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	var mdp4_h_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: false }
+     	},
+     	{ title: "[[#{md.mcusma.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden: true},
+		{ title: "[[#{md.mcusma.ownerky}]]", dataType: "string", dataIndx: "ownerky", editable: false},
+		{ title: "[[#{md.mowrma.ownamlc}]]", dataType: "string", dataIndx: "ownamlc", editable: false},
+		{ title: "[[#{wm.mdp4.custkey}]]", dataType: "string", dataIndx: "custkey", editable: false},
+		{ title: "[[#{wm.mdp4.custnam}]]", dataType: "string", dataIndx: "cunamlc", editable: false},
+		{ title: "[[#{wm.mdp4.cudelyn}]]", dataType: "string", dataIndx: "cudelyn", align: "center", editable: false}
+	];
+    
+	var mdp4_h_grid = new GridUtil(mdp4_h_gridCM, '[[${gprogrid}]]', 'mdp4_h_grid');
+	mdp4_h_grid.setFind();
+	
+	mdp4_h_grid.setRowDblClick(function(evt, ui){
+		this.Checkbox('state').unCheckAll();
+		this.updateRow( {
+			rowIndx : ui.rowData.pq_ri,
+		    newRow : { state : true },
+		    checkEditable: false
+		});
+	});
+	
+	mdp4_h_grid.setBeforeValidate(function(evt, ui){
+		ui.addList = [];
+	});
+	
+	mdp4_h_grid.setCheck(function(evt, ui){
+		if(ui.check){
+			this.Checkbox('state').unCheckAll();
+			ui.rowData.state = true;
+			this.refreshRow({ rowIndx: ui.rowData.pq_ri});
+			mdp4_i_grid_List(ui);
+		}
+	});
+	
+	mdp4_h_grid.open();
+	
+	//============================================================	
+	// Item 리스트 조회
+	//============================================================
+	function mdp4_i_grid_List(ui){
+		var gridI = pq.grid("#mdp4_i_grid");
+		gridI.showLoading();
+		var aul = new AjaxUtil_Order("/md/mdp4ItemSelect.do", { compkey : ui.rowData.compkey, custkey : ui.rowData.custkey }, "GET");
+		aul.setCallbackSuccess(function(data){
+			gridI.option( "dataModel", {data: data.list, recIndx: "rowkey" } );
+			gridI.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			gridI.hideLoading();
+		});
+		aul.send();
+	}
+	
+	var mdp4_i_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+			type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: true }
+     	},
+		{ title: "rowkey", dataType: "string", dataIndx: "rowkey", editable: false, hidden: true },
+		{ title: "[[#{md.mcuswh.compkey}]]", dataType: "string", dataIndx: "compkey", editable: false, hidden: true},
+		{ title: "[[#{wm.mdp4.custkey}]]",   dataType: "string", dataIndx: "custkey", editable: false},
+		{ title: "[[#{md.mcuswh.mngwhky}]]", dataType: "string", dataIndx: "mngwhky" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+                type: "select",
+                init: function (ui) {
+                	ui.$cell.find("select").pqSelect({ search:false, singlePlaceholder: '' });
+                	setTimeout(function () {
+	                	ui.$cell.find("select").pqSelect('open'); 
+	                }, 250);
+                },
+                options: []
+            },
+            render: function (ui) {
+            	var option = ui.column.editor.options.find(function (obj) {
+                    return (obj[ui.cellData] != null);
+                });
+            	return option ? option[ui.cellData] : ui.cellData;
+            }
+		},
+		{ title: "[[#{md.mcuswh.defwhyn}]]", dataType: "string", dataIndx: "defwhyn" ,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox',
+            cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {                            
+            	var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			},
+			editor: false,
+			editable: function (ui) {}
+		},
+		{ title: "[[#{md.mcuswh.credate}]]", dataType: "string", dataIndx: "credate" , editable : false},
+		{ title: "[[#{md.mcuswh.cretime}]]", dataType: "string", dataIndx: "cretime" , editable : false},
+		{ title: "[[#{md.mcuswh.creuser}]]", dataType: "string", dataIndx: "creuser" , editable : false},
+		{ title: "[[#{md.mcuswh.lmodate}]]", dataType: "string", dataIndx: "lmodate" , editable : false},
+		{ title: "[[#{md.mcuswh.lmotime}]]", dataType: "string", dataIndx: "lmotime" , editable : false},
+		{ title: "[[#{md.mcuswh.lmouser}]]", dataType: "string", dataIndx: "lmouser" , editable : false}
+	];
+	
+	var mdp4_i_grid = new GridUtil(mdp4_i_gridCM, '[[${gprogrid}]]', 'mdp4_i_grid');
+	mdp4_i_grid.setFind();
+	mdp4_i_grid.setReset();
+	
+	mdp4_i_grid.setAdd(function(evt, ui){
+		var headGrid = pq.grid("#mdp4_h_grid")
+  	  	  , headCheck = headGrid.Checkbox('state').getCheckedNodes();
+		if(headCheck.length > 0){
+			var rowData = { state : true, compkey : "[[${session.compkey}]]" , custkey : headCheck[0].custkey , defwhyn : "N" } ;
+			var rowIndx = this.addRow({ newRow : rowData , checkEditable : false});
+			this.goToPage({ rowIndx : rowIndx });
+			this.editCell({ rowIndx : rowIndx , dataIndx : "mngwhky"});
+		}else{
+			alert("[[#{md.mcuswh.ckdcust}]]");	//매장을 먼저 선택해주세요.
+		}
+	});
+	
+	mdp4_i_grid.setDelete(function(evt, ui){
+		var grid = this;
+		var checkList = this.Checkbox('state').getCheckedNodes(), rows = [];
+    	
+		if(checkList.length > 0){
+			setTimeout(function () {
+				var ans = window.confirm("[[#{ms.choiceRowDelete}]]");	//선택된 행을 모두 삭제하시겠습니까?
+                if (ans) {
+                	for(i=0; i<checkList.length; i++){
+                		rows.push({rowIndx : checkList[i].pq_ri});
+                	}
+                	grid.deleteRow({ rowList: rows });
+                }
+			});
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+    	}
+    });
+	
+	mdp4_i_grid.setCreate(function (evt, ui) {
+		var keys = Object.keys(mdp4_init);
+		for(key of keys){
+			var gData = mdp4_init[key];
+			var column = this.getColumn({ dataIndx: key });
+			if(typeof column !== "undefined"){
+				var options = gData.map(function(obj){
+		        	var rObj = {};
+		        	rObj[obj.combovl] = obj.combonm;
+		        	return rObj;
+				});
+		    	column.editor.options = options;
+			}
+		}
+	});
+	
+	mdp4_i_grid.setChange(function (evt, ui) {
+    	if(ui.source === 'edit'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : { state : true },
+        		    checkEditable: false
+        		});
+    		}
+    	}else if(ui.source === 'paste'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : {state : true},
+        		    checkEditable: false
+        		});
+    		}
+    		if(ui.addList.length > 0){
+    			var headGrid = pq.grid("#mdp4_h_grid"), headCheck = headGrid.Checkbox('state').getCheckedNodes();
+        		for(i=0; i<ui.addList.length; i++){
+        			ui.addList[i].newRow.state = true;
+        			ui.addList[i].newRow.compkey = "[[${session.compkey}]]";
+        			ui.addList[i].newRow.custkey = headCheck[0].custkey;
+        			ui.addList[i].newRow.defwhyn = "N";
+        		}
+    		}
+    	}else if(ui.source === 'checkbox'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			if(ui.updateList[i].newRow.hasOwnProperty('defwhyn')){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : true },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+    	}
+    });
+	
+	mdp4_i_grid.setCheck(function (evt, ui) {
+		if(ui.check == true && ui.dataIndx == 'defwhyn'){
+			var grid = this, checkList = grid.Checkbox('defwhyn').getCheckedNodes();
+       		for(i=0; i<checkList.length; i++){
+           		if(checkList[i].pq_ri != ui.rowIndx){
+           			this.updateRow( {
+               			rowIndx : checkList[i].pq_ri,
+               		    newRow : { defwhyn : 'N' },
+               		    checkEditable: false
+               		});
+           		}
+   			}
+		}
+	});
+	
+	mdp4_i_grid.open();
+	mdp4List();
+	
+	function mdp4List(){
+		var gridH = pq.grid("#mdp4_h_grid");
+		var gridI = pq.grid("#mdp4_i_grid");
+		gridH.showLoading();
+		var aul = new AjaxUtil_Order("/md/mdp4HeaderSelect.do" , { ownerky : $('#mdp4_ownerky option:selected').val(), cunamlc : $('#mdp4_cunamlc').val() } , "GET");
+		aul.setCallbackSuccess(function(data){
+			gridH.option( "dataModel", {data: data.list} );
+			gridH.refreshDataAndView();
+			gridI.option( "dataModel", {data: [] , recIndx: "rowkey" } );
+			gridI.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			gridH.hideLoading();
+		});
+		aul.send();
+	}
+	
+	function mdp4Init(){
+		var initData = callAjax('data', 'GET', "/md/mdp4Init.do" , {});
+		if(initData){
+			var list = initData.ownerky;
+			for(item of list){
+				$('#mdp4_ownerky').append("<option value='" + item.combovl + "'>" + item.combonm +"</option>");	
+			}
+		}
+		return initData
+	}
+});
+
+</script>
+
+</div>
+</html>

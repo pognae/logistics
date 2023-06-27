@@ -1,0 +1,772 @@
+<!-- Modal EditProfile start -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div class="modal fade show" id="modalEditProfile" tabindex="-1" role="dialog" aria-labelledby="exampleModalToggleLabel" style="padding-right: 15px; z-index: 1050; ">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content" style="height:700px;">
+			<!-- Account details card-->
+			<div class="modal-header">
+				<div class="modal-title" style="margin: 0;">
+					<nav>
+						<ul class="nav nav-pills modal-nav">
+							<li class="nav-item"><a class="nav-link current" id="syu6_userProfile">[[#{sy.syu6.userProfile}]]</a></li>
+							<li class="nav-item"><a class="nav-link" id="syu6_pwdChange">[[#{sy.syu6.pwdChange}]]</a></li>
+						</ul>
+					</nav>
+				</div>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+			<div class="modal-body" style="overflow-y:auto">
+				<div class="card" style="border :none">
+					<div class="card-body" id="syu6_container" th:switch="${session.usertyp}">
+						<div class="card-inbody" data-type="BINBLUR">
+							<h5 class="mb-2 font-weight-bold" style="font-size: 20px;">[[#{sy.syu6.myProfile}]]</h5>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{sy.susrma.useract}]]</label>
+									<input class="form-control" name="syu6_useract" data-BINBLUR="useract" type="text"
+										id="syu6_useract" disabled/>
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{sy.susrma.usernam}]]</label> 
+									<input class="form-control" name="syu6_usernam" data-BINBLUR="usernam" type="text"
+										id="syu6_usernam" placeholder="Enter your username"/>
+								</div>
+								<div class="col-md-6" style="display:none;">
+									<label class="small mb-1">[[#{sy.susrma.usertyp}]]</label>
+									<input class="form-control" name="syu6_usertyp" data-BINBLUR="usertyp" type="text"
+										id="syu6_usertyp"/>
+								</div>
+							</div>
+							<div class="mb-3">
+								<label class="small mb-1">[[#{sy.susrma.address}]]</label> 
+								<input class="form-control" name="syu6_address" data-BINBLUR="address" type="text"
+									id="syu6_address" placeholder="Enter your address"/>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{sy.susrma.telphnm}]]</label>
+									<input class="form-control" name="syu6_telphnm" data-BINBLUR="telphnm" type="text"
+										id="syu6_telphnm" placeholder="Enter your phoneNumber"/>
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{sy.susrma.departm}]]</label> 
+									<input class="form-control" name="syu6_departm" data-BINBLUR="departnm" type="text"
+										id="syu6_departm" placeholder="Enter your department"/>
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{sy.susrma.emailad}]]</label>
+									<input class="form-control" name="syu6_emailad" data-BINBLUR="emailad" type="text"
+										id="syu6_emailad" placeholder="Enter your emailAddress"/>
+								</div>
+							</div>
+							<div class="form-group row col">
+								<label for="syu6_favoryn" class="col-5 col-form-label">[[#{sy.susrma.favoryn}]]</label>
+								<input type="checkbox" class="col-1 form-control" id="syu6_favoryn" data-BINBLUR="favoryn"/>
+							</div>
+						</div>
+						<div class="card-inbody" data-type="OWNER" th:case="OWNER">
+							<h5 class="mb-2 font-weight-bold" style="font-size: 20px;">[[#{sy.syu6.ownerProfile}]]</h5>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mowrma.ownerky}]]</label> 
+									<input class="form-control" name="syu6_OWNER_ownerky" type="text" 
+										id="syu6_OWNER_ownerky" data-OWNER="ownerky" disabled>
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mowrma.ownamlc}]]</label> 
+									<input class="form-control" name="syu6_ownamlc" type="text" 
+										id="syu6_ownamlc" placeholder="Enter your owner name"
+										data-OWNER="ownamlc">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mowrma.ownamko}]]</label> 
+									<input class="form-control" name="syu6_ownamko" type="text" 
+										placeholder="Enter your owner name(ko)"
+										id="syu6_ownamko" data-OWNER="ownamko">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mowrma.ownamen}]]</label> 
+									<input class="form-control" name="syu6_ownamen" type="text"
+										id="syu6_ownamen" placeholder="Enter your owner name(en)" data-OWNER="ownamen">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mowrma.owaddr1}]]</label>
+									<input class="form-control" name="syu6_owaddr1" type="text"
+										id="syu6_owaddr1" placeholder="Enter your address1" data-OWNER="owaddr1">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">	
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mowrma.owaddr2}]]</label> <input
+										class="form-control" name="syu6_owaddr2" type="text"
+										id="syu6_owaddr2" placeholder="Enter your address2" data-OWNER="owaddr2">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mowrma.owaddr3}]]</label> <input
+										class="form-control" name="syu6_owaddr3" type="text" 
+										id="syu6_owaddr3" placeholder="Enter your address3" data-OWNER="owaddr3">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mowrma.owrepnm}]]</label> 
+									<input class="form-control" name="syu6_owrepnm" type="text" 
+										id="syu6_owrepnm" placeholder="Enter your owner name" data-OWNER="owrepnm">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mowrma.owreptl}]]</label> 
+									<input class="form-control" name="syu6_owreptl" type="text"
+										 id="syu6_owreptl" placeholder="Enter your owner number" data-OWNER="owreptl">
+								</div>
+							</div>	
+							<div class="row gx-3 mb-3">
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mowrma.owrepem}]]</label> 
+									<input class="form-control" name="syu6_owrepem" type="text" 
+										id="syu6_owrepem" placeholder="Enter your owner email" data-OWNER="owrepem">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mowrma.owmannm}]]</label>
+									<input class="form-control" name="syu6_owmannm" type="text"
+										id="syu6_owmannm" placeholder="Enter your manager name" data-OWNER="owmannm">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mowrma.owmantl}]]</label> 
+									<input class="form-control" name="syu6_owmantl" type="text" 
+										id="syu6_owmantl" placeholder="Enter your manager number" data-OWNER="owmantl">
+								</div>
+							</div>	
+							<div class="row gx-3 mb-3">	
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mowrma.owmanem}]]</label> 
+										<input class="form-control" name="syu6_owmanem" type="text"
+											id="syu6_owmanem" placeholder="Enter your manager email" data-OWNER="owmanem">
+								</div>
+							</div>
+						</div>
+						<div class="card-inbody" data-type="VENDER" th:case="VENDER">
+							<h5 class="mb-2 font-weight-bold" style="font-size: 20px;">[[#{sy.syu6.partnerProfile}]]</h5>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptnrkey}]]</label> 
+									<input class="form-control" name="syu6_ptnrkey" type="text"
+										id="syu6_ptnrkey" data-VENDER="ptnrkey" disabled>
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptnamlc}]]</label> 
+									<input class="form-control" name="syu6_ptnamlc" type="text"
+										id="syu6_ptnamlc" data-VENDER="ptnamlc" placeholder="Enter your partner name">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptnamko}]]</label> 
+									<input class="form-control" name="syu6_ptnamko"	type="text" 
+										id="syu6_ptnamko" data-VENDER="ptnamko" placeholder="Enter your partner name(ko)">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptnamen}]]</label> 
+									<input class="form-control" name="syu6_ptnamen" type="text"
+										id="syu6_ptnamen" data-VENDER="ptnamen" placeholder="Enter your partner name(en)">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptteln1}]]</label> 
+									<input class="form-control" name="syu6_ptteln1" type="text"
+										id="syu6_ptteln1" data-VENDER="ptteln1" placeholder="Enter your phone number">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptteln2}]]</label> 
+									<input class="form-control" name="syu6_ptteln2" type="text" 
+										id="syu6_ptteln2" data-VENDER="ptteln2" placeholder="Enter your phone number">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptteln3}]]</label> 
+									<input class="form-control" name="syu6_ptteln3" type="text" 
+										id="syu6_ptteln3" data-VENDER="ptteln3"  placeholder="Enter your phone number">
+								</div>
+								<div class="col-md-6"></div>
+							</div>	
+							<div class="row gx-3 mb-3">
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mptnma.ptaddr1}]]</label> 
+									<input class="form-control" name="syu6_ptaddr1" type="text"
+										id="syu6_ptaddr1" data-VENDER="ptaddr1" placeholder="Enter your address">
+								</div>
+							</div>	
+							<div class="row gx-3 mb-3">	
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mptnma.ptaddr2}]]</label> 
+									<input
+										class="form-control" name="syu6_ptaddr2" type="text"
+										id="syu6_ptaddr2" data-VENDER="ptaddr2" placeholder="Enter your address">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mptnma.ptaddr3}]]</label> 
+									<input
+										class="form-control" name="syu6_ptaddr3" type="text"
+										id="syu6_ptaddr3" data-VENDER="ptaddr3" placeholder="Enter your address">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptrepnm}]]</label> 
+									<input class="form-control" name="syu6_ptrepnm" type="text" 
+										id="syu6_ptrepnm" data-VENDER="ptrepnm" placeholder="Enter your name">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptreptl}]]</label> 
+									<input class="form-control" name="syu6_ptreptl" type="text" 
+										id="syu6_ptreptl" data-VENDER="ptreptl" placeholder="Enter your phone number">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">	
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptrepem}]]</label> 
+									<input class="form-control" name="syu6_ptrepem" type="text" 
+										id="syu6_ptrepem" data-VENDER="ptrepem" placeholder="Enter your email">
+								</div>
+								<div class="col-md-6"></div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptmannm}]]</label>
+									<input class="form-control" name="syu6_ptmannm" type="text"
+										id="syu6_ptmannm" data-VENDER="ptmannm" placeholder="Enter your name">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mptnma.ptmantl}]]</label> 
+									<input class="form-control" name="syu6_ptmantl" type="text" 
+										id="syu6_ptmantl" data-VENDER="ptmantl" placeholder="Enter your phone number">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mptnma.ptmanem}]]</label> 
+									<input class="form-control" name="syu6_ptmanem" type="text"
+										id="syu6_ptmanem" data-VENDER="ptmanem" placeholder="Enter your email" >
+								</div>
+							</div>
+						</div>
+						<div class="card-inbody" data-type="CUSTOMER" th:case="CUSTOMER">
+							<h5 class="mb-2 font-weight-bold" style="font-size: 20px;">[[#{sy.syu6.customerProfile}]]</h5>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.custkey}]]</label> 
+									<input class="form-control" name="syu6_custkey" type="text" 
+										id="syu6_custkey" data-CUSTOMER="custkey" disabled>
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.cunamlc}]]</label> 
+									<input class="form-control" name="syu6_cunamlc" type="text" 
+										id="syu6_cunamlc" data-CUSTOMER="cunamlc" placeholder="Enter your customer name">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.cunamko}]]</label> 
+									<input class="form-control" name="syu6_cunamko" type="text" 
+										id="syu6_cunamko" data-CUSTOMER="cunamko" placeholder="Enter your customer name(ko)">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.cunamen}]]</label> 
+									<input class="form-control" name="syu6_cunamen" type="text" 
+										id="syu6_cunamen" data-CUSTOMER="cunamen" placeholder="Enter your customer name(en)">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.ownerky}]]</label> 
+									<input class="form-control" name="syu6_CUSTOMER_ownerky" type="text" 
+										id="syu6_CUSTOMER_ownerky" data-CUSTOMER="ownerky" disabled>
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.custpky}]]</label> 
+									<input class="form-control" name="syu6_custpky" type="text" 
+										id="syu6_custpky" data-CUSTOMER="custpky" disabled>
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.cuteln1}]]</label> 
+									<input class="form-control" name="syu6_cuteln1" type="text" 
+										id="syu6_cuteln1" data-CUSTOMER="cuteln1" placeholder="Enter your phone number">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.cuteln2}]]</label> 
+									<input class="form-control" name="syu6_cuteln2" type="text" 
+										id="syu6_cuteln2" data-CUSTOMER="cuteln2" placeholder="Enter your phone number">
+								</div>
+							</div>	
+							<div class="row gx-3 mb-3">	
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mcusma.cuteln3}]]</label> 
+									<input class="form-control" name="syu6_cuteln3" type="text"
+										id="syu6_cuteln3" data-CUSTOMER="cuteln3" placeholder="Enter your phone number">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mcusma.cuaddr1}]]</label> 
+									<input class="form-control" name="syu6_cuaddr1" type="text"
+										id="syu6_cuaddr1" data-CUSTOMER="cuaddr1" placeholder="Enter your address">
+								</div>
+							</div>	
+							<div class="row gx-3 mb-3">	
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mcusma.cuaddr2}]]</label> 
+										<input class="form-control" name="syu6_cuaddr2" type="text"
+											id="syu6_cuaddr2" data-CUSTOMER="cuaddr2" placeholder="Enter your address">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mcusma.cuaddr3}]]</label> <input
+										class="form-control" name="syu6_cuaddr3" type="text"
+										id="syu6_cuaddr3" data-CUSTOMER="cuaddr3" placeholder="Enter your address">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.curepnm}]]</label> 
+									<input class="form-control" name="syu6_curepnm" type="text" 
+										id="syu6_curepnm" data-CUSTOMER="curepnm">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.cureptl}]]</label> 
+									<input class="form-control" name="syu6_cureptl" type="text" 
+										id="syu6_cureptl" data-CUSTOMER="cureptl">
+								</div>
+							</div>	
+							<div class="row gx-3 mb-3">	
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mcusma.curepem}]]</label> 
+									<input class="form-control" name="syu6_curepem" type="text" 
+										id="syu6_curepem" data-CUSTOMER="curepem">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.cumannm}]]</label> 
+									<input class="form-control" name="syu6_cumannm" type="text" 
+										id="syu6_cumannm" data-CUSTOMER="cumannm" placeholder="Enter your name">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.cumantl}]]</label> 
+									<input class="form-control" name="syu6_cumantl" type="text" 
+										id="syu6_cumantl" data-CUSTOMER="cumantl" placeholder="Enter your phone number">
+								</div>
+							</div>	
+							<div class="row gx-3 mb-3">	
+								<div class="col-md-12">
+									<label class="small mb-1">[[#{md.mcusma.cumanem}]]</label> 
+									<input class="form-control" name="syu6_cumanem" type="text"
+										id="syu6_cumanem" data-CUSTOMER="cumanem" placeholder="Enter your email">
+								</div>
+							</div>
+							<div class="row gx-3">
+								<div class="col-md-12">
+									<label class="small mb-2">[[#{sy.syu6.dateAval}]]</label>
+									<div class="flex-group flex-row mb-3">
+										<div>
+											<input name="syu6_sundavl" type="checkbox" id="syu6_sundavl" data-CUSTOMER="sundavl"><label class="small mb-2">[[#{md.mcusma.sundavl}]]</label>
+										</div>                                                                                     
+										<div>                                                                                      
+											<input name="syu6_mondavl" type="checkbox" id="syu6_mondavl" data-CUSTOMER="mondavl"><label class="small mb-2">[[#{md.mcusma.mondavl}]]</label>
+										</div>                                                                                     
+										<div>                                                                                      
+											<input name="syu6_tuedavl" type="checkbox" id="syu6_tuedavl" data-CUSTOMER="tuedavl"><label class="small mb-2">[[#{md.mcusma.tuedavl}]]</label>
+										</div>                                                                                     
+										<div>                                                                                      
+											<input name="syu6_weddavl" type="checkbox" id="syu6_weddavl" data-CUSTOMER="weddavl"><label class="small mb-2">[[#{md.mcusma.weddavl}]]</label>
+										</div>                                                                                     
+										<div>                                                                                      
+											<input name="syu6_thudavl" type="checkbox" id="syu6_thudavl" data-CUSTOMER="thudavl"><label class="small mb-2">[[#{md.mcusma.thudavl}]]</label>
+										</div>                                                                                     
+										<div>                                                                                      
+											<input name="syu6_fridavl" type="checkbox" id="syu6_fridavl" data-CUSTOMER="fridavl"><label class="small mb-2">[[#{md.mcusma.fridavl}]]</label>
+										</div>                                                                                     
+										<div>                                                                                      
+											<input name="syu6_satdavl" type="checkbox" id="syu6_satdavl" data-CUSTOMER="satdavl"><label class="small mb-2">[[#{md.mcusma.satdavl}]]</label>
+										</div>                                                                                     
+										<div style="flex:2">                                                                       
+											<input name="syu6_nathavl" type="checkbox" id="syu6_sundavl" data-CUSTOMER="nathavl"><label class="small mb-2">[[#{md.mcusma.nathavl}]]</label> 
+										</div>
+									</div>
+								</div>
+							</div>	
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.dlvrqtm}]]</label>
+									<input class="form-control" name="syu6_dlvrqtm" type="time"
+										data-CUSTOMER="dlvrqtm" id="syu6_dlvrqtm">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.depbank}]]</label>
+									<input class="form-control" name="syu6_depbank" type="text"
+										data-CUSTOMER="depbank" id="syu6_depbank">
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.depacnm}]]</label> 
+									<input class="form-control" name="syu6_depacnm" type="text" 
+										data-CUSTOMER="depacnm" id="syu6_depacnm">
+								</div>
+							</div>
+							<div class="row gx-3 mb-3">
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.invhead}]]</label>
+									<textarea class="form-control" name="syu6_invhead"
+										data-CUSTOMER="invhead" id="syu6_invhead"></textarea>
+								</div>
+								<div class="col-md-6">
+									<label class="small mb-1">[[#{md.mcusma.invfoot}]]</label>
+									<textarea class="form-control" name="syu6_invfoot"
+										data-CUSTOMER="invfoot" id="syu6_invfoot"></textarea>
+								</div>
+							</div>
+						</div>
+					</div> 
+					<div class="card-body td-check" id="changePwdDiv">
+						<div class="card-inbody1">
+							<div>
+								<label class="small mb-1">[[#{sy.susrma.passwrd}]]</label>
+								<input class="input" name="syu6_pwdchkBox" id="syu6_pwdchkBox" type="checkbox" style="display:none;">
+								<div class="input-btn-group mb-2">
+									<input class="form-control" name="syu6_passwrd" type="text"
+										placeholder="Enter your password" id="pwd" />
+									<button class="btn btn-default btn-sm3" type="button" id="currentPwdCk" >[[#{sy.main.login.useractSuccess}]]</button>
+								</div>
+								<div class="md-8">
+									<div class="form-pwd-noti md-5" id="authPwdCheck"></div>
+								</div>
+							</div>
+							<div>
+								<label class="small mb-1">[[#{sy.syu6.newPasswrd}]]</label> 
+								<div class="mb-2 input-btn-group ">
+									<form>
+										<input class="form-control" name="changePasswrd" type="password"
+											placeholder="Enter your new password" id="syu6_passwrd"
+											autoComplete="off"/>
+									</form>
+								</div>
+								<span class="form-noti mb-2"><i class="fa-solid fa-circle-exclamation"></i>[[#{sy.syu6.pwdValid}]]</span>	
+							</div>
+							<div>	
+								<label class="small mb-1">[[#{sy.syu6.newRePaswrd}]]</label> 
+								<div class="mb-1 input-btn-group ">
+									<form>
+										<input class="form-control md-4" name="passwrd" type="password"
+											placeholder="Enter your new password" id="newPwdCk"
+											autoComplete="off"/>
+									</form>
+									<button class="btn btn-default btn-sm3" type="button" onClick="pwdChngeBtn()">[[#{bt.change}]]</button>
+								</div>
+								<div class="md-12">
+									<div class="small md-5" id="changePwdCheck"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer" style="padding-bottom: 90px;">
+				<button type="button" class="btn btn-border-lg" data-dismiss="modal">[[#{bt.close}]]</button>
+				<button type="button" class="btn btn-main-lg" id="syu6_btnSave">[[#{bt.save}]]</button>
+				<button type="button" class="btn btn-text" id="exampleModalToggleLabel1" data-bs-target="#exampleModalToggleLabel2" data-bs-toggle="modal">[[#{bt.signOut}]]</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>  
+$(function(){
+	//btnEditProfile 버튼 클릭시 modal show 처리
+	$("#btnEditProfile").click(function () { 
+		$("#modalEditProfile").modal("show");
+		$("#modalEditProfile").css("z-index", 1050);
+		$('.modal-backdrop').css('z-index', 997);
+		$('#syu6_container').css("display", "block");
+	});
+	
+	$('#modalEditProfile').on('show.bs.modal', function() {
+		var aul = new AjaxUtil_Order("/sy/userProfile.do", {} , "GET");	
+		aul.setCallbackSuccess(function(data){
+			showProfileList(data.list);
+		});
+		aul.send();
+	});
+		
+	function showProfileList(data){
+		let dataTypeDom = $(".card-body").children(".card-inbody");
+		for(typeDom of dataTypeDom){
+			let dataType = $(typeDom).data("type");
+			let dataset = "data-" + dataType;
+			let profileList = dataType == "CUSTOMER" ? 
+							 $(typeDom).find("input["+ dataset +"]" , "textarea[" + dataset + "]") : $(typeDom).find("input["+ dataset +"]");
+			var list = data[dataType];
+			for(profileCol of profileList){
+				let dataCol = profileCol.dataset[dataType.toLowerCase()];
+				if(dataType == "OWNER" || dataType == "CUSTOMER"){ //ownerky 중복
+					$("#syu6_" + dataType + "_" +  dataCol).val(list[dataCol]);
+				}
+				
+				if(profileCol.type == "checkbox"){
+					$("#syu6_" + dataCol).prop("checked", list[dataCol] == "Y" ? true : false);
+				}else{
+					$("#syu6_" + dataCol).val(list[dataCol]);
+				}
+			}
+		}
+	}
+	
+	//============================================================
+	//EditProfile : 저장 버튼 이벤트 정의
+	//============================================================
+	$("#syu6_btnSave").click(function () {
+		let pwd = $('#syu6_passwrd').val();
+		let dataTypeDom = $(".card-body").children(".card-inbody");
+		let profileTag = document.getElementsByClassName("card-inbody");
+		let dataList = new Object();
+		let dataType = null;
+		
+		for(typeDom of dataTypeDom){
+			dataType = $(typeDom).data("type");
+			let dataset = "data-" + dataType;
+			let data = new Object();
+			let profileList = dataType == "CUSTOMER" ? 
+							 $(typeDom).find("input["+ dataset +"]" , "textarea[" + dataset + "]") : $(typeDom).find("input["+ dataset +"]");
+			
+			 for(profileCol of profileList){
+				let dataCol = profileCol.dataset[dataType.toLowerCase()];	
+
+				if(profileCol.type == "checkbox"){
+					profileCol.value = profileCol.checked
+				}
+				data = Object.assign(data , { [dataCol] : profileCol.value });
+			 }
+			 
+			if(!dataList[dataType]){
+				dataList = Object.assign(dataList , { [dataType] : data });
+			}
+		 }
+		let aul = new AjaxUtil_Order("/sy/saveUserProfile.do", dataList);	
+		aul.setCallbackSuccess(function(data){
+			if(data.result == 1){
+				alert("[[#{ms.saveSuccess}]]"); //저장 성공
+				$('#modalEditProfile').modal("hide");
+//					getUserMenuList();
+			}
+		});
+		aul.send();
+	});
+	
+	//============================================================
+	//EditProfile : 비밀번호 변경 버튼 이벤트 정의
+	//============================================================
+	function pwdChngeBtn(){
+		var currentPwd = $('#pwd').val(); // 현재 비밀번호
+		var newPwd = $('#syu6_passwrd').val(); // 변경 비밀번호
+		var newPwdCk = $('#newPwdCk').val();
+		var useract = $("#syu6_useract").val();
+		var pwdChk = $('#syu6_pwdchkBox').is(':checked');
+		
+		if (!saveValidation(currentPwd, newPwd, newPwdCk, pwdChk) || 
+			!newPwdValidation(useract , newPwd)){
+			return false;
+		}  
+		
+		if(currentPwd == '' || currentPwd.length ==0){
+			alert("[[#{sy.syu6.curPwdChk}]]");  
+			currentPwd.focus;
+			return false;
+		}else if(newPwd == '' || newPwd.length ==0){
+			alert("[[#{sy.syu6.chnPwdChk}]]");  
+			newPwd.focus;
+			return false;
+		}else if(newPwdCk == '' || newPwdCk.length ==0){
+			alert("[[#{sy.syu6.chnPwdChk}]]");  
+			newPwdCk.focus;
+			return false;
+		}
+		
+		var data = { passwrd : $('#syu6_passwrd').val() };
+		var aul = new AjaxUtil_Order("/sy/userProfile.do", data);	
+		aul.setCallbackSuccess(function(data){
+			alert("[[#{md.mdo2.saveSuccess}]]");
+			$('#modalEditProfile').modal("hide");
+		});
+		aul.send();
+	};
+	
+	//비밀번호 변경 저장 validation
+	function saveValidation(currentPwd , newPwd ,newPwdCk , pwdChk){
+		if(currentPwd == ""){
+			alert("[[#{sy.syu6.curPwdChk}]]");
+			$('#pwd').focus();
+			return false;
+		}else if(newPwd == ""){
+			alert("[[#{sy.syu6.chnPwdChk}]]");
+			$('#syu6_passwrd').focus();
+			return false;
+		}else if(newPwdCk == ""){
+			alert("[[#{sy.syu6.chnPwdChk}]]");
+			$('#newPwdCk').focus();
+			return false;
+		}
+
+		//현재 비밀번호 확인 여부
+		if(pwdChk == false){
+			alert("[[#{sy.syu6.pwdChk}]]");
+			return false
+		}
+		
+		//새 비밀번호 일치 여부
+		if(newPwd !== newPwdCk){
+			 $('#changePwdCheck').text("[[#{sy.syu6.compPwd}]]");
+		     $('#changePwdCheck').css("color", "red");
+			 return false;
+		}else{ 
+			$('#changePwdCheck').empty();
+			return true;
+		}
+		return true;
+	}
+	
+	//비밀번호 유효성 검사
+	function newPwdValidation(useract , newPwd){
+		var reg = /^(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
+		var hangulcheck = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/;
+		 
+		if(false === reg.test(newPwd) ) {
+			alert("[[#{sy.main.pwdValidation}]]"); //비밀번호는 8자 이상이어야 하며, 숫자/영문자/특수문자를 모두 포함해야 합니다.
+			$('#syu6_passwrd').focus();
+			return false;
+		}else if(/(\w)\1\1\1/.test(newPwd)){
+		 	alert("[[#{sy.main.pwdValidation2}]]" ); //같은 문자를 4번 이상 사용하실 수 없습니다.
+		 	$('#syu6_passwrd').focus();
+		 	return false;
+		}else if(newPwd.search(useract) > -1){
+		 	alert("[[#{sy.main.pwdValidation3}]]"); //비밀번호에 아이디가 포함되었습니다.
+		 	$('#syu6_passwrd').focus();
+		 	return false;
+		}else if(newPwd.search(/\s/) != -1){
+		 	alert("[[#{sy.main.pwdValidation4}]]");//비밀번호는 공백 없이 입력해주세요
+		 	$('#syu6_passwrd').focus();
+		 	return false;
+		}else if(hangulcheck.test(newPwd)){
+		 	alert("[[#{sy.main.pwdValidation5}]]"); //비밀번호에 한글을 사용 할 수 없습니다.
+		 	$('#syu6_passwrd').focus();
+		 	return false;
+		}else {
+			return true;
+		} 
+	};
+	
+	//============================================================
+	//EditProfile : 탈퇴 버튼 이벤트 정의
+	//============================================================
+	$('#exampleModalToggleLabel1').click(function(){
+		var result = confirm("[[#{sy.syu6.signOut}]]");
+		if(result){
+			var data = { useract :  $('#syu6_useract').val() , usernam : $('#syu6_usernam').val() };
+			var aul = new AjaxUtil_Order("/sy/signOutUser.do" , data );
+			aul.setCallbackSuccess(function (data){
+				if(data.list == 1){
+					alert("[[#{sy.syu6.saveSignOut}]]");
+					location.href='/logout';
+				}else{
+					alert("[[#{sy.syu6.failSignOut}]]");
+					return false;
+				}
+			});
+			
+			aul.send();
+		}
+	});
+
+	
+	//============================================================
+	//EditProfile : 비밀번호 확인 버튼 이벤트 정의
+	//============================================================
+	$('#currentPwdCk').click(function(){
+		var data = $('#pwd').val();
+		if(data == ""){
+			alert("[[#{sy.syu6.curPwdChk}]]");
+			$('#pwd').focus();
+			return false;
+		}else{
+			$.ajax({
+				url : '/sy/findPwd.do',
+				type : 'POST',
+				beforeSend : function(xhr) {
+					xhr.setRequestHeader("Accept", "application/json");
+					xhr.setRequestHeader("Content-Type","application/json;charset=utf-8");
+					xhr.setRequestHeader("AJAX", true);
+				},
+				data : data,
+				success : function(response){
+					$('#authPwdCheck').text('[[#{sy.syu6.pwdSuccess}]]');
+					$('#authPwdCheck').css('color' , 'red');
+					$('#syu6_pwdchkBox').prop('checked',true);
+				},
+				error : function(a,b,c){
+					$('#authPwdCheck').text('[[#{sy.syu6.pwdError}]]');
+					$('#authPwdCheck').css('color' , 'red');
+					$('#syu6_pwdchkBox').prop('checked',false);
+				}
+			});
+		}
+	});
+
+	//============================================================
+	// TAB 이동
+	//============================================================
+	$('#syu6_userProfile').click(function(e){
+		$('.nav-link').removeClass('current');
+		$(e).addClass('current');
+		
+		$('#syu6_container').removeClass("td-check");
+ 		$('#changePwdDiv').addClass("td-check");
+		$('#syu6_btnSave').removeClass("td-check");
+		$('#exampleModalToggleLabel1').removeClass("td-check");
+	});
+	
+	
+	$('#syu6_pwdChange').click(function(e){
+		$('.nav-link').removeClass('current');
+		$(e).addClass('current');
+		
+		$('#syu6_container').addClass("td-check");
+		$('#changePwdDiv').removeClass("td-check");
+		$('#syu6_btnSave').addClass("td-check");
+		$('#exampleModalToggleLabel1').addClass("td-check");
+		
+		$('input[name="syu6_passwrd"]').val("");
+		$('input[name="changePasswrd"]').val("");
+		$('input[name="passwrd"]').val("");
+		$('#authPwdCheck').text("");
+	});
+});	
+		
+</script>
+</html>
+<!-- Modal EditProfile end -->

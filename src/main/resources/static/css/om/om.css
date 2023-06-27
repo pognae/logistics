@@ -1,0 +1,39 @@
+
+.omw3-nborder :not(input){
+	border:none !important;
+	padding:0 !important;
+}
+
+.omw4-nborder :not(input){
+	border:none !important;
+	padding:0 !important;
+}
+
+.omb9_cont_grid{
+	display:flex;
+	flex-direction:row;
+	border: 1px solid #333;
+}
+.omb9_row_block{
+	width:100%; 
+	height:100%;
+	display:flex;
+	flex-direction:column;
+}
+.omb9_row_block{border-right: 1px solid #333;}
+.omb9_row_bottom_line{border-bottom:1px solid #333;}
+.omb9_row{
+	text-align:center;
+	display:flex;
+	flex-direction:row;
+	height:100%;
+	align-items:center;
+}
+.omb9_row div{width:100%; margin:0 0.2rem;}
+.omb9_row .omb9_cont_title{max-width:30%; }
+.omb9_row .omb9_cont_title[data-grid]{text-decoration:underline;  text-underline-position: under;}
+.omb9_row .omb9_cont_title[data-grid]:hover{font-weight:bold; cursor:pointer;}
+.omb9_row .omb9_cont_count{max-width:20%;}
+.omb9_row .omb9_cont_count input{width:100%; text-align:right;}
+.omb9_row .omb9_cont_price{margin-right:0.8rem;}
+.omb9_row .omb9_cont_price input{width:100%; text-align:right;}

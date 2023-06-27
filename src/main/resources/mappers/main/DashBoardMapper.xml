@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.logistics.main.mapper.DashBoardMapper">
+	<select id="callSpDsChart" statementType="CALLABLE" parameterType="java.util.HashMap" resultType="java.util.HashMap"> 
+		CALL sp_ds_chart
+		( 
+		  #{compkey}
+		, #{ownerky}
+		, #{warekey}
+		, #{custkey}
+		, #{vendkey}
+		, #{chatype}
+		, #{userData.useract}
+		, #{O_ORSDATA, mode=OUT, jdbcType=VARCHAR}
+		, #{O_OXLDATA, mode=OUT, jdbcType=VARCHAR}
+		, #{O_OYLDATA, mode=OUT, jdbcType=VARCHAR}
+		, #{O_OMSGKEY, mode=OUT, jdbcType=VARCHAR}
+		, #{O_ORESULT, mode=OUT, jdbcType=INTEGER}
+		)
+	</select>
+	
+	<select id="selectWmPosdate" resultType="hashmap">
+		<![CDATA[ select CASE WHEN DATE_FORMAT(NOW(), '%H%i' ) <= POSTSTM  
+							  THEN DATE_FORMAT(NOW(), '%Y%m%d' )
+				       		  ELSE DATE_FORMAT( DATE_ADD(NOW(), INTERVAL +1 DAY) , '%Y-%m-%d' )     	 
+				         END as POSDATE
+				  from MWARMA 
+					WHERE COMPKEY = #{compkey}
+					  AND WAREKEY = #{warekey} ]]>
+	</select>
+</mapper>

@@ -1,0 +1,32 @@
+<!DOCTYPE html> 
+<html xmlns:th="http://www.thymeleaf.org"  xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+	<head>
+		<meta charset="UTF-8">
+	    <title> Error Page!</title>
+	    <link rel="shortcut icon" href="/img/warehouse1.ico">
+	    <!-- CSS  -->
+	    <link rel="stylesheet" href="/css/sy/error.css">
+	</head> 
+	<body> 
+		<div class="noise"></div>
+		<div class="overlay"></div>
+		<div class="terminal">
+			<h2>오류 발생</h2>
+		  	서버가 예상하지 못한 상황에 놓였다는 것을 나타냅니다.
+		  	<hr> 		
+			<h1>Error <span class="errorcode"><span th:text="${code}"></span></span></h1>
+			<p class="output"><span th:text="${msg}"></span></p>
+			<p class="output">TIMESTAMP: <span th:text="${timestamp}"></span> </p>
+			<p class="output">QueryString: <span th:text="${QueryString}"></span> </p>
+			<p class="output">ParameterMap: <span th:text="${ParameterMap}"></span> </p>
+			<p class="output">referer: <span th:text="${referer}"></span> </p> 
+			  
+			<p class="output"> 
+				<a href="index" th:href="@{/login}"> login </a>    
+				<a href="index" th:href="${referer}">Back to Page</a> 
+			</p>
+			<br>		    
+		</div>
+
+	</body>
+</html>  

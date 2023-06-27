@@ -1,0 +1,6080 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent">
+<script>
+var mdu1Params = null;
+var pageId;
+var pageInitData;
+var loadData;
+var generalSkugr04RowSize = 1;			//상품 컬러 Default Row Size 세팅
+var skuskey = "";
+var skutkey = "";
+
+var mdu1Depth1SaveFlag = false;
+var mdu1Depth2SaveFlag = false;
+var mdu1Depth3SaveFlag = false;
+
+$(function(){
+	
+	pageId = "mdu1";
+	mdu1Params = paramsJsonData("[[${params}]]")||null;
+	console.log("파라미터 여기 => "+JSON.stringify(mdu1Params));
+	
+	mdu1PageSetInitData(mdu1CallAjaxGetInitData());
+	
+	
+	/*************************************************
+	 * Html Dom 초기화
+	 *************************************************/
+	mdu1Init();
+	
+	/*************************************************
+	 * JQuery Event
+	 *************************************************/
+	mdu1InitSelectData();
+	
+	
+	$("#mdu1_skugr04_add").click(function(){
+		mdu1Skugr04Add($(this));
+	});
+	
+	$("#mdu1_grid_detail_view").click(function(){
+		mdu1GridDetailCombination();
+		$("#mdu1_detail_grid_modal_div").modal("show");
+	});
+	
+	$("#mdu1_detail_grid_modal_close").click(function(){
+		$("#mdu1_detail_grid_modal_div").modal("hide");
+	});
+	
+	$("#mdu1_depth1_save").click(function(){
+		if(confirm("[[#{ms.checksave}]]")){
+			if(skutkey != ""){
+				if(mdu1SaveProcessDetailSave()){
+					mdu1StepInit(2);
+				}
+			}else{
+				mdu1SaveCodeSave();
+			}
+		}
+	});
+	
+	$("#mdu1_depth2_save").click(function(){
+		if(confirm("[[#{ms.checksave}]]")){
+			mdu1SaveProcessDetailSave();
+			mdu1StepInit(3);
+		}
+	});
+	
+	$("#mdu1_depth3_save").click(function(){
+		if(confirm("[[#{ms.checksave}]]")){
+			mdu1SaveProcessDetailSave();
+		}
+	});
+	
+	$("#mdu1_brandnm").change(function(){
+		var brandnm = $(this).val();
+		//초기화
+		mdu1Init();
+		$("#mdu1_brandnm").val(brandnm).prop("selected", true);
+	});
+	
+	$("#mdu1_brandnm, #mdu1_stryear, input[name='mdu1_seasona']").change(function(){
+		mdu1SkutkeyCreate();
+	});
+	
+	$("#mdu1_sksizes_general").on("click", "input[name='"+pageId+"_sksizes']", function(){
+		var check = $(this).is(":checked");
+		var sizeValue = $(this).val();
+		eventSizeCheck(sizeValue, check);
+	});
+	
+	$(".mdu1MaterialSubAdd").on("click", function(){
+		mdu1MaterialCreate("SUB");
+	});
+	
+	$(".material-combination").on("change", "select[name='"+pageId+"_sub_combination_fabcolo']", function(){
+		
+		var parentDom 			= $(this).closest("tr");
+		var combinationKey 		= parentDom.data("combination-key");
+		var combinationitegnum 	= parentDom.data("combination-itegnum");
+
+		var findDom = $(".material-combination").find("tr[data-combination-key='"+combinationKey+"'][data-combination-itegnum='"+combinationitegnum+"']");
+		var selectDom = findDom.find("select[name='"+pageId+"_sub_combination_fabcolo']");
+		var count = 0;
+
+		for(var i=0; i<selectDom.length; i++){
+			var selectValue = selectDom.eq(i).val();
+			if($(this).val() == selectValue && $(this).val() != ""){
+				count++;
+			}
+		}
+		
+		if(count > 1){
+			alert("[[#{ms.mdu1.dupliCombination}]]");
+			$(this).children().eq(0).prop("selected","selected");
+			return;
+		}
+		
+		eventCombinationSubFabcoloSelect($(this));
+	});
+});
+
+function mdu1Init(){
+	skuskey = "";
+	skutkey = "";
+	
+	mdu1InitOwnerky();
+	mdu1InitBrand();
+	mdu1InitSaveList();
+	mdu1InitStryear();
+	mdu1InitSeasona();
+	mdu1InitSkuupdn();
+	mdu1Skugr04Init();
+	mdu1SksizesGeneralInit();
+	
+	$("#"+pageId+"_skudesc").val("");
+	$("#"+pageId+"_designe").val("");
+	$("#"+pageId+"_nav_tab").children().remove();
+	$("#"+pageId+"_nav_tab_content").children().remove();
+	$(".material-combination").children().remove();
+	$("input[name='mdu1_save_type']").prop("checked", true);
+	
+	mdu1MaterialInit();
+	mdu1SkutkeyCreate();
+	mdu1StepInit(1);
+}
+/*************************************************
+ * Page Dom Init
+ *************************************************/
+
+function mdu1StepInit(number){
+	
+	var stepId = $("#"+pageId+"-step"+number);
+	var stepNavDom = $(".mdu1-step-nav");
+	var stepNavLink = stepNavDom.find(".nav-link");
+	var stepNavLinkActiveNumber = Number(number)-1;
+	
+	for(var i=0; i<stepNavLink.length; i++){
+		stepNavLink.eq(i).removeClass("active");
+	}
+	
+	$("."+pageId+"-step").hide();
+	
+	if(number != 1 && skutkey == ""){
+		alert("[[#{ms.mdu1.notSaveLoad}]]");
+		mdu1StepInit(1);
+		return;
+	}
+	
+	stepNavLink.eq(stepNavLinkActiveNumber).addClass("active");
+	stepId.show();
+	
+	$(window).scrollTop(0);
+}
+
+function mdu1PageSetInitData(initData){
+	pageInitData = initData;
+}
+
+function mdu1PageGetInitData(){
+	return pageInitData;
+}
+//=================================================
+//페이지 Dom 초기화
+//=================================================
+function mdu1CallAjaxGetInitData(){
+	
+	var callData = callAjax("data", "GET", "/md/mdu1InitSelect.do", null);
+	var initData = callData.item;
+	
+	return initData;
+}
+
+//=================================================
+//화주 세팅
+//=================================================
+function mdu1InitOwnerky(){
+	var initData = mdu1PageGetInitData();
+	$("#"+pageId+"_ownerky").val(initData.ownerky);
+}
+
+//=================================================
+//매장(브랜드) 세팅
+//=================================================
+function mdu1InitBrand(){
+
+	var initData 	= mdu1PageGetInitData();
+	var data 		= initData.customerItem;
+	
+	var selectDom = $("#"+pageId+"_brandnm");
+	selectDom.children().remove();
+	
+	var option = $("<option></option>",{
+		"value" : "",
+		"text" : "[[#{md.mdu1.select}]]"
+	});
+	selectDom.append(option);
+	
+	for(var i=0; i<data.length; i++){
+		var option = $("<option></option>",{
+			"value" : data[i].combovl,
+			"text" : data[i].combonm
+		});
+		selectDom.append(option);
+	}
+}
+
+function mdu1InitSaveListReload(){
+	
+	var ownerky = $("#"+pageId+"_ownerky").val();
+	var brandnm = $("#"+pageId+"_brandnm").val();
+	
+	var param = {
+		ownerky : ownerky,
+		brandnm : brandnm
+	}
+	
+	console.log("mdu1InitSaveListReload param=> " + JSON.stringify(param));
+	
+	var callData = callAjax("data", "GET", "/md/mdu1MskuspListSelect.do", param);
+	console.log("mdu1InitSaveListReload => " + JSON.stringify(callData.item.selectMskuspList));
+	
+	
+	pageInitData.selectMskuspList = callData.item.selectMskuspList;
+	var data 		= pageInitData.selectMskuspList;
+	
+	var selectDom = $("#"+pageId+"_mskusp_list");
+	
+	var option = $("<option></option>",{
+		"value" : "",
+		"text" : "[[#{md.mdu1.select}]]"
+	});
+	selectDom.children().remove();
+	selectDom.append(option);
+	
+	var data = data.filter(function(e){
+		return e.brandnm == brandnm;
+	});
+	
+	for(var i=0; i<data.length; i++){
+		var option = $("<option></option>",{
+			"value" : data[i].skutkey,
+			"text" : data[i].skudesc
+		});
+		selectDom.append(option);
+	}
+}
+//=================================================
+//작업지시서 리스트 SelectBox -  mdu1InitSaveList
+//=================================================
+function mdu1InitSaveList(brandnm){
+
+	var initData 	= mdu1PageGetInitData();
+	var data 		= initData.selectMskuspList;
+	
+	var selectDom = $("#"+pageId+"_mskusp_list");
+	
+	var option = $("<option></option>",{
+		"value" : "",
+		"text" : "[[#{md.mdu1.select}]]"
+	});
+	selectDom.children().remove();
+	selectDom.append(option);
+	
+	var data = data.filter(function(e){
+		return e.brandnm == brandnm;
+	});
+	
+	for(var i=0; i<data.length; i++){
+		var option = $("<option></option>",{
+			"value" : data[i].skutkey,
+			"text" : data[i].skudesc
+		});
+		selectDom.append(option);
+	}
+}	
+
+//=================================================
+//출시년도 SelectBox
+//=================================================
+function mdu1InitStryear(){
+	var today 		= new Date();
+	var nowYear		= today.getFullYear();
+	var nextYear	= Number(nowYear)+1;
+
+	var defaultDom = $("<option></option>",{
+		"value" : "",
+		"text" : "[[#{md.mdu1.select}]]"
+	});
+	
+	var nowYearDom = $("<option></option>",{
+		"value" : nowYear,
+		"text" : "[[#{md.mdu1.nowYear}]]"
+	});
+	
+	var textYearDom = $("<option></option>",{
+		"value" : nextYear,
+		"text" : "[[#{md.mdu1.nextYear}]]"
+	});
+	
+	$("#"+pageId+"_stryear").children().remove();
+	$("#"+pageId+"_stryear").append(defaultDom, nowYearDom, textYearDom);
+}
+
+//=================================================
+//시즌 세팅
+//=================================================
+function mdu1InitSeasona(){
+	var initData 	= mdu1PageGetInitData();
+	var data 		= initData.seasonaItem;
+	
+	var ulDom = $("#"+pageId+"_seasona_ul");
+	ulDom.children().remove();
+	
+	for(var i=0; i<data.length; i++){
+		var liDom = $("<li></li>");
+		var spanInputDom 	= $("<span></span>");
+		var spanTextDom 	= $("<span></span>");
+		
+		var inputDom = $("<input/>",{
+			"type" : "radio",
+			"value" : data[i].combovl,
+			"name" : pageId+"_seasona"
+		});
+		
+		spanTextDom.text(data[i].combonm);
+		
+		spanInputDom.append(inputDom);
+		liDom.append(spanInputDom);
+		liDom.append(spanTextDom);
+		ulDom.append(liDom);
+	}
+}
+
+//=================================================
+//구분 세팅
+//=================================================
+function mdu1InitSkuupdn(){
+	var ulDom = $("#"+pageId+"_skuupdn_ul");
+	ulDom.children().remove();
+	
+	var liUpDom = $("<li></li>");
+	var liDnDom = $("<li></li>");
+	var spanInputUpDom 	= $("<span></span>"); 
+	var spanTextUpDom 	= $("<span></span>");
+	var spanInputDnDom 	= $("<span></span>");
+	var spanTextDnDom 	= $("<span></span>");
+	
+	var inputUpDom = $("<input/>",{
+		"type" : "radio",
+		"value" : "UP",
+		"name" : pageId+"_skuupdn"
+	});
+	
+	var inputDnDom = $("<input/>",{
+		"type" : "radio",
+		"value" : "DN",
+		"name" : pageId+"_skuupdn"
+	});
+	
+	spanTextUpDom.text("[[#{md.mdu1.upcloth}]]");
+	spanTextDnDom.text("[[#{md.mdu1.dncloth}]]");
+	
+	spanInputUpDom.append(inputUpDom);
+	spanInputDnDom.append(inputDnDom);
+	
+	liUpDom.append(spanInputUpDom, spanTextUpDom);
+	liDnDom.append(spanInputDnDom, spanTextDnDom);
+	
+	ulDom.append(liUpDom, liDnDom);
+}
+
+//=================================================
+//상품 컬러
+//=================================================
+function mdu1Skugr04Init(){
+	$("#mdu1_skugr04_row").children().remove();
+	
+	for(var i=0; i<generalSkugr04RowSize; i++){
+		mdu1Skugr04Add(null);
+	}
+}
+
+//=================================================
+//사이즈
+//=================================================
+function mdu1SksizesGeneralInit(){
+	var initData 	= mdu1PageGetInitData();
+	var data 		= initData.sizeItem;
+	
+	console.log("initData => ================== " + JSON.stringify(initData) );
+	var tbodyDom = $("#"+pageId+"_sksizes_general");
+	tbodyDom.children().remove();
+	
+	var trDom = $("<tr></tr>");
+	var thDom = $("<th></th>",{
+		"text" : "[[#{md.mdu1.size}]]"
+	});
+	var tdDom = $("<td></td>");
+	var ulDom = $("<ul></ul>");
+	
+	for(var i=0; i<data.length; i++){
+		var liDom 	 = $("<li></li>");
+		
+		var inputDom = $("<input/>",{
+			"type" : "checkbox",
+			"name" : pageId+"_sksizes",
+			"value" : data[i].combovl
+		});
+		var spanDom = $("<span></span>",{
+			"text" : data[i].combovl
+		});
+		liDom.append(inputDom, spanDom);
+		ulDom.append(liDom);
+	}
+	tdDom.append(ulDom);
+	trDom.append(thDom, tdDom);
+	tbodyDom.append(trDom);
+}
+
+//=================================================
+//품번 채번
+//=================================================
+function mdu1SkutkeyCreate(){
+	var brandnm = $("#"+pageId+"_brandnm").val() != undefined ? $("#"+pageId+"_brandnm").val() : "";
+	var stryear = $("#"+pageId+"_stryear").val() != undefined ? $("#"+pageId+"_stryear").val() : "";
+	//var stryear = $("#"+pageId+"_stryear").val() != undefined ? $("#"+pageId+"_stryear").val().toString().substring(2) : "";
+	var seasona = "";
+	
+	var seasonaInputDom = $("input[name='"+pageId+"_seasona'");
+	for(var i=0; i<seasonaInputDom.length; i++){
+		if(seasonaInputDom.eq(i).prop("checked")){
+			seasona = seasonaInputDom.eq(i).val();
+		}
+	}
+	
+	var skutkey = brandnm+"."+stryear+seasona;
+	$("#"+pageId+"_skutkey").val("");
+	if(brandnm != "") $("#"+pageId+"_skutkey").val(skutkey);
+	else $("#"+pageId+"_skutkey").val("");
+}
+
+function mdu1MaterialInit(){
+	mdu1MaterialCreate("MAIN");
+	//mdu1MaterialCreate("SUB"); 부원단 첫 화면에서 안보이게 설정
+	mdu1MaterialCreate("BTN");
+	eventNavTabHref("mdu1MaterialMain1");
+}
+
+/*************************************************
+ * 주원단/부원단 Tab & 하위 Dom 생성
+ *************************************************/
+
+//=================================================
+//원단 탭 컨텐츠 레이아웃 생성
+//=================================================
+function mdu1MaterialCreate(type){
+	var initData = mdu1PageGetInitData();
+	
+	//Tab
+	var navTabDom 		= $("#"+pageId+"_nav_tab");					//tab Dom
+	var typeLower		= type.toLowerCase();
+	
+	if(type == "MAIN"){
+
+		var navTabItemDom 	= navTabDom.find("[data-mdu1-nav-"+typeLower+"-item]");	//tab nav-item
+		if(navTabItemDom.length == 0) var navTabItemNextValue = (navTabItemDom.length+1);
+		var tabNextItem 	= mdu1MaterialTabDomCreate(type, navTabItemNextValue); //new nav-item Dom 
+		navTabDom.append(tabNextItem);	//tab Item Add 처리
+		
+		//Tab Content - Main
+		var tabContentDom = $("#mdu1_nav_tab_content");
+		var tabDivId = "mdu1MaterialMain"+navTabItemNextValue;
+		var tabDivDom = $("<div></div>",{
+			"data-type" : "main",
+			"class" : "tab-pane",
+			"role" : "tabpanel",
+			"id" : tabDivId
+		});
+	}
+	else if(type == "SUB"){
+		var navTabItemDom 	= navTabDom.find("[data-mdu1-nav-"+typeLower+"-item]");		//tab nav-item
+
+		if(navTabItemDom.length == 0){
+			var navTabItemNextValue = (navTabItemDom.length+1);
+			var tabNextItem 	= mdu1MaterialTabDomCreate(type, navTabItemNextValue); 	//new nav-item Dom 
+			navTabDom.children().eq(0).after(tabNextItem);								//tab Item Add 처리
+		}
+		else{
+			var navTabItemDomLastIndex = (navTabItemDom.length-1);												//tab nav-item last Index
+			var navTabItemValue = navTabItemDom.eq(navTabItemDomLastIndex).attr("data-mdu1-nav-"+typeLower+"-item");	//tab nav-item  data("mdu1-nav-item") value
+			var navTabItemNextValue = Number(navTabItemValue)+1;														//next value (navTabItemValue+1)
+			var tabNextItem 	= mdu1MaterialTabDomCreate(type, navTabItemNextValue); 							//new nav-item Dom 
+			
+			navTabItemDom.eq(navTabItemDomLastIndex).after(tabNextItem);										//tab Item Add 처리
+		}
+		
+		//Tab Content - SUB
+		var tabContentDom = $("#mdu1_nav_tab_content");
+		var tabDivId = "mdu1MaterialSub"+navTabItemNextValue;
+		var tabDivDom = $("<div></div>",{
+			"data-type" : "sub",
+			"class" : "tab-pane",
+			"role" : "tabpanel",
+			"id" : tabDivId
+		});
+	}else{
+		var navTabItemDom 	= navTabDom.find(".mdu1MaterialSubAdd");
+		if(navTabItemDom.length == 0){
+			var tabNextItem 	= mdu1MaterialTabDomCreate("BTN", null); //new nav-item Dom 
+			navTabDom.append(tabNextItem);
+		}
+	}
+	
+	if(type == "MAIN"){
+		var materialInfoDom 		= mdu1MaterialInfoDomCreate();		//원단정보 block
+		var mdu1MaterialColorDom 	= mdu1MaterialColorDomCreate(type); //원단컬러 block
+		var mdu1MaterialSizeDom 	= mdu1MaterialSizeDomCreate();		//원단사이즈 block
+		var mdu1MaterialSidiaryDom 	= mdu1MaterialSidiaryDomCreate();	//원단 부자재 정보 block
+		var mdu1MaterialProcessDom 	= mdu1MaterialProcessDomCreate();	//원단 공정 정보 block
+		tabDivDom.append(materialInfoDom, mdu1MaterialColorDom, mdu1MaterialSizeDom, mdu1MaterialSidiaryDom, mdu1MaterialProcessDom);
+		tabContentDom.append(tabDivDom);
+		
+		//이벤트 호출
+		eventNavTabHref(tabDivId);
+		mdu1SksizesMapping();
+	}else if(type == "SUB"){
+		var materialInfoDom 		= mdu1MaterialInfoDomCreate();		//원단정보 block
+		var mdu1MaterialColorDom 	= mdu1MaterialColorDomCreate(type); //원단컬러 block
+		var mdu1MaterialSizeDom 	= mdu1MaterialSizeDomCreate();		//원단사이즈 block
+		tabDivDom.append(materialInfoDom, mdu1MaterialColorDom, mdu1MaterialSizeDom);
+		tabContentDom.append(tabDivDom);
+		
+		//이벤트 호출
+		eventNavTabHref(tabDivId);
+		mdu1SksizesMapping();
+	}
+	
+}
+
+
+//=================================================
+//원단 탭 생성
+//=================================================
+function mdu1MaterialTabDomCreate(type, key){
+	
+	if(type == "MAIN"){
+		var liDom = $("<li></li>",{
+			"class" : "nav-item",
+			"data-type" : type.toLowerCase(),
+			"data-mdu1-nav-main-item" : key
+			
+			
+		});
+		
+		var anchorDom = $("<a></a>",{
+			"class" : "nav-link",
+			"text" : "[[#{md.mdu1.mainFabric}]]",
+			"href" : "#mdu1MaterialMain"+key,
+			"data-toggle" : "tab",
+			"role" : "tab"
+		});
+		
+		liDom.append(anchorDom);
+	}
+	else if(type == "SUB"){
+		var liDom = $("<li></li>",{
+			"class" : "nav-item",
+			"data-type" : type.toLowerCase(),
+			"data-mdu1-nav-sub-item" : key
+		});
+		
+		var anchorDom = $("<a></a>",{
+			"class" : "nav-link",
+			"text" : "[[#{md.mdu1.subFabric}]]",
+			"href" : "#mdu1MaterialSub"+key,
+			"data-toggle" : "tab",
+			"role" : "tab"
+		});
+		
+		var spanDom = $("<span></span>",{
+			"class" : "nav-item-del-btn",
+			"text" : "X",
+			"onclick" : "mdu1TabListDelete(this)"
+		});
+		
+		liDom.append(anchorDom, spanDom);
+	}
+	else{
+		var liDom = $("<li></li>",{
+			"class" : "nav-item"
+		});
+		
+		var anchorDom = $("<a></a>",{
+			"class" : "nav-link mdu1MaterialSubAdd",
+			"text" : "+"
+		});
+		
+		liDom.append(anchorDom);
+	}
+
+	return liDom;
+}
+
+//=================================================
+//원단 탭 하위 콘텐츠 - 원단 정보 레이아웃 생성
+//=================================================
+function mdu1MaterialInfoDomCreate(){
+	console.log("mdu1MaterialInfoDomCreate");
+	var blockDom = $("<div></div>",{
+		"class" : "block"
+	});
+	
+	var titleDivDom = $("<div></div>",{
+		"class" : "mdu-title"
+	});
+	var titleH4Dom = $("<h4></h4>",{
+		"text" : "[[#{md.mdu1.infoFabric}]]"
+	});
+	
+	var tableCotainerDom = $("<div></div>",{
+		"class" : "table-container"
+	});
+	
+	var tableDom = $("<table></table>",{
+		"class" : "table table-mdu material-info"
+	});
+	
+	var tableColgroupDom = $("<colgroup></colgroup>");
+	var tableCol1Dom = $("<col></col>",{width:"16%"});
+	var tableCol2Dom = $("<col></col>",{width:"13%"});
+	var tableCol3Dom = $("<col></col>",{width:"auto"});
+	
+	
+	tableColgroupDom.append(tableCol1Dom, tableCol2Dom, tableCol3Dom );
+	tableDom.append(tableColgroupDom);
+	
+	var tbodyDom 	= $("<tbody></tbody>");
+	var trRow1Dom 	= $("<tr></tr>");
+	var trRow2Dom 	= $("<tr></tr>");
+	var trRow3Dom 	= $("<tr></tr>");
+	
+	//tr1 Dom
+	var trRow1td1Dom	= $("<th></th>",{
+		"rowspan" : 3,
+		"text" : "[[#{md.mdu1.fabric}]]"
+	});
+	
+	var trRow1td2Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.material}]]"
+	});
+	
+	var trRow1td3Dom	= $("<td></td>");
+	var trRow1td3InputDom = $("<input/>",{
+		"class" : "mdu-control",
+		"type" : "text",
+		"name" : pageId+"_itemnam",
+		"placeholder" : "[[#{md.mdu1.phskugr04}]]"
+	});
+	trRow1td3Dom.append(trRow1td3InputDom);
+	trRow1Dom.append(trRow1td1Dom, trRow1td2Dom, trRow1td3Dom);
+	
+	//tr2 Dom
+	var trRow2td1Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.mixrato}]]"
+	});
+	
+	var trRow2td2Dom	= $("<td></td>");
+	var trRow2td2InputDom = $("<input/>",{
+		"class" : "mdu-control",
+		"type" : "text",
+		"name" : pageId+"_mixrato",
+		"placeholder" : "[[#{md.mdu1.phmixrato}]]"
+	});
+	trRow2td2Dom.append(trRow2td2InputDom);
+	trRow2Dom.append(trRow2td1Dom, trRow2td2Dom);
+	
+	//tr3 Dom
+	var trRow3td1Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.itemfac}]]"
+	});
+	
+	var trRow3td2Dom	= $("<td></td>");
+	var trRow3td2InputDom = $("<input/>",{
+		"class" : "mdu-control",
+		"type" : "text",
+		"name" : pageId+"_itemfac",
+		"placeholder" : "[[#{md.mdu1.phitemfac}]]"
+	});
+	trRow3td2Dom.append(trRow3td2InputDom);
+	trRow3Dom.append(trRow3td1Dom, trRow3td2Dom);
+	
+	
+	tbodyDom.append(trRow1Dom, trRow2Dom, trRow3Dom);
+	tableDom.append(tbodyDom);
+	tableCotainerDom.append(tableDom);
+	
+	//테이블 상단 제목
+	titleDivDom.append(titleH4Dom);
+	
+	//블럭 
+	blockDom.append(titleDivDom, tableCotainerDom);
+	return blockDom;
+}
+
+//=================================================
+//원단 탭 하위 콘텐츠 - 원단 컬러 레이아웃 생성
+//=================================================
+function mdu1MaterialColorDomCreate(type){
+	console.log("mdu1MaterialColorDomCreate");
+	var defaultRowSize = type == "MAIN" ? generalSkugr04RowSize : 1;
+	
+	var blockDom = $("<div></div>",{
+		"class" : "block"
+	});
+	
+	var titleDivDom = $("<div></div>",{
+		"class" : "mdu-title"
+	});
+	var titleH4Dom = $("<h4></h4>",{
+		"text" : "[[#{md.mdu1.colorFabric}]]"
+	});
+	
+	var tableCotainerDom = $("<div></div>",{
+		"class" : "table-container"
+	});
+	
+	var tableDom = $("<table></table>",{
+		"class" : "table table-mdu material-color"
+	});
+
+	var tableColgroupDom = $("<colgroup></colgroup>");
+	var tableCol1Dom = $("<col></col>",{width:"16%"});
+	var tableCol2Dom = $("<col></col>",{width:"13%"});
+	var tableCol3Dom = $("<col></col>",{width:"auto"});
+
+	tableColgroupDom.append(tableCol1Dom, tableCol2Dom, tableCol3Dom );
+	tableDom.append(tableColgroupDom);
+	
+	//=====================================
+	// <thead>
+	//=====================================
+	var theadDom 	= $("<thead></thead>");
+	var trheadRowDom 	= $("<tr></tr>");
+
+	var trHeadthCol1Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.itemnum}]]"
+	});
+	var trHeadthCol2Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.skugr04}]]"
+	});
+	var trHeadthCol3Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.skucolo}]]"
+	});
+	var trHeadthCol4Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.fabcolo}]]"
+	});
+	var trHeadthCol5Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.fabpric}]]"
+	});
+
+	var trHeadThButtonDom = $("<button></button",{
+		"class" : "mdu-add-button",
+		"onclick" : "mdu1mskuitAdd(this)",
+		"text" : "[[#{bt.add}]]"
+	});
+	
+	var trHeadThButtonIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-plus",
+	});
+	
+	trHeadthCol5Dom.append(trHeadThButtonDom.prepend(trHeadThButtonIconDom));
+	trheadRowDom.append(trHeadthCol1Dom, trHeadthCol2Dom, trHeadthCol3Dom, trHeadthCol4Dom, trHeadthCol5Dom);
+	theadDom.append(trheadRowDom);
+	
+	//=====================================
+	// <tbody>
+	//=====================================
+	var tbodyDom 	= $("<tbody></tbody>");
+	
+	for(var i=0; i<defaultRowSize; i++){
+		var trBodyRowDom 	= $("<tr></tr>");
+		var number = (i+1).toString().padStart(3,"0");
+		var trBodytdCol1Dom		= $("<td></td>",{
+			"class" : "no",
+			"text" : number
+		});
+		
+		var trBodytdCol2Dom		= $("<td></td>");
+		if(type == "MAIN"){
+			var trBodytdCol2InputData = {
+				"class" : "mdu-control small",
+				"type" : "text",
+				"name" : pageId+"_mskuit_skugr04",
+				"readonly" : true
+			}
+		}
+		else{
+			var trBodytdCol2InputData = {
+				"class" : "mdu-control small",
+				"type" : "text",
+				"name" : pageId+"_mskuit_skugr04"
+			}
+		}
+		var trBodytdCol2InputDom = $("<input/>",trBodytdCol2InputData);
+		
+		var trBodytdCol3Dom		= $("<td></td>");
+		var trBodytdCol3InputDom = $("<input/>",{
+			"class" : "mdu-control small",
+			"type" : "text",
+			"name" : pageId+"_mskuit_skucolo",
+			"placeholder" : "[[#{md.mdu1.phskucolo}]]"
+		});
+		
+		var trBodytdCol4Dom		= $("<td></td>");
+		var trBodytdCol4InputDom = $("<input/>",{
+			"class" : "mdu-control small",
+			"type" : "text",
+			"name" : pageId+"_mskuit_fabcolo",
+			"placeholder" : "[[#{md.mdu1.phfabcolo}]]"
+		});
+		
+		var trBodytdCol5Dom		= $("<td></td>");
+		var trBodytdCol5DivDom	= $("<div></div>",{
+			"class" : "md-row"
+		})
+		
+		var trBodytdCol5InputDom = $("<input/>",{
+			"class" : "mdu-control small mdu1-number",
+			"type" : "text",
+			"name" : pageId+"_mskuit_fabpric",
+			"placeholder" : "[[#{md.mdu1.phfabpric}]]",
+			"onkeyup" : "onlyNumber(this)"
+		});
+		
+		var trBodytdCol5AnchorDom = $("<a></a>",{
+			class : "btn-a-del",
+			onclick : "mdu1mskuitDelete(this);"
+		});
+		
+		var trBodytdCol5AnchorIconDom = $("<i></i>",{
+			"class" : "fa-solid fa-minus"
+		});
+		trBodytdCol5DivDom.append(trBodytdCol5InputDom, trBodytdCol5AnchorDom.append(trBodytdCol5AnchorIconDom));
+		
+		trBodytdCol2Dom.append(trBodytdCol2InputDom);
+		trBodytdCol3Dom.append(trBodytdCol3InputDom);
+		trBodytdCol4Dom.append(trBodytdCol4InputDom);
+		trBodytdCol5Dom.append(trBodytdCol5DivDom);
+		
+		trBodyRowDom.append(
+			trBodytdCol1Dom, 
+			trBodytdCol2Dom, 
+			trBodytdCol3Dom, 
+			trBodytdCol4Dom, 
+			trBodytdCol5Dom
+		);
+		
+		tbodyDom.append(trBodyRowDom);
+	}
+	
+	//=====================================
+	// <table> append ( <thead><tbody> )
+	//=====================================
+	tableDom.append(theadDom, tbodyDom);
+	
+	//=====================================
+	// <div class='block'> append (Contents = table, title )
+	//=====================================
+	tableCotainerDom.append(tableDom);
+	titleDivDom.append(titleH4Dom);
+	blockDom.append(titleDivDom, tableCotainerDom);
+	
+	return blockDom;
+}
+
+//=================================================
+//원단 탭 하위 콘텐츠 - 원단 사이즈 정보 레이아웃 생성
+//=================================================
+function mdu1MaterialSizeDomCreate(){
+	console.log("mdu1MaterialSizeDomCreate");
+	var generalDom = $("#"+pageId+"_sksizes_general");
+	var sksizesInputDom = generalDom.find("input[name='"+pageId+"_sksizes']");
+
+	var blockDom = $("<div></div>",{
+		"class" : "block"
+	});
+	
+	var titleDivDom = $("<div></div>",{
+		"class" : "mdu-title"
+	});
+	
+	var titleH4Dom = $("<h4></h4>",{
+		"text" : "[[#{md.mdu1.size}]]"
+	});
+	
+	var tableCotainerDom = $("<div></div>",{
+		"class" : "table-container"
+	});
+
+	var tableDom = $("<table></table>",{
+		"class" : "table table-mdu material-size"
+	});
+
+	var tableColgroupDom = $("<colgroup></colgroup>");
+	var tableCol1Dom = $("<col></col>",{width:"16%"});
+	var tableCol2Dom = $("<col></col>",{width:"16%"});
+	var tableCol3Dom = $("<col></col>",{width:"auto"});
+	
+	tableColgroupDom.append(tableCol1Dom, tableCol2Dom, tableCol3Dom );
+	tableDom.append(tableColgroupDom);
+	
+	//=====================================
+	// <thead>
+	//=====================================
+	var theadDom 	= $("<thead></thead>");
+	var trheadRowDom 	= $("<tr></tr>");
+
+	var trHeadthCol1Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.size}]]"
+	});
+	var trHeadthCol2Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.roinqty}]]"
+	});
+	var trHeadthCol3Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.consnum}]]"
+	});
+	var trHeadthCol4Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.conspri}]]"
+	});
+	
+	trheadRowDom.append(trHeadthCol1Dom, trHeadthCol2Dom, trHeadthCol3Dom, trHeadthCol4Dom);
+	theadDom.append(trheadRowDom);
+	
+	//=====================================
+	// <tbody>
+	//=====================================
+	var tbodyDom 	= $("<tbody></tbody>");
+	
+	for(var i=0; i<sksizesInputDom.length; i++){
+		
+		var sizeValue 		= sksizesInputDom.eq(i).val();
+		var sizeChecked 	= sksizesInputDom.eq(i).is(":checked");
+
+		var readOnlyCheck	= sizeChecked == true ? false : true;
+		
+		var trBodyRowDom 	= $("<tr></tr>");
+
+		var trBodytdCol1Dom		= $("<td></td>");
+		var trBodytdCol1InputDom = $("<input/>",{
+			"type" : "checkbox",
+			"onclick" : "return false;",
+			"name" : pageId+"_mskusz_sksizes",
+			"value" : sizeValue
+		});
+		var trBodytdCol1SpanDom = $("<span></span>",{
+			"text" : sizeValue
+		});
+		
+		var trBodytdCol2Dom		= $("<td></td>");
+		var trBodytdCol2InputDom = $("<input/>",{
+			"class" : "mdu-control small mdu1-number",
+			"type" : "text",
+			"name" : pageId+"_mskusz_roinqty",
+			"readonly" : readOnlyCheck,
+			"placeholder" : "[[#{md.mdu1.phroinqty}]]",
+			"onkeyup" : "onlyNumber(this)"
+		});
+		
+		var trBodytdCol3Dom		= $("<td></td>");
+		var trBodytdCol3InputDom = $("<input/>",{
+			"class" : "mdu-control small mdu1-number",
+			"type" : "text",
+			"name" : pageId+"_mskusz_consnum",
+			"placeholder" : "[[#{md.mdu1.phconsnum}]]",
+			"readonly" : readOnlyCheck,
+			"onkeyup" : "onlyFloat(this)"
+		});
+		
+		var trBodytdCol4Dom		= $("<td></td>");
+		var trBodytdCol4InputDom = $("<input/>",{
+			"class" : "mdu-control small mdu1-number",
+			"type" : "text",
+			"name" : pageId+"_mskusz_conspri",
+			"readonly" : readOnlyCheck,
+			"onkeyup" : "onlyNumber(this)"
+		});
+		
+		trBodytdCol1Dom.append(trBodytdCol1InputDom, trBodytdCol1SpanDom)
+		trBodytdCol2Dom.append(trBodytdCol2InputDom);
+		trBodytdCol3Dom.append(trBodytdCol3InputDom);
+		trBodytdCol4Dom.append(trBodytdCol4InputDom);
+		
+		trBodyRowDom.append(
+			trBodytdCol1Dom, 
+			trBodytdCol2Dom, 
+			trBodytdCol3Dom, 
+			trBodytdCol4Dom
+		);
+		
+		tbodyDom.append(trBodyRowDom);
+	}
+	
+	//=====================================
+	// <table> append ( <thead><tbody> )
+	//=====================================
+	tableDom.append(theadDom, tbodyDom);
+	
+	//=====================================
+	// <div class='block'> append (Contents = table, title )
+	//=====================================
+	tableCotainerDom.append(tableDom);
+	titleDivDom.append(titleH4Dom);
+	blockDom.append(titleDivDom, tableCotainerDom);
+	
+	return blockDom;
+}
+
+
+//=================================================
+//원단 탭 하위 콘텐츠 - 원단 부자재 정보 레이아웃 생성
+//=================================================
+function mdu1MaterialSidiaryDomCreate(){
+	console.log("mdu1MaterialSidiaryDomCreate");
+	var defaultRowSize = 1;
+	var blockDom = $("<div></div>",{
+		"class" : "block"
+	});
+	
+	var titleDivDom = $("<div></div>",{
+		"class" : "mdu-title"
+	});
+	var titleH4Dom = $("<h4></h4>",{
+		"text" : "[[#{md.mdu1.infoSidiary}]]"
+	});
+	
+	var tableCotainerDom = $("<div></div>",{
+		"class" : "table-container"
+	});
+	
+	var tableDom = $("<table></table>",{
+		"class" : "table table-mdu material-sidiary"
+	});
+
+	var tableColgroupDom = $("<colgroup></colgroup>");
+	var tableCol1Dom = $("<col></col>",{width:"16%"});
+	var tableCol2Dom = $("<col></col>",{width:"13%"});
+	var tableCol3Dom = $("<col></col>",{width:"auto"});
+	
+	
+	tableColgroupDom.append(tableCol1Dom, tableCol2Dom, tableCol3Dom );
+	tableDom.append(tableColgroupDom);
+	
+	//=====================================
+	// <thead>
+	//=====================================
+	var theadDom 	= $("<thead></thead>");
+	var trheadRowDom 	= $("<tr></tr>");
+
+	var trHeadthCol1Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.itemnum}]]"
+	});
+	var trHeadthCol2Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.submtnm}]]"
+	});
+	var trHeadthCol3Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.submtpr}]]"
+	});
+	var trHeadthCol4Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.subtext}]]"
+	});
+	
+	var trHeadthCol4ButtonDom		= $("<button></button>",{
+		"class" : "mdu-add-button",
+		"onclick" : "mdu1mskusbAdd(this)",
+		"text" : "[[#{bt.add}]]"
+	});
+	
+	var trHeadthCol4ButtonIconDom		= $("<i></i>",{
+		"class" : "fa-solid fa-plus"
+	});
+	
+	trHeadthCol4Dom.append(trHeadthCol4ButtonDom.prepend(trHeadthCol4ButtonIconDom));
+	trheadRowDom.append(trHeadthCol1Dom, trHeadthCol2Dom, trHeadthCol3Dom, trHeadthCol4Dom);
+	theadDom.append(trheadRowDom);
+	
+	//=====================================
+	// <tbody>
+	//=====================================
+	var tbodyDom 	= $("<tbody></tbody>");
+	
+	for(var i=0; i<defaultRowSize; i++){
+		var trBodyRowDom 	= $("<tr></tr>",{
+			"class" : pageId+"_mskusb_row"
+		});
+		var number = (i+1).toString().padStart(3,"0");
+		var trBodytdCol1Dom		= $("<td></td>",{
+			"class" : "no",
+			"text" : number
+		});
+		
+		var trBodytdCol2Dom		= $("<td></td>");
+		var trBodytdCol2InputDom = $("<input/>",{
+			"class" : "mdu-control small",
+			"type" : "text",
+			"name" : pageId+"_mskusb_submtnm"
+		});
+		
+		var trBodytdCol3Dom		= $("<td></td>");
+		var trBodytdCol3InputDom = $("<input/>",{
+			"class" : "mdu-control small mdu1-number",
+			"type" : "text",
+			"name" : pageId+"_mskusb_submtpr",
+			"onkeyup" : "onlyNumber(this); mdu1SetSummarySubmtpr();"
+		});
+		
+		var trBodytdCol4Dom		= $("<td></td>");
+		var trBodytdCol4DivDom = $("<div></div>",{
+			"class" : "md-row"
+		});
+		var trBodytdCol4DivInputDom = $("<input/>",{
+			"class" : "mdu-control small",
+			"type" : "text",
+			"name" : pageId+"_mskusb_subtext"
+		});
+
+		var trBodytdCol4DivAnchorDom = $("<a></a>",{
+			"class" : "btn-a-del",
+			"onclick" : "mdu1mskusbDelete(this);"
+		});
+		
+		var trBodytdCol4DivAnchorIconDom = $("<i></i>",{
+			"class" : "fa-solid fa-minus"
+		});	
+		
+		trBodytdCol4DivAnchorDom.append(trBodytdCol4DivAnchorIconDom);
+		trBodytdCol4DivDom.append(trBodytdCol4DivInputDom, trBodytdCol4DivAnchorDom);
+		
+		trBodytdCol2Dom.append(trBodytdCol2InputDom);
+		trBodytdCol3Dom.append(trBodytdCol3InputDom);
+		trBodytdCol4Dom.append(trBodytdCol4DivDom);
+		
+		trBodyRowDom.append(
+			trBodytdCol1Dom, 
+			trBodytdCol2Dom, 
+			trBodytdCol3Dom,
+			trBodytdCol4Dom
+		);
+		
+		tbodyDom.append(trBodyRowDom);
+	}
+	
+	//=====================================
+	// <tbody> append ( <tr> - summary row )
+	//=====================================
+	var trBodyRowDom 	= $("<tr></tr>",{
+		"class" : "summary-mskusb"
+	});
+	var trBodytdCol1Dom		= $("<td></td>",{
+		"colspan" : 4,
+		"text" : "[[#{md.mdu1.summaryPrice}]]"
+	});
+
+	var trBodytdCol1SpanPriceDom = $("<span></span>",{
+		"class" : "summary-mskusb-price",
+		"text" : 0
+	});
+	var trBodytdCol1SpanCurrencyDom = $("<span></span>",{
+		"class" : "summary-mskusb-currency",
+		"text" : "[[#{md.mdu1.currencyType}]]"
+	});
+	trBodytdCol1Dom.append(trBodytdCol1SpanPriceDom, trBodytdCol1SpanCurrencyDom);
+	var trBodytdCol4Dom		= $("<td></td>");
+	var trBodytdCol5Dom		= $("<td></td>");
+
+	trBodyRowDom.append(trBodytdCol1Dom, trBodytdCol1Dom);
+	tbodyDom.append(trBodyRowDom);
+	
+	//=====================================
+	// <table> append ( <thead><tbody> )
+	//=====================================
+	tableDom.append(theadDom, tbodyDom);
+	
+	//=====================================
+	// <div class='block'> append (Contents = table, title )
+	//=====================================
+	tableCotainerDom.append(tableDom);
+	titleDivDom.append(titleH4Dom);
+	blockDom.append(titleDivDom, tableCotainerDom);
+	
+	return blockDom;
+}
+
+//=================================================
+//원단 탭 하위 콘텐츠 - 공정 정보 레이아웃 생성
+//=================================================
+function mdu1MaterialProcessDomCreate(){
+	console.log("mdu1MaterialProcessDomCreate");
+	var initData			= mdu1PageGetInitData();
+	var materialProcessItem = initData.materialProcessItem;
+	var mptnmaItem 			= initData.mptnmaItem;
+	
+	var defaultRowSize = 1;
+	var blockDom = $("<div></div>",{
+		"class" : "block"
+	});
+	
+	var titleDivDom = $("<div></div>",{
+		"class" : "mdu-title"
+	});
+	var titleH4Dom = $("<h4></h4>",{
+		"text" : "[[#{md.mdu1.infoProcess}]]"
+	});
+	
+	var tableCotainerDom = $("<div></div>",{
+		"class" : "table-container"
+	});
+	
+	var tableDom = $("<table></table>",{
+		"class" : "table table-mdu material-process"
+	});
+
+	var tableColgroupDom = $("<colgroup></colgroup>");
+	var tableCol1Dom = $("<col></col>",{width:"16%"});
+	var tableCol2Dom = $("<col></col>",{width:"16%"});
+	var tableCol3Dom = $("<col></col>",{width:"16%"});
+	var tableCol4Dom = $("<col></col>",{width:"16%"});
+	var tableCol5Dom = $("<col></col>",{width:"16%"});
+	var tableCol6Dom = $("<col></col>",{width:"auto"});
+	
+	
+	tableColgroupDom.append(tableCol1Dom, tableCol2Dom, tableCol3Dom, tableCol4Dom, tableCol5Dom, tableCol6Dom );
+	tableDom.append(tableColgroupDom);
+	
+	//=====================================
+	// <thead>
+	//=====================================
+	var theadDom 	= $("<thead></thead>");
+	var trheadRowDom 	= $("<tr></tr>");
+
+	//var trHeadthCol0Dom		= $("<th></th>");
+	var trHeadthCol1Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.itemnum}]]"
+	});
+	var trHeadthCol2Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.sprotyp}]]"
+	});
+	var trHeadthCol3Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.spronam}]]"
+	});
+	var trHeadthCol4Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.sproprc}]]"
+	});
+	var trHeadthCol5Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.sprofac}]]"
+	});
+	var trHeadthCol6Dom		= $("<th></th>",{
+		"text" : "[[#{md.mdu1.sproday}]]"
+	});
+	var trHeadthCol6ButtonDom		= $("<button></button>",{
+		"class" : "mdu-add-button",
+		"onclick" : "mdu1mskupcAdd(this)",
+		"text" : "[[#{bt.add}]]"
+	});
+	var trHeadthCol6ButtonIconDom		= $("<i></i>",{
+		"class" : "fa-solid fa-plus"
+	});
+	
+	trHeadthCol6ButtonDom.prepend(trHeadthCol6ButtonIconDom);
+	trHeadthCol6Dom.append(trHeadthCol6ButtonDom);
+	//trheadRowDom.append(trHeadthCol0Dom, trHeadthCol1Dom, trHeadthCol2Dom, trHeadthCol3Dom, trHeadthCol4Dom, trHeadthCol5Dom, trHeadthCol6Dom, trHeadthCol7Dom);
+	trheadRowDom.append(trHeadthCol1Dom, trHeadthCol2Dom, trHeadthCol3Dom, trHeadthCol4Dom, trHeadthCol5Dom, trHeadthCol6Dom);
+	theadDom.append(trheadRowDom);
+	
+	//=====================================
+	// <tbody>
+	//=====================================
+	var tbodyDom 	= $("<tbody></tbody>");
+	
+	for(var i=0; i<defaultRowSize; i++){
+		
+		var trBodyRowDom 	= $("<tr></tr>",{
+			"class" : pageId+"_mskupc_row"
+		});
+		var number = (i+1).toString().padStart(3,"0");
+		
+		if(i==0){
+			var trBodytdCol0Dom		= $("<td></td>",{
+				"class" : "row-span",
+				"rowspan" : defaultRowSize,
+				"text" : "[[#{md.mdu1.process}]]"
+			});
+		}
+		
+		var trBodytdCol1Dom		= $("<td></td>",{
+			"class" : "no",
+			"text" : number
+		});
+		
+		var trBodytdCol2Dom		= $("<td></td>");
+		var trBodytdCol2SelectDom = $("<select></select>",{
+			"class" : "mdu-control small",
+			"name" : pageId+"_mskupc_sprotyp"
+		});
+		
+		var trBodytdCol2SelectOptionDom = $("<option></option>",{
+			"text" : "[[#{md.mdu1.select}]]",
+			"value" : ""
+		});
+		trBodytdCol2SelectDom.append(trBodytdCol2SelectOptionDom);
+		
+		for(var j=0; j<materialProcessItem.length; j++){
+			if(i == 0){
+				//첫 로우일경우 메인 공정만 SelectBox 생성
+				if(materialProcessItem[j].combovl == "MAIN"){
+					var trBodytdCol2SelectOptionDom = $("<option></option>",{
+						"text" : materialProcessItem[j].combonm,
+						"value" : materialProcessItem[j].combovl,
+						"selected" : true
+					});
+				}
+			}
+			else{
+				var trBodytdCol2SelectOptionDom = $("<option></option>",{
+					"text" : materialProcessItem[j].combonm,
+					"value" : materialProcessItem[j].combovl
+				});
+			}
+			trBodytdCol2SelectDom.append(trBodytdCol2SelectOptionDom);
+		}
+		
+		var trBodytdCol3Dom		= $("<td></td>");
+		var trBodytdCol3InputDom = $("<input/>",{
+			"class" : "mdu-control small",
+			"type" : "text",
+			"name" : pageId+"_mskupc_spronam",
+			"placeholder" : "[[#{md.mdu1.phspronam}]]"
+		});
+		
+		var trBodytdCol4Dom		= $("<td></td>");
+		var trBodytdCol4InputDom = $("<input/>",{
+			"class" : "mdu-control small mdu1-number",
+			"type" : "text",
+			"name" : pageId+"_mskupc_sproprc",
+			"placeholder" : "[[#{md.mdu1.phsproprc}]]",
+			"onkeyup" : "onlyNumber(this); mdu1SetSummarySproprc();"
+		});
+		
+		var trBodytdCol5Dom		= $("<td></td>");
+		var trBodytdCol5SelectDom = $("<select></select>",{
+			"class" : "mdu-control small",
+			"name" : pageId+"_mskupc_sprofac"
+		});
+		
+		var trBodytdCol5SelectOptionDom = $("<option></option>",{
+			"text" : "[[#{md.mdu1.select}]]",
+			"value" : ""
+		});
+		
+		trBodytdCol5SelectDom.append(trBodytdCol5SelectOptionDom);
+		
+		for(var j=0; j<mptnmaItem.length; j++){
+			var trBodytdCol5SelectOptionDom = $("<option></option>",{
+				"value" : mptnmaItem[j].combovl,
+				"text" : mptnmaItem[j].combonm
+			});
+			trBodytdCol5SelectDom.append(trBodytdCol5SelectOptionDom);
+		}
+		
+		var trBodytdCol6Dom		= $("<td></td>");
+		var trBodytdCol6DivInputDom = $("<div></div>",{
+			"class" : "md-row"
+		});
+		var trBodytdCol6InputDom = $("<input/>",{
+			"class" : "mdu-control small mdu1-number",
+			"type" : "text",
+			"name" : pageId+"_mskupc_sproday",
+			"onkeyup" : "onlyNumber(this)"
+		});
+		
+		var trBodytdCol6DivAnchorDom = $("<a></a>",{
+			"class" : "btn-a-del",
+			"onclick" : "mdu1mskupcDelete(this);"
+		});
+		var trBodytdCol6DivAnchorIconDom = $("<i></i>",{
+			class : "fa-solid fa-minus"
+		});	
+
+		trBodytdCol2Dom.append(trBodytdCol2SelectDom);
+		trBodytdCol3Dom.append(trBodytdCol3InputDom);
+		trBodytdCol4Dom.append(trBodytdCol4InputDom);
+		trBodytdCol5Dom.append(trBodytdCol5SelectDom);
+		trBodytdCol6Dom.append(trBodytdCol6DivInputDom);
+		
+		if(i==0){
+			trBodytdCol6Dom.append(trBodytdCol6InputDom);
+			
+			trBodyRowDom.append(
+				//trBodytdCol0Dom,
+				trBodytdCol1Dom, 
+				trBodytdCol2Dom, 
+				trBodytdCol3Dom, 
+				trBodytdCol4Dom, 
+				trBodytdCol5Dom, 
+				trBodytdCol6Dom
+			);
+		}
+		else{
+			trBodytdCol6DivAnchorDom.append(trBodytdCol6DivAnchorIconDom);
+			trBodytdCol6DivInputDom.append(trBodytdCol6InputDom, trBodytdCol6DivAnchorDom);
+			
+			trBodyRowDom.append(
+				trBodytdCol1Dom, 
+				trBodytdCol2Dom, 
+				trBodytdCol3Dom, 
+				trBodytdCol4Dom, 
+				trBodytdCol5Dom, 
+				trBodytdCol6Dom
+			);
+		}
+		
+		tbodyDom.append(trBodyRowDom);
+	}
+	
+	//=====================================
+	// <tbody> append ( <tr> - summary row )
+	//=====================================
+	var trBodyRowDom 	= $("<tr></tr>",{
+		"class" : "summary-mskupc"
+	});
+	var trBodytdCol1Dom		= $("<td></td>",{
+		"colspan" : 6,
+		"text" : "[[#{md.mdu1.summaryPrice}]]"
+	});
+	
+	var trBodytdCol1SpanPriceDom = $("<span></span>",{
+		"class" : "summary-mskupc-price",
+		"text" : 0
+	});
+	var trBodytdCol1SpanCurrencyDom = $("<span></span>",{
+		"class" : "summary-mskupc-currency",
+		"text" : "[[#{md.mdu1.currencyType}]]"
+	});
+	trBodytdCol1Dom.append(trBodytdCol1SpanPriceDom, trBodytdCol1SpanCurrencyDom);
+
+	
+	trBodyRowDom.append(
+		trBodytdCol1Dom
+	);
+	
+	tbodyDom.append(trBodyRowDom);
+	
+	//=====================================
+	// <table> append ( <thead><tbody> )
+	//=====================================
+	tableDom.append(theadDom, tbodyDom);
+	
+	//=====================================
+	// <div class='block'> append (Contents = table, title )
+	//=====================================
+	tableCotainerDom.append(tableDom);
+	titleDivDom.append(titleH4Dom);
+	blockDom.append(titleDivDom, tableCotainerDom);
+	
+	return blockDom;
+}
+
+/*************************************************
+ * Dom Row Add
+ *************************************************/
+
+//=====================================
+// 상품컬러 Row Add
+//=====================================
+function mdu1Skugr04Add(e){
+	var rowDom 	= $("#mdu1_skugr04_row");
+	var trDom 	= $("<tr></tr>");
+	
+	var tdNumberDom = $("<td></td>", {
+		class : "no"
+	});
+	
+	var tdInputDom 	= $("<td></td>");
+	var divInputDom = $("<div></div>",{
+		"class" : "md-row"
+	});
+	var inputDom = $("<input/>",{
+		"class" : "mdu-control",
+		"type" : "text",
+		"name" : pageId+"_skugr04",
+		"placeholder" : "[[#{md.mdu1.phskugr04}]]",
+		"onkeyup" : "mdu1skugr04Change(this)"
+	});
+	
+	//var tdButtonDom = $("<td></td>");
+	var anchorDom = $("<a></a>",{
+		"class" : "btn-a-del",
+		"onclick" : "mdu1skugr04Delete(this);"
+	});
+	
+	var iconDom = $("<i></i>",{
+		class : "fa-solid fa-minus"
+	});	
+	
+	var trLength = Number(rowDom.find("tr").length) + 1;
+	
+	tdNumberDom.text(trLength.toString().padStart(3,"0"));
+	anchorDom.append(iconDom);
+	divInputDom.append(inputDom, anchorDom);
+	tdInputDom.append(divInputDom);
+	trDom.append(tdNumberDom, tdInputDom);
+	rowDom.append(trDom);
+	
+	if(e != null){
+		//주원단 상품컬러 동기화
+		mdu1mskuitAdd(null, $("#mdu1MaterialMain1").find(".table-container").find(".material-color"));
+	}
+}
+
+//=====================================
+//원단컬러 Row Add
+//=====================================
+function mdu1mskuitAdd(e, targetDom, type){
+	var tabInfo  = e == null && targetDom != null ? targetDom : $(e).closest(".tab-pane");
+	var tabId	 = tabInfo.attr("id");
+	var dataType = tabInfo.data("type");
+	
+	if(tabId == "mdu1MaterialMain1"){
+		mdu1Skugr04Add(null);
+	}
+	
+	var tableDom = e == null && targetDom != null ? targetDom : $(e).closest("table");
+	var tbodyDom = tableDom.find("tbody");
+	var trLength = Number(tbodyDom.find("tr").length) + 1;
+	
+	var number = trLength.toString().padStart(3,"0");
+	
+	var trBodyRowDom 	= $("<tr></tr>");
+	var trBodytdCol1Dom		= $("<td></td>",{
+		"class" : "no",
+		"text" : number
+	});
+	
+	var trBodytdCol2Dom		= $("<td></td>");
+	if(type == "SUB" || dataType == "sub"){
+		var trBodytdCol2InputDom = $("<input/>",{
+			"class" : "mdu-control small",
+			"type" : "text",
+			"name" : pageId+"_mskuit_skugr04"
+		});
+	}else{
+		var trBodytdCol2InputDom = $("<input/>",{
+			"class" : "mdu-control small",
+			"type" : "text",
+			"name" : pageId+"_mskuit_skugr04",
+			"readonly" : true
+		});
+	}
+	
+	var trBodytdCol3Dom		= $("<td></td>");
+	var trBodytdCol3InputDom = $("<input/>",{
+		"class" : "mdu-control small",
+		"type" : "text",
+		"name" : pageId+"_mskuit_skucolo"
+	});
+	
+	var trBodytdCol4Dom		= $("<td></td>");
+	var trBodytdCol4InputDom = $("<input/>",{
+		"class" : "mdu-control small",
+		"type" : "text",
+		"name" : pageId+"_mskuit_fabcolo"
+	});
+	
+	var trBodytdCol5Dom		= $("<td></td>");
+	var trBodytdCol5DivDom	= $("<div></div>",{
+		"class" : "md-row"
+	});
+	
+	var trBodytdCol5InputDom = $("<input/>",{
+		"class" : "mdu-control small mdu1-number",
+		"type" : "text",
+		"name" : pageId+"_mskuit_fabpric",
+		"onkeyup" : "onlyNumber(this)"
+	});
+
+	var trBodytdCol5AnchorDom = $("<a></a>",{
+		class : "btn-a-del",
+		onclick : "mdu1mskuitDelete(this);"
+	});
+	
+	var trBodytdCol5AnchorIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-minus"
+	});
+	trBodytdCol5DivDom.append(trBodytdCol5InputDom, trBodytdCol5AnchorDom.append(trBodytdCol5AnchorIconDom));
+	
+	
+	trBodytdCol2Dom.append(trBodytdCol2InputDom);
+	trBodytdCol3Dom.append(trBodytdCol3InputDom);
+	trBodytdCol4Dom.append(trBodytdCol4InputDom);
+	trBodytdCol5Dom.append(trBodytdCol5DivDom);
+	
+	trBodyRowDom.append(
+		trBodytdCol1Dom, 
+		trBodytdCol2Dom, 
+		trBodytdCol3Dom, 
+		trBodytdCol4Dom, 
+		trBodytdCol5Dom
+	);
+	
+	tbodyDom.append(trBodyRowDom);
+}
+
+//=====================================
+//원단 부자재 Row Add
+//=====================================
+function mdu1mskusbAdd(e, targetDom){
+	var tableDom = e == null ? targetDom : $(e).closest("table");
+	var tbodyDom = tableDom.find("tbody");
+	var summaryTrDom = tbodyDom.find(".summary-mskusb");
+	var trLength = Number(tbodyDom.find("."+pageId+"_mskusb_row").length) + 1;
+	var number = trLength.toString().padStart(3,"0");
+	
+	var trBodyRowDom 	= $("<tr></tr>",{
+		"class" : pageId+"_mskusb_row"
+	});
+	var trBodytdCol1Dom		= $("<td></td>",{
+		"class" : "no",
+		"text" : number
+	});
+	
+	var trBodytdCol2Dom		= $("<td></td>");
+	var trBodytdCol2InputDom = $("<input/>",{
+		"class" : "mdu-control small",
+		"type" : "text",
+		"name" : pageId+"_mskusb_submtnm"
+	});
+	
+	var trBodytdCol3Dom		= $("<td></td>");
+	var trBodytdCol3InputDom = $("<input/>",{
+		"class" : "mdu-control small mdu1-number",
+		"type" : "text",
+		"name" : pageId+"_mskusb_submtpr",
+		"onkeyup" : "onlyNumber(this); mdu1SetSummarySubmtpr();"
+	});
+	
+	var trBodytdCol4Dom		= $("<td></td>");
+	var trBodytdCol4DivDom	= $("<div></div>",{
+		"class" : "md-row"
+	})
+	
+	var trBodytdCol4InputDom = $("<input/>",{
+		"class" : "mdu-control small",
+		"type" : "text",
+		"name" : pageId+"_mskusb_subtext"
+	});
+	
+	var trBodytdCol4AnchorDom = $("<a></a>",{
+		"class" : "btn-a-del",
+		"onclick" : "mdu1mskusbDelete(this);"
+	});
+	
+	var trBodytdCol4AnchorIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-minus"
+	});
+	
+	trBodytdCol4AnchorDom.append(trBodytdCol4AnchorIconDom);
+	trBodytdCol4DivDom.append(trBodytdCol4InputDom, trBodytdCol4AnchorDom);
+	
+	trBodytdCol2Dom.append(trBodytdCol2InputDom);
+	trBodytdCol3Dom.append(trBodytdCol3InputDom);
+	trBodytdCol4Dom.append(trBodytdCol4DivDom);
+	
+	trBodyRowDom.append(
+		trBodytdCol1Dom, 
+		trBodytdCol2Dom, 
+		trBodytdCol3Dom, 
+		trBodytdCol4Dom
+	);
+	
+	summaryTrDom.before(trBodyRowDom);
+}
+
+//=====================================
+//원단 공정 정보 Row Add
+//=====================================
+function mdu1mskupcAdd(e, targetDom){
+	var initData 			= mdu1PageGetInitData();
+	var materialProcessItem = initData.materialProcessItem;
+	var mptnmaItem 			= initData.mptnmaItem;
+	
+	var tableDom = e == null ? targetDom : $(e).closest("table");
+	var tbodyDom = tableDom.find("tbody");
+	var summaryTrDom = tbodyDom.find(".summary-mskupc");
+	var trLength = Number(tbodyDom.find("."+pageId+"_mskupc_row").length) + 1;
+	var number = trLength.toString().padStart(3,"0");
+
+	var trBodyRowDom 	= $("<tr></tr>",{
+		"class" : pageId+"_mskupc_row"
+	});
+	var trBodytdCol1Dom		= $("<td></td>",{
+		"class" : "no",
+		"text" : number
+	});
+	
+	var trBodytdCol2Dom		= $("<td></td>");
+	var trBodytdCol2SelectDom = $("<select></select>",{
+		"class" : "mdu-control small",
+		"name" : pageId+"_mskupc_sprotyp"
+	});
+	
+	var trBodytdCol2SelectOptionDom = $("<option></option>",{
+		"value" : "",
+		"text" : "[[#{md.mdu1.select}]]"
+	});
+	trBodytdCol2SelectDom.append(trBodytdCol2SelectOptionDom);
+	
+	for(var j=0; j<materialProcessItem.length; j++){
+		var trBodytdCol2SelectOptionDom = $("<option></option>",{
+			"value" : materialProcessItem[j].combovl,
+			"text" : materialProcessItem[j].combonm
+		});
+		trBodytdCol2SelectDom.append(trBodytdCol2SelectOptionDom);
+	}
+	
+	var trBodytdCol3Dom		= $("<td></td>");
+	var trBodytdCol3InputDom = $("<input/>",{
+		"class" : "mdu-control small",
+		"type" : "text",
+		"name" : pageId+"_mskupc_spronam"
+	});
+	
+	var trBodytdCol4Dom		= $("<td></td>");
+	var trBodytdCol4InputDom = $("<input/>",{
+		"class" : "mdu-control small mdu1-number",
+		"type" : "text",
+		"name" : pageId+"_mskupc_sproprc",
+		"onkeyup" : "onlyNumber(this); mdu1SetSummarySproprc();"
+	});
+	
+	var trBodytdCol5Dom		= $("<td></td>");
+	var trBodytdCol5SelectDom = $("<select></select>",{
+		"class" : "mdu-control small",
+		"name" : pageId+"_mskupc_sprofac"
+	});
+	
+	var trBodytdCol5SelectOptionDom = $("<option></option>",{
+		"value" : "",
+		"text" : "[[#{md.mdu1.select}]]"
+	});
+	trBodytdCol5SelectDom.append(trBodytdCol5SelectOptionDom);
+	
+	for(var j=0; j<mptnmaItem.length; j++){
+		var trBodytdCol5SelectOptionDom = $("<option></option>",{
+			"value" : mptnmaItem[j].combovl,
+			"text" : mptnmaItem[j].combonm
+		});
+		trBodytdCol5SelectDom.append(trBodytdCol5SelectOptionDom);
+	}
+	
+	var trBodytdCol6Dom		= $("<td></td>");
+	var trBodytdCol6DivInputDom = $("<div></div>",{
+		"class" : "md-row"
+	});
+	var trBodytdCol6InputDom = $("<input/>",{
+		"class" : "mdu-control small mdu1-number",
+		"type" : "text",
+		"name" : pageId+"_mskupc_sproday",
+		"onkeyup" : "onlyNumber(this)"
+	});
+	var trBodytdCol6DivAnchorDom = $("<a></a>",{
+		"class" : "btn-a-del",
+		"onclick" : "mdu1mskupcDelete(this);"
+	});
+	var trBodytdCol6DivAnchorIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-minus"
+	});	
+	
+	trBodytdCol6DivAnchorDom.append(trBodytdCol6DivAnchorIconDom);
+	trBodytdCol6DivInputDom.append(trBodytdCol6InputDom, trBodytdCol6DivAnchorDom);
+	
+	trBodytdCol2Dom.append(trBodytdCol2SelectDom);
+	trBodytdCol3Dom.append(trBodytdCol3InputDom);
+	trBodytdCol4Dom.append(trBodytdCol4InputDom);
+	trBodytdCol5Dom.append(trBodytdCol5SelectDom);
+	trBodytdCol6Dom.append(trBodytdCol6DivInputDom);
+	
+	trBodyRowDom.append(
+		trBodytdCol1Dom, 
+		trBodytdCol2Dom, 
+		trBodytdCol3Dom, 
+		trBodytdCol4Dom, 
+		trBodytdCol5Dom, 
+		trBodytdCol6Dom
+	);
+	
+	summaryTrDom.before(trBodyRowDom);
+	
+	tbodyDom.find("."+pageId+"_mskupc_row").find(".row-span").attr("rowspan", trLength);
+}
+/*************************************************
+ * Dom Row Delete
+ *************************************************/
+ 
+//=====================================
+//상품컬러 Row Delete
+//=====================================
+function mdu1TabListDelete(e){
+	var tabUl		= $(e).closest("ul");
+	var tabLi		= $(e).closest("li");
+	var contentID 	= $(e).closest("li").find("a").attr("href");
+	eventNavTabHref("mdu1MaterialMain1");
+	
+	tabLi.remove();
+	$(contentID).remove();
+	
+	var tabContentDiv = $("#"+pageId+"_nav_tab_content");
+	var tabContentList = tabContentDiv.find("[data-type='sub']");
+	
+	for(var i=0; i<tabContentList.length; i++){
+		tabContentList.eq(i).attr("id", "mdu1MaterialSub"+(i+1));
+	}
+	
+	var subTabLi = tabUl.find("[data-mdu1-nav-sub-item]");
+	for(var i=0; i<subTabLi.length; i++){
+		subTabLi.eq(i).attr("data-mdu1-nav-sub-item", (i+1));
+		subTabLi.eq(i).find(".nav-link").attr("href", "#mdu1MaterialSub"+(i+1));
+	}
+	
+}
+
+//=====================================
+//상품컬러 Row Delete
+//=====================================
+function mdu1skugr04Delete(e, index){
+	/* var tbodyDom = $(e).closest("tbody");
+	var index = tbodyDom.find(".btn-a-del").index(e); */
+	var rowDom 	= $("#mdu1_skugr04_row");
+	var trDom	= rowDom.find("tr");
+	var index 	= e == null ? index : rowDom.find(".btn-a-del").index(e);
+	
+	trDom.eq(index).remove();
+	
+	trDom	= rowDom.find("tr");
+	var trLength = Number(trDom.length);
+	
+	for(var i=0; i<trLength; i++){
+		var number = (i+1);
+		trDom.eq(i).find(".no").text("");
+		trDom.eq(i).find(".no").text(number.toString().padStart(3,"0"));
+	}
+	
+	if(e != null){
+		mdu1mskuitDelete(null, $("#mdu1MaterialMain1").find(".material-color").find("tbody") ,index);
+	}
+}
+
+//=====================================
+//원단컬러 Row Delete
+//=====================================
+function mdu1mskuitDelete(e, targetDom, index){
+	
+	var tbodyDom 	= e == null ? targetDom : $(e).closest("tbody");
+	var index 		= e == null ? index : tbodyDom.find(".btn-a-del").index(e);
+	
+	var tabInfo = $(e).closest(".tab-pane");
+	var tabId 	= tabInfo.attr("id");
+
+	if(tabId == "mdu1MaterialMain1"){
+		mdu1skugr04Delete(null, index);
+	}
+	
+	//tr remove 처리
+	tbodyDom.find("tr").eq(index).remove();
+	//$(e).closest("tr").remove();
+
+	//tr 정리
+	var trDom		= tbodyDom.find("tr");
+	var trLength 	= Number(trDom.length);
+	
+	for(var i=0; i<trLength; i++){
+		var number = (i+1);
+		trDom.eq(i).find(".no").text("");
+		trDom.eq(i).find(".no").text(number.toString().padStart(3,"0"));
+	}
+}
+
+//=====================================
+//원단 부자재 정보 Row Delete
+//=====================================
+function mdu1mskusbDelete(e){
+	var tbodyDom = $(e).closest("tbody");
+	$(e).closest("tr").remove();
+
+	var trDom		= tbodyDom.find("."+pageId+"_mskusb_row");
+	var trLength 	= Number(trDom.length);
+	
+	for(var i=0; i<trLength; i++){
+		var number = (i+1);
+		trDom.eq(i).find(".no").text("");
+		trDom.eq(i).find(".no").text(number.toString().padStart(3,"0"));
+	}
+	
+	mdu1SetSummarySubmtpr();
+}
+
+//=====================================
+//원단 공정 정보 Row Delete
+//=====================================
+function mdu1mskupcDelete(e){
+	var tbodyDom = $(e).closest("tbody");
+	$(e).closest("tr").remove();
+
+	var trDom		= tbodyDom.find("."+pageId+"_mskupc_row");
+	var trLength 	= Number(trDom.length);
+	
+	for(var i=0; i<trLength; i++){
+		var number = (i+1);
+		trDom.eq(i).find(".no").text("");
+		trDom.eq(i).find(".no").text(number.toString().padStart(3,"0"));
+	}
+	
+	
+	trDom.find(".row-span").attr("rowspan", trLength);
+	mdu1SetSummarySproprc();
+}
+
+/*************************************************
+ * Dom Row Change (Mapping)
+ *************************************************/
+//=====================================
+//상품 컬러 - 원단 컬러 Row Mapping
+//=====================================
+function mdu1skugr04Change(e){
+	var index = $("#"+pageId+"_skugr04_row").find("input[name='"+pageId+"_skugr04']").index(e);
+	$("#"+pageId+"MaterialMain1").find("input[name='"+pageId+"_mskuit_skugr04']").eq(index).val($(e).val());
+}
+
+//=====================================
+//상품 사이즈 - 모든 원단 사이즈 Checkbox Row Mapping
+//=====================================
+function mdu1SksizesMapping(){
+	var sksizesDom = $("#mdu1_size_main_table").find("input[name='mdu1_sksizes']");
+	
+	for(var i=0; i<sksizesDom.length; i++){
+		var check 		= sksizesDom.eq(i).is(":checked");
+		var sizeValue 	= sksizesDom.eq(i).val();
+		eventSizeCheck(sizeValue, check);
+	}
+}
+
+//=====================================
+// 원단 조합 갱신
+//=====================================
+function mdu1CombinationRefresh(){
+	var tabDom 			= $("#"+pageId+"_nav_tab");
+	var tabLiDom 		= tabDom.find("li");
+	var tabAnchorDom 	= tabDom.find(".nav-link");
+	
+	var contentArr = [];
+
+	//탭 Id 리스트 추출
+	for(var i=0; i<tabAnchorDom.length; i++){
+		var contentId 		= tabAnchorDom.eq(i).attr("href");
+		var contentIdOrigin = contentId != undefined ? contentId.substring(1,contentId.length) : null;
+
+		if(contentIdOrigin != null){
+			contentArr.push(contentIdOrigin);
+		}
+	}
+
+	//대상 탭 콘텐츠 내용 추출
+	var combinationArrData = [];
+	
+	for(var i=0; i<contentArr.length; i++){
+		var combinationData = new Object();
+		
+		//탭 콘텐츠 - 원단 소재명 > 소재명 Input, tabId = Key 세팅
+		var tabContItemnam = $("#"+contentArr[i]).find("input[name='"+pageId+"_itemnam']");
+		combinationData.itemnam = tabContItemnam.val();
+		combinationData.key 	= contentArr[i];
+		
+		//탭 콘텐츠 - 원단 컬러 > SelectBox화
+		var tabMskuitTable = $("#"+contentArr[i]).find(".material-color");
+		var tabContItemnum = tabMskuitTable.find("tr .no");
+		var tabContSkugr04 = tabMskuitTable.find("input[name='"+pageId+"_mskuit_skugr04']");
+		var tabContSkucolo = tabMskuitTable.find("input[name='"+pageId+"_mskuit_skucolo']");
+		var tabContFabcolo = tabMskuitTable.find("input[name='"+pageId+"_mskuit_fabcolo']");
+
+		var combinationSelectArr = [];
+		
+		for(var j=0; j<tabContSkugr04.length; j++){
+			var itemnum = tabContItemnum.eq(j).text().trim();
+			var skugr04 = tabContSkugr04.eq(j).val().trim();
+			var skucolo = tabContSkucolo.eq(j).val().trim();
+			var fabcolo = tabContFabcolo.eq(j).val().trim();
+
+			console.log("skugr04 => " + skugr04 + "/" + "skucolo => " + skucolo + "fabcolo => " + fabcolo);
+			if(contentArr[i] == "mdu1MaterialMain1"){
+				combinationData.type = "main";
+				combinationData.materialType = "[[#{md.mdu1.mainFabric}]]";
+				combinationData.itegnum = $("#mdu1_nav_tab").find("[href='#"+contentArr[i]+"']").closest("li").data("mdu1-nav-main-item");
+			}else{
+				combinationData.type = "sub";
+				combinationData.materialType = "[[#{md.mdu1.subFabric}]]";
+				combinationData.itegnum = $("#mdu1_nav_tab").find("[href='#"+contentArr[i]+"']").closest("li").data("mdu1-nav-sub-item");
+			}
+			
+			if(j == 0 && combinationData.type != "main"){
+				var combinationSelectData = new Object();
+				combinationSelectData.title	= "";
+				combinationSelectData.selectTitle	= "[[#{md.mdu1.select}]]";
+				combinationSelectData.selectValue 	= "";
+				combinationSelectArr.push(combinationSelectData);
+			}
+			
+			if(skugr04 != "" && skucolo != "" && fabcolo != ""){
+				var combinationSelectData = new Object();
+				combinationSelectData.itemnum = itemnum;
+				combinationSelectData.title	= skugr04;
+				combinationSelectData.selectTitle = skucolo;
+				combinationSelectData.selectValue = fabcolo;
+				combinationSelectArr.push(combinationSelectData);
+			}			
+		}
+		
+		combinationData.selectData = combinationSelectArr;
+		combinationArrData.push(combinationData);
+	}
+	
+	
+	mdu1CombinationDelete();
+	mdu1CombinationCreate(combinationArrData);
+}
+
+//=====================================
+//원단 조합 생성
+//=====================================
+function mdu1CombinationCreate(data){
+	var tableDom = $(".material-combination");
+	
+	var tableColgroupDom = $("<colgroup></colgroup>");
+	var tableCol1Dom = $("<col></col>",{width:"16%"});
+	var tableCol2Dom = $("<col></col>",{width:"16%"});
+	var tableCol3Dom = $("<col></col>",{width:"16%"});
+	var tableCol4Dom = $("<col></col>",{width:"auto"});
+	
+	
+	tableColgroupDom.append(tableCol1Dom, tableCol2Dom, tableCol3Dom, tableCol4Dom );
+	tableDom.append(tableColgroupDom);
+	
+	var mainData = data.filter(function(e){
+	    return e.type === "main";
+	});
+	
+	var subDataArr = data.filter(function(e){
+	    return e.type === "sub";
+	});
+	
+	var mainDataInfo 	= mainData[0];
+	var mainDataArr 	= mainData[0].selectData;
+	
+	for(var i=0; i<mainDataArr.length; i++){
+		var tbodyDom 		= $("<tbody></tbody>");
+		var trBodyRowDom 	= $("<tr></tr>",{
+			"data-combination-type" : mainDataInfo.type,
+			"data-combination-key" : mainDataInfo.key,
+			"data-combination-itemnum" : mainDataArr[i].itemnum,
+			"data-combination-itegnum" : mainDataInfo.itegnum
+		});
+		var trBodytdCol1Dom	= $("<th></th>",{
+			"text" : mainDataInfo.materialType
+		});
+		
+		var trBodytdCol2Dom		= $("<td></td>");
+		var trBodytdCol2InputDom = $("<input/>",{
+			"class" : "mdu-control small",
+			"value" : mainDataInfo.itemnam,
+			"readonly" : "disabled"
+		});
+		trBodytdCol2Dom.append(trBodytdCol2InputDom);
+		
+
+		var trBodytdCol3Dom		= $("<td></td>",{
+			"data-combination-skugr04" : mainDataArr[i].title
+		});
+		var trBodytdCol3InputDom = $("<input/>",{
+			"class" : "mdu-control small",
+			"value" : mainDataArr[i].title,
+			"readonly" : "disabled"
+		});		
+		trBodytdCol3Dom.append(trBodytdCol3InputDom);
+		
+		
+		var trBodytdCol4Dom		= $("<td></td>",{
+			"data-combination-skucolo" : mainDataArr[i].selectTitle,
+			"data-combination-fabcolo" : mainDataArr[i].selectValue
+		});
+		var trBodytdCol4InputDom = $("<input/>",{
+			"class" : "mdu-control small",
+			"value" : mainDataArr[i].selectTitle,
+			"readonly" : "disabled"
+		});	
+		trBodytdCol4Dom.append(trBodytdCol4InputDom);
+		
+		
+		trBodyRowDom.append(
+			trBodytdCol1Dom, 
+			trBodytdCol2Dom, 
+			trBodytdCol3Dom, 
+			trBodytdCol4Dom
+		);
+
+		tbodyDom.append(trBodyRowDom);
+
+		for(var j=0; j<subDataArr.length; j++){
+			var selectData 		= subDataArr[j].selectData;
+			var trBodyRowDom 	= $("<tr></tr>",{
+				"data-combination-type" : subDataArr[j].type,
+				"data-combination-key" : subDataArr[j].key,
+				"data-combination-itegnum" : subDataArr[j].itegnum
+			});
+			var trBodytdCol1Dom	= $("<th></th>",{
+				"text" : subDataArr[j].materialType
+			});
+
+			var trBodytdCol2Dom	= $("<td></td>");
+			var trBodytdCol2InputDom = $("<input/>",{
+				"class" : "mdu-control small",
+				"value" : subDataArr[j].itemnam,
+				"readonly" : "disabled"
+			});
+			trBodytdCol2Dom.append(trBodytdCol2InputDom);
+
+			var trBodytdCol3Dom	= $("<td></td>");
+			var trBodytdCol3InputDom = $("<input/>",{
+				"class" : "mdu-control small",
+				"name" : pageId+"_sub_combination_skugr04",
+				"readonly" : "disabled"
+			});
+			trBodytdCol3Dom.append(trBodytdCol3InputDom);
+			
+			var trBodytdCol4Dom			= $("<td></td>");
+			var trBodytdCol4SelectDom 	= $("<select></select>",{
+				"class" : "mdu-control small",
+				"name" : pageId+"_sub_combination_fabcolo"
+			});
+			
+			for(var k=0; k<selectData.length; k++){
+				var trBodytdCol4SelectOptionDom = $("<option></option",{
+					"data-select-skugr04" : selectData[k].title,
+					"data-select-itemnum" : selectData[k].itemnum,
+					"text" : selectData[k].selectTitle,
+					"value" : selectData[k].selectValue
+				});
+				
+				trBodytdCol4SelectDom.append(trBodytdCol4SelectOptionDom);
+			}
+			
+			
+			trBodyRowDom.append(
+				trBodytdCol1Dom, 
+				trBodytdCol2Dom, 
+				trBodytdCol3Dom, 
+				trBodytdCol4Dom.append(trBodytdCol4SelectDom)
+			)
+			
+			tbodyDom.append(trBodyRowDom);
+		}
+		tableDom.append(tbodyDom);
+	}
+}
+
+//=====================================
+//원단 조합 삭제
+//=====================================
+function mdu1CombinationDelete(){
+	var tableDom = $(".material-combination");
+	tableDom.children().remove();
+}
+
+//=====================================
+//입력 정보 JSON Parsing
+//=====================================
+function mdu1DetailInfoData(){
+	var dataInfo = new Object();
+	var dataArr = [];
+	var mskuclArr = [];
+	var mskuclRowDom = $("#mdu1_skugr04_row").find("tr");
+	var tabNavDom	= $("#mdu1_nav_tab");
+	var contentDom 	= $("#mdu1_nav_tab_content").children();
+
+	for(var i=0; i<mskuclRowDom.length; i++){
+		var mskuclObject = new Object();
+		var beforeskugr04 = mskuclRowDom.eq(i).data("beforeskugr04");
+		var skugr04 = mskuclRowDom.eq(i).find("input[name='"+pageId+"_skugr04']").val();
+		
+		mskuclObject.skugr04 = skugr04;
+		mskuclObject.beforeskugr04 = beforeskugr04;
+		mskuclArr.push(mskuclObject);
+	}
+	
+	dataInfo.mskuclList = mskuclArr;
+	
+	for(var i=0; i<contentDom.length; i++){
+		var data = new Object();
+		var type = contentDom.eq(i).data("type");
+		var key  = contentDom.eq(i).attr("id");
+		data.type 	= type;
+		data.key	= key;
+		
+		if(type == "main")
+			data.itegnum = tabNavDom.find("a[href='#"+key+"']").closest("li").attr("data-mdu1-nav-main-item");
+		else
+			data.itegnum = tabNavDom.find("[href='#"+key+"']").closest("li").attr("data-mdu1-nav-sub-item");
+		
+		//=====================================
+		//원단정보
+		//=====================================
+		var materialInfoDom = contentDom.eq(i).find(".material-info");
+		var info = new Object();
+		info.itemnam = materialInfoDom.find("input[name='"+pageId+"_itemnam']").val();
+		info.mixrato = materialInfoDom.find("input[name='"+pageId+"_mixrato']").val();
+		info.itemfac = materialInfoDom.find("input[name='"+pageId+"_itemfac']").val();
+		data.info = info;
+
+		//=====================================
+		//원단컬러
+		//=====================================
+		var materialColorDom 	= contentDom.eq(i).find(".material-color");
+		var materialColorList 	= materialColorDom.find("tbody tr");
+		var colorArr = [];
+		
+		for(var j=0; j<materialColorList.length; j++){
+			var color = new Object();
+			var colorFabpric = materialColorList.eq(j).find("input[name='"+pageId+"_mskuit_fabpric']").val();
+			color.itemnum = materialColorList.eq(j).find(".no").text();
+			color.itemnam = materialColorList.eq(j).find("input[name='"+pageId+"_mskuit_skugr04']").val();
+			color.skucolo = materialColorList.eq(j).find("input[name='"+pageId+"_mskuit_skucolo']").val();
+			color.fabcolo = materialColorList.eq(j).find("input[name='"+pageId+"_mskuit_fabcolo']").val();
+			color.fabpric = colorFabpric != undefined ? uncomma(colorFabpric) : 0;
+
+			colorArr.push(color);
+		}
+		data.color = colorArr;
+		
+		//=====================================
+		//원단사이즈
+		//=====================================
+		var materialSizeDom 	= contentDom.eq(i).find(".material-size");
+		var materialSizeList 	= materialSizeDom.find("tbody tr");
+		var sizeArr = [];
+		
+		for(var j=0; j<materialSizeList.length; j++){
+			var check = materialSizeList.eq(j).find("input[name='"+pageId+"_mskusz_sksizes']").is(":checked");
+			if(check){
+				var size = new Object();
+				var sizeRoinqty = materialSizeList.eq(j).find("input[name='"+pageId+"_mskusz_roinqty']").val();
+				var sizeConsnum = materialSizeList.eq(j).find("input[name='"+pageId+"_mskusz_consnum']").val();
+				var sizeConspri = materialSizeList.eq(j).find("input[name='"+pageId+"_mskusz_conspri']").val();
+				
+				size.sizecod = materialSizeList.eq(j).find("input[name='"+pageId+"_mskusz_sksizes']").val();
+				size.roinqty = sizeRoinqty != "" ? uncomma(sizeRoinqty) : 0;
+				size.consnum = sizeConsnum != "" ? sizeConsnum : 0;
+				size.conspri = sizeConspri != "" ? uncomma(sizeConspri) : 0;
+				sizeArr.push(size);
+			}
+		}
+		data.size = sizeArr;
+		
+		//=====================================
+		//부자재
+		//=====================================
+		var materialSidiaryDom 	= contentDom.eq(i).find(".material-sidiary");
+		var materialSidiaryList 	= materialSidiaryDom.find("tbody tr").not(".summary-mskusb");
+		var sidiaryArr 		= [];
+		var submtps = 0;
+		
+		for(var j=0; j<materialSidiaryList.length; j++){
+			var sidiary = new Object();
+			var sidiraySubmtpr = materialSidiaryList.eq(j).find("input[name='"+pageId+"_mskusb_submtpr']").val();
+				
+			sidiary.submtno = materialSidiaryList.eq(j).find(".no").text().trim();
+			sidiary.submtnm = materialSidiaryList.eq(j).find("input[name='"+pageId+"_mskusb_submtnm']").val();
+			sidiary.submtpr = sidiraySubmtpr != "" ? uncomma(sidiraySubmtpr) : 0;
+			sidiary.subtext = materialSidiaryList.eq(j).find("input[name='"+pageId+"_mskusb_subtext']").val();
+
+			if(sidiary.submtpr != ""){
+				submtps = submtps + Number(sidiary.submtpr);
+			}
+			
+			sidiaryArr.push(sidiary);
+		}
+		data.sidiary = sidiaryArr;
+		data.submtps = submtps;
+		
+		//=====================================
+		//공정 정보
+		//=====================================
+		var materialProcessDom 	= contentDom.eq(i).find(".material-process");
+		var materialProcessList = materialProcessDom.find("tbody tr").not(".summary-mskupc");
+		var processArr 		= [];
+		var coslabs = 0;
+
+		for(var j=0; j<materialProcessList.length; j++){
+			var process = new Object();
+			var processSproprc = materialProcessList.eq(j).find("input[name='"+pageId+"_mskupc_sproprc']").val();
+			process.sprocno = materialProcessList.eq(j).find(".no").text().trim();
+			process.sprotyp = materialProcessList.eq(j).find("select[name='"+pageId+"_mskupc_sprotyp']").find("option:selected").val();
+			process.spronam = materialProcessList.eq(j).find("input[name='"+pageId+"_mskupc_spronam']").val();
+			process.sproprc = processSproprc != "" ? uncomma(processSproprc) : 0;
+			process.sprofac = materialProcessList.eq(j).find("select[name='"+pageId+"_mskupc_sprofac']").find("option:selected").val();
+			process.sproday = materialProcessList.eq(j).find("input[name='"+pageId+"_mskupc_sproday']").val();
+			
+			if(process.sproprc != ""){
+				coslabs = coslabs + Number(process.sproprc);
+			}
+			
+			processArr.push(process);
+		}
+		data.process = processArr;
+		data.coslabs = coslabs;
+		
+		dataArr.push(data);
+	}
+	
+	//=====================================
+	//사이즈 선택 정보 (상단 사이즈 컨트롤)
+	//=====================================
+	var sksizesDom = $("#mdu1_size_main_table").find("input[name='mdu1_sksizes']");
+	var sizeGlobalDataArr = [];
+	
+	for(var i=0; i<sksizesDom.length; i++){
+		var check 		= sksizesDom.eq(i).is(":checked");
+		if(check){
+			var sizeGlobalData = new Object();
+			var sizeValue 	= sksizesDom.eq(i).val();
+			sizeGlobalData.sizecod = sizeValue;
+			sizeGlobalDataArr.push(sizeGlobalData);
+		}
+	}
+	
+	//=====================================
+	//상품 정보 (상단 상품코드채번 | 메인정보 | 구분 | )
+	//=====================================
+	var skutkey = $("#mdu1_skutkey").val();		//품번
+	var skudesc = $("#mdu1_skudesc").val();		//품명
+	var ownerky	= $("#mdu1_ownerky").val();		//화주
+	var brandnm	= $("#mdu1_brandnm").val();		//매장(브랜드)
+	var stryear = $("#mdu1_stryear").val();		//출시년도
+	var seasona	= $("input[name='"+pageId+"_seasona']:checked").val();		//시즌
+	var designe	= $("#mdu1_designe").val();		//디자이너
+	var skuupdn	= $("input[name='"+pageId+"_skuupdn']:checked").val();		//구분
+
+	//=====================================
+	//상품 정보 (원가합계(MAX) | 하단 판매가 )
+	//=====================================
+	var itmcost = $("#mdu1_mskusp").find("span[name='"+pageId+"_itmcost']").text().trim();
+	var selpric = $("#mdu1_mskusp").find("input[name='"+pageId+"_selpric']").val();
+	var savetyp = "";
+	
+	if($("input[name='mdu1_save_type']").is(":checked")){
+		savetyp = "new";
+	}else{
+		savetyp = "modify"	
+	}
+	
+	var mainInfo = {
+		skutkey : skutkey,
+		skudesc : skudesc,
+		ownerky : ownerky,
+		brandnm : brandnm,
+		savetyp : savetyp,
+		stryear : stryear,
+		seasona : seasona,
+		designe : designe,
+		skuupdn : skuupdn,
+		itmcost : uncomma(itmcost),
+		selpric : uncomma(selpric)
+	}
+	
+	
+	dataInfo.mainInfo 	= mainInfo;
+	dataInfo.sizeData 	= sizeGlobalDataArr;
+	dataInfo.tableData 	= dataArr;
+	dataInfo.selpric 	= selpric;
+	
+	return dataInfo;
+}
+
+function mdu1CombinationData(data){
+	var combinationArr 		= [];
+	
+	//=====================================
+	//원단 조합 데이터
+	//=====================================
+	var tableDom = $(".material-combination");
+	var tbodyDom = tableDom.find("tbody");
+	
+	for(var i=0; i<tbodyDom.length; i++){
+		var trDom = tbodyDom.eq(i).find("tr");
+		var combinationRowArr 	= [];
+		
+		for(var j=0; j<trDom.length; j++){
+			var combinationData = new Object();
+			var type 	= trDom.eq(j).data("combination-type");
+			var key		= trDom.eq(j).data("combination-key");
+			var itegnum	= trDom.eq(j).data("combination-itegnum");
+			
+			if(type == "main"){
+				var itemnum = trDom.eq(j).data("combination-itemnum");
+				var skugr04 = trDom.eq(j).find("[data-combination-skugr04]").data("combination-skugr04");
+				var skucolo = trDom.eq(j).find("[data-combination-skucolo]").data("combination-skucolo");
+				var fabcolo = trDom.eq(j).find("[data-combination-fabcolo]").data("combination-fabcolo");
+			}
+			else{
+				var selectDom = trDom.eq(j).find("select[name='mdu1_sub_combination_fabcolo']").find("option:selected");
+				var itemnum = selectDom.data("select-itemnum");
+				var skugr04 = selectDom.data("select-skugr04");
+				var skucolo = selectDom.text();
+				var fabcolo = selectDom.val();
+			}
+			
+			combinationData.type 	= type;
+			combinationData.key		= key;
+			combinationData.itegnum	= itegnum;
+			combinationData.itemdiv = type.toUpperCase();
+			combinationData.itemnum = itemnum;
+			combinationData.skugr04 = skugr04;
+			combinationData.skucolo = skucolo;
+			combinationData.fabcolo = fabcolo;
+			
+			combinationRowArr.push(combinationData);
+		}
+		
+		combinationArr.push(combinationRowArr);
+	}
+	
+	return combinationArr;
+}
+//=====================================
+//상세확인 테이블 콘텐츠 생성 mdu1_detail_table
+//=====================================
+function mdu1DetailTableData(data){
+	var returnData 			= [];
+	var combinationArr 		= [];
+	
+	//=====================================
+	//원단 조합 데이터
+	//=====================================
+	var tableDom = $(".material-combination");
+	var tbodyDom = tableDom.find("tbody");
+	
+	for(var i=0; i<tbodyDom.length; i++){
+		var trDom = tbodyDom.eq(i).find("tr");
+		var combinationRowArr 	= [];
+		
+		for(var j=0; j<trDom.length; j++){
+			var combinationData = new Object();
+			var type 	= trDom.eq(j).data("combination-type");
+			var key		= trDom.eq(j).data("combination-key");
+			var itegnum	= trDom.eq(j).data("combination-itegnum");
+			
+			if(type == "main"){
+				var itemnum = trDom.eq(j).data("combination-itemnum");
+				var skugr04 = trDom.eq(j).find("[data-combination-skugr04]").data("combination-skugr04");
+				var skucolo = trDom.eq(j).find("[data-combination-skucolo]").data("combination-skucolo");
+				var fabcolo = trDom.eq(j).find("[data-combination-fabcolo]").data("combination-fabcolo");
+			}
+			else{
+				var selectDom = trDom.eq(j).find("select[name='mdu1_sub_combination_fabcolo']").find("option:selected");
+				var itemnum = selectDom.data("select-itemnum");
+				var skugr04 = selectDom.data("select-skugr04");
+				var skucolo = selectDom.text();
+				var fabcolo = selectDom.val();
+			}
+			
+			combinationData.type 	= type;
+			combinationData.key		= key;
+			combinationData.itegnum	= itegnum;
+			combinationData.itemdiv = type.toUpperCase();
+			combinationData.itemnum = itemnum;
+			combinationData.skugr04 = skugr04;
+			combinationData.skucolo = skucolo;
+			combinationData.fabcolo = fabcolo;
+			
+			combinationRowArr.push(combinationData);
+		}
+		
+		combinationArr.push(combinationRowArr);
+	}
+	//=====================================
+	// 상세확인 데이터 생성
+	//=====================================
+	for(var i=0; i<combinationArr.length; i++){
+		//=====================================
+		// 사이즈별로 배열 데이터 생성
+		//=====================================
+		//var rowDataArr = [];
+		
+		for(var j=0; j<data.sizeData.length; j++){
+			var sizecod = data.sizeData[j].sizecod;
+			var rowData = [];
+			
+			//합계데이터 오브젝트 & 초기화
+			var summaryData = new Object();
+			summaryData.type = "summary";
+			summaryData.summaryConspri 	= 0;
+			summaryData.summaryMskusb 	= 0;
+			summaryData.summaryMskupc 	= 0;
+			summaryData.summaryCost 	= 0;
+			for(var k=0; k<combinationArr[i].length; k++){
+				
+				var keyData = data.tableData.filter(function(e){
+					return e.type == combinationArr[i][k].type && e.itegnum == combinationArr[i][k].itegnum;
+				})[0];
+
+				var sizeData = keyData.size.filter(function(e){
+					return e.sizecod == sizecod; 
+				})[0];
+
+				var tempData = JSON.parse(JSON.stringify(combinationArr[i][k]));
+				tempData.sizecod = sizeData.sizecod;
+				tempData.roinqty = uncomma(sizeData.roinqty);
+				tempData.consnum = sizeData.consnum;
+				tempData.conspri = uncomma(sizeData.conspri);
+				tempData.submtps = uncomma(keyData.submtps);
+				tempData.coslabs = uncomma(keyData.coslabs);
+				tempData.itmcost = Number(uncomma(tempData.conspri)) + Number(uncomma(tempData.submtps)) + Number(uncomma(tempData.coslabs));
+				tempData.selpric = uncomma(data.selpric);
+				
+				summaryData.summaryConspri 	+= Number(uncomma(tempData.conspri));
+				summaryData.summaryMskusb 	+= Number(uncomma(tempData.submtps));
+				summaryData.summaryMskupc 	+= Number(uncomma(tempData.coslabs));
+				summaryData.summaryCost 	+= Number(uncomma(tempData.itmcost));
+				summaryData.summarySellPrice = uncomma(data.selpric);
+				
+				//======rowData 생성=========
+				if(tempData.skugr04 != "" && tempData.fabcolo != ""){
+					rowData.push(tempData);
+				}
+			}
+			rowData.push(summaryData);
+			returnData.push(rowData);
+		}
+	}
+	return returnData;
+}
+
+function mdu1DetailTableCreate(){
+	var tableData 	= mdu1DetailInfoData();
+	var gridData 	= mdu1DetailTableData(tableData);
+	
+	var tableDom = $("#"+pageId+"_detail_table");
+	var tbodyDom = tableDom.find("tbody");
+	tbodyDom.children().remove();
+	
+	var itmCostTmp = 0;
+	
+	for(var i=0; i<gridData.length; i++){
+		for(var j=0; j<gridData[i].length; j++){
+			
+			var checkRowspan 	= gridData[i].length;
+			var skugr04Rowspan 	= (gridData[i].length -1);
+			
+			if(gridData[i][j].type == "main"){
+				//=====================================
+				//1.주원단 tr Dom 
+				//=====================================
+				var trBodyRowDom = $("<tr></tr>");
+				var trBodytdCol1Dom = $("<td></td>",{
+					"rowspan" : checkRowspan,
+					"name" : pageId+"_detail_check",
+					"class" : "td-check"
+				});
+				var trBodytdCol1InputDom = $("<input/>",{
+					"type" : "checkbox"
+				});
+				trBodytdCol1Dom.append(trBodytdCol1InputDom);
+				
+				var trBodytdCol2Dom = $("<td></td>",{
+					"rowspan" : skugr04Rowspan,
+					"name" : pageId+"_detail_skugr04",
+					"text" : gridData[i][j].skugr04
+				});
+				
+				var trBodytdCol3Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskusz_sizecod",
+					"text" : gridData[i][j].sizecod
+				});
+				var trBodytdCol4Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskuit_skucolo",
+					"text" : gridData[i][j].skucolo
+				});
+				var trBodytdCol5Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskuit_fabcolo",
+					"text" : gridData[i][j].fabcolo
+				});
+				var trBodytdCol6Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskusz_roinqty",
+					"text" : comma(gridData[i][j].roinqty)
+				});
+				var trBodytdCol7Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskusz_consnum",
+					"text" : gridData[i][j].consnum
+				});
+				var trBodytdCol8Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskusz_conspri",
+					"text" : comma(gridData[i][j].conspri)
+				});
+				var trBodytdCol9Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskusb",
+					"text" : comma(gridData[i][j].submtps)
+				});
+				var trBodytdCol10Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskupc",
+					"text" : comma(gridData[i][j].coslabs)
+				});
+				var trBodytdCol11Dom = $("<td></td>",{
+					"name" : pageId+"_detail_cost",
+					"text" : comma(gridData[i][j].itmcost)
+				});
+				var trBodytdCol12Dom = $("<td></td>",{
+					"class" : "td-blank"
+				});
+				
+				trBodyRowDom.append(
+					trBodytdCol1Dom,
+					trBodytdCol2Dom,
+					trBodytdCol3Dom,
+					trBodytdCol4Dom,
+					trBodytdCol5Dom,
+					trBodytdCol6Dom,
+					trBodytdCol7Dom,
+					trBodytdCol8Dom,
+					trBodytdCol9Dom,
+					trBodytdCol10Dom,
+					trBodytdCol11Dom,
+					trBodytdCol12Dom
+				)
+				tbodyDom.append(trBodyRowDom);
+			}else if(gridData[i][j].type == "sub"){
+				//=====================================
+				//2.부원단 tr Dom 
+				//=====================================
+				var trBodyRowDom = $("<tr></tr>");
+				var trBodytdCol1Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskusz_sizecod",
+					"text" : gridData[i][j].sizecod
+				});
+				var trBodytdCol2Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskuit_skucolo",
+					"text" : gridData[i][j].skucolo
+				});
+				var trBodytdCol3Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskuit_fabcolo",
+					"text" : gridData[i][j].fabcolo
+				});
+				var trBodytdCol4Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskusz_roinqty",
+					"text" : comma(gridData[i][j].roinqty)
+				});
+				var trBodytdCol5Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskusz_consnum",
+					"text" : gridData[i][j].consnum
+				});
+				var trBodytdCol6Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskusz_conspri",
+					"text" : comma(gridData[i][j].conspri)
+				});
+				var trBodytdCol7Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskusb",
+					"text" : comma(gridData[i][j].submtps)
+				});
+				var trBodytdCol8Dom = $("<td></td>",{
+					"name" : pageId+"_detail_mskupc",
+					"text" : comma(gridData[i][j].coslabs)
+				});
+				var trBodytdCol9Dom = $("<td></td>",{
+					"name" : pageId+"_detail_cost",
+					"text" : comma(gridData[i][j].itmcost)
+				});
+				var trBodytdCol10Dom = $("<td></td>",{
+					"class" : "td-blank"
+				});
+				
+				trBodyRowDom.append(
+					trBodytdCol1Dom,
+					trBodytdCol2Dom,
+					trBodytdCol3Dom,
+					trBodytdCol4Dom,
+					trBodytdCol5Dom,
+					trBodytdCol6Dom,
+					trBodytdCol7Dom,
+					trBodytdCol8Dom,
+					trBodytdCol9Dom,
+					trBodytdCol10Dom
+				)
+				tbodyDom.append(trBodyRowDom);
+			}else if(gridData[i][j].type == "summary"){
+				//=====================================
+				//3.합계 tr Dom 
+				//=====================================
+				if(gridData[i][j].summaryCost >= itmCostTmp){
+					itmCostTmp = gridData[i][j].summaryCost;
+				}
+				
+				var trBodyRowSummaryDom = $("<tr></tr>");
+				var trBodytdCol1Dom = $("<td></td>",{
+					"colspan" : 6,
+					"text" : "[[#{md.mdu1.summaryPrice}]]"
+				});
+				
+				var trBodytdCol2Dom = $("<td></td>",{
+					"name" : pageId+"_detail_summary_conspri",
+					"text" : comma(gridData[i][j].summaryConspri)
+				});
+				
+				var trBodytdCol3Dom = $("<td></td>",{
+					"name" : pageId+"_detail_summary_mskusb",
+					"text" : comma(gridData[i][j].summaryMskusb)
+				});
+				
+				var trBodytdCol4Dom = $("<td></td>",{
+					"name" : pageId+"_detail_summary_mskupc",
+					"text" : comma(gridData[i][j].summaryMskupc)
+				});
+				
+				var trBodytdCol5Dom = $("<td></td>",{
+					"name" : pageId+"_detail_summary_cost",
+					"text" : comma(gridData[i][j].summaryCost)
+				});
+				
+				var trBodytdCol6Dom = $("<td></td>",{
+					"name" : pageId+"_detail_summary_sell_price",
+					"text" : comma(gridData[i][j].summarySellPrice)
+				});
+				
+				trBodyRowSummaryDom.append(
+					trBodytdCol1Dom,
+					trBodytdCol2Dom,
+					trBodytdCol3Dom,
+					trBodytdCol4Dom,
+					trBodytdCol5Dom,
+					trBodytdCol6Dom
+				)
+				tbodyDom.append(trBodyRowSummaryDom);
+			}
+		}
+	}
+	//테이블 생성 끝
+	var tdSellPrice = tbodyDom.find("td[name='"+pageId+"_detail_summary_cost']");
+	for(var i=0; i<tdSellPrice.length; i++){
+		var summaryCost = tdSellPrice.eq(i).text();
+		if(Number(uncomma(summaryCost)) == Number(uncomma(itmCostTmp))){
+			$("span[name='mdu1_itmcost']").text(comma(itmCostTmp));
+			tdSellPrice.eq(i).closest("tr").addClass("highlight");
+		}
+	}
+}
+/*************************************************
+ *  Event
+ *************************************************/
+//=====================================
+// 탭 선택 이벤트
+//=====================================
+function eventNavTabHref(href){	
+	$("#mdu1_nav_tab").find("li").find("a").removeClass("active show");
+	$("#mdu1_nav_tab").find("li").find("a").attr("aria-selected",false);
+	$("a[href='#"+href+"']").click();
+	$("a[href='#"+href+"']").attr("aria-selected",true);
+	$("a[href='#"+href+"']").addClass("active show");
+}
+
+//=====================================
+//사이즈 - 모든 원단 사이즈 Checkbox 이벤트
+//=====================================
+function eventSizeCheck(sizeValue, check){
+	var mdu1MaterialSizeItem = $("input[name='"+pageId+"_mskusz_sksizes']");
+	
+	for(var i=0; i<mdu1MaterialSizeItem.length; i++){
+		if(mdu1MaterialSizeItem.eq(i).val() == sizeValue){
+			mdu1MaterialSizeItem.eq(i).prop("checked", check);
+			mdu1MaterialSizeItem.eq(i).closest("tr").find("input").attr("readonly", !check);
+			if(!check) mdu1MaterialSizeItem.eq(i).closest("tr").find("input[type='text']").val("");
+			if(check){
+				mdu1MaterialSizeItem.eq(i).closest("tr").addClass("active");
+			} else{
+				mdu1MaterialSizeItem.eq(i).closest("tr").removeClass("active");
+			}
+		}
+	}
+}
+
+//=====================================
+//원단 조합 - 부원단 Select 이벤트
+//=====================================
+function eventCombinationSubFabcoloSelect(e){
+	var targetTdDom 	= $(e).closest("tr").find("input[name='"+pageId+"_sub_combination_skugr04']");
+	var subValue 		= $(e).find("option:selected").data("select-skugr04");
+	targetTdDom.val("");
+	targetTdDom.val(subValue);
+}
+
+//=====================================
+//상세확인
+//=====================================
+function mdu1GridDetailCombination(){
+	mdu1DetailTableCreate();
+}
+
+
+/*************************************************
+ * MDU1 Save
+ *************************************************/
+function mdu1Depth1Data(){
+	var param	= new Object();
+	param.list 	= new Object();
+	
+	var inputData 		= mdu1DetailInfoData();
+	var combinationData = mdu1CombinationData(inputData);
+	var gridData 		= mdu1DetailTableData(inputData);
+
+	//=====================================
+	// MSKMCH - 작업지시서 원단 조합 정보 Insert
+	//=====================================
+	var mskmchArr = [];
+
+	for(var i=0; i<combinationData.length; i++){
+		var mainData = combinationData[i].filter(function(e){
+			return e.itemdiv == "MAIN";
+		})[0];
+		
+		var subData = combinationData[i].filter(function(e){
+			return e.itemdiv == "SUB";
+		});
+			
+		for(var j=0; j<subData.length; j++){
+			subData[j].mainnum = mainData.itemnum;
+			subData[j].subinum = subData[j].itemnum;
+			
+			mskmchArr.push(subData[j]);
+		}
+	}
+	param.list.mskmch = mskmchArr;
+	
+	//=====================================
+	// MSKCST - 작업지시서 원가 계산 정보 Insert
+	//=====================================
+	var mskcstArr = [];
+	for(var i=0; i<gridData.length; i++){
+		for(var j=0; j<gridData[i].length; j++){
+			if(gridData[i][j].type != "summary"){
+				mskcstArr.push(gridData[i][j]);
+			}
+		}
+	}
+	param.list.mskcst = mskcstArr;
+	
+	//=====================================
+	// MSKUSP - 작업지시서 데이터 | 사이즈 데이터 직렬화
+	//=====================================
+	var sksizes = [];
+	for(var i=0; i<inputData.sizeData.length; i++){
+		sksizes.push(inputData.sizeData[i].sizecod);
+	}
+	
+	inputData.mainInfo.sksizes = sksizes.join("/");
+	param.list.mskusp = inputData.mainInfo;
+	
+	
+	//=====================================
+	// MSKUCL - 작업지시서 메인 컬러 데이터
+	//=====================================	
+	var materialMain = inputData.tableData.filter(function(e){
+		return e.type == "main";
+	})[0];
+	
+	var materialMainColor = materialMain.color.filter(function(e){
+		//컬러명, 원단처컬러명 필수
+		
+		var beforeskugr04Data = inputData.mskuclList.filter(function(f){
+			return f.skugr04 == e.itemnam;
+		})[0];
+		
+		e.beforeskugr04 = beforeskugr04Data.beforeskugr04;
+		e.skugr04 = e.itemnam;
+		return e.itemnam != "" && e.skucolo != "";
+	});
+	param.list.mskucl = materialMainColor;
+	
+	
+	//=====================================
+	// MSKUIT | MSKUSB | - MSKUPC 작업지시서 원단 정보, 부자재, 공정
+	//=====================================	
+	var materialArr 	= inputData.tableData;
+	var materialMskuit	= [];
+	var materialMskusb	= [];
+	var materialMskupc	= [];
+	
+	for(var i=0; i<materialArr.length; i++){
+		for(var j=0; j<materialArr[i].color.length; j++){
+			//=====================================
+			// MSKUIT - 작업지시서 원단 정보
+			//=====================================	
+			var materialRow = new Object();
+			materialRow.itegnum = materialArr[i].itegnum;
+			materialRow.itemdiv = materialArr[i].type.toUpperCase();
+			materialRow.itemnum = materialArr[i].color[j].itemnum;
+			materialRow.itemnam = materialArr[i].info.itemnam;
+			materialRow.itemfac = materialArr[i].info.itemfac;
+			materialRow.mixrato = materialArr[i].info.mixrato;
+			materialRow.skugr04 = materialArr[i].color[j].itemnam;
+			materialRow.skucolo = materialArr[i].color[j].skucolo;
+			materialRow.fabcolo = materialArr[i].color[j].fabcolo;
+			materialRow.fabpric = materialArr[i].color[j].fabpric;
+			
+			if(materialRow.itemnam != "" && materialRow.skucolo != ""){
+				materialMskuit.push(materialRow);
+			}
+			
+			//=====================================
+			// MSKUSB - 작업지시서 부자재
+			//=====================================
+			for(var k=0; k<materialArr[i].sidiary.length; k++){
+				var materialRow = new Object();
+				materialRow.itegnum = materialArr[i].itegnum;
+				materialRow.itemdiv = materialArr[i].type.toUpperCase();
+				materialRow.itemnum = materialArr[i].color[j].itemnum;
+				materialRow.skugr04 = materialArr[i].color[j].itemnam;
+				materialRow.submtno = materialArr[i].sidiary[k].submtno;
+				materialRow.submtnm = materialArr[i].sidiary[k].submtnm;
+				materialRow.submtpr = materialArr[i].sidiary[k].submtpr;
+				materialRow.subtext = materialArr[i].sidiary[k].subtext;
+				
+				if(materialArr[i].color[j].itemnam != "" && materialRow.submtnm != ""){
+					materialMskusb.push(materialRow);
+				}
+			}
+			
+			//=====================================
+			// MSKUPC - 작업지시서 공정
+			//=====================================
+			for(var k=0; k<materialArr[i].process.length; k++){
+				var materialRow = new Object();
+				materialRow.itegnum = materialArr[i].itegnum;
+				materialRow.itemdiv = materialArr[i].type.toUpperCase();
+				materialRow.itemnum = materialArr[i].color[j].itemnum;
+				materialRow.skugr04 = materialArr[i].color[j].itemnam;
+				materialRow.sprocno = materialArr[i].process[k].sprocno;
+				materialRow.sprotyp = materialArr[i].process[k].sprotyp;
+				materialRow.spronam = materialArr[i].process[k].spronam;
+				materialRow.sproprc = materialArr[i].process[k].sproprc;
+				materialRow.sprofac = materialArr[i].process[k].sprofac;
+				materialRow.sproday = materialArr[i].process[k].sproday;
+				
+				if(materialArr[i].color[j].itemnam != "" && materialRow.sprotyp != ""){
+					materialMskupc.push(materialRow);
+				}
+			}
+		}
+	}
+	param.list.mskuit = materialMskuit;
+	param.list.mskusb = materialMskusb;
+	param.list.mskupc = materialMskupc;
+	
+	//=====================================
+	// MSKUSZ - 작업지시서 제품 사이즈
+	//=====================================	
+	var materialArr 	= inputData.tableData;
+	var materialMskusz	= [];
+	for(var i=0; i<materialArr.length; i++){
+		for(var j=0; j<materialArr[i].color.length; j++){
+			//=====================================
+			// MSKUSZ - 작업지시서 제품 사이즈
+			//=====================================
+			for(var k=0; k<materialArr[i].size.length; k++){
+				var materialRow = new Object();
+				materialRow.itegnum = materialArr[i].itegnum;
+				materialRow.itemdiv = materialArr[i].type.toUpperCase();
+				materialRow.itemnum = materialArr[i].color[j].itemnum;
+				materialRow.skugr04 = materialArr[i].color[j].itemnam;
+				materialRow.sizecod = materialArr[i].size[k].sizecod;
+				materialRow.roinqty = materialArr[i].size[k].roinqty;
+				materialRow.consnum = materialArr[i].size[k].consnum;
+				materialRow.conspri = materialArr[i].size[k].conspri;
+				
+				if(materialRow.skugr04 != ""){
+					materialMskusz.push(materialRow);
+				}
+			}
+		}
+	}
+	
+	param.list.mskusz = materialMskusz;
+	param.skutkey 	= skutkey;
+	param.savetyp 	= inputData.mainInfo.savetyp;
+	
+	return param;
+}
+
+function mdu1Depth2Data(){
+	if(skuskey != undefined && skuskey.trim() != ""){
+		var param = mdu1Depth1Data();
+		param.skutkey = skutkey;
+		
+		//=====================================
+		// MSKUSP - 메인 작업지시서 이미지 업로드
+		//=====================================
+		var mskuspParam = new Object();
+		var mskuitParam = [];
+		var mskusiParam = [];
+		
+		var uploadFileCount = 0;
+		var mskuspFileParam = new Object();
+		
+		var formData	 = new FormData();
+		var skuImage	 = $(".mdu1-sku-img");
+		var skuTextDom	 = skuImage.find(".print-spcimt");
+		var skuFileInput	= skuImage.find("input[type=file]");
+		var skuFileInputDel = skuImage.find("input[type=hidden]");
+		
+		var materialImage	 = $(".mdu1-material-img");
+		var materailMainDom	 = materialImage.find(".mdu1-material-main-img");
+		var materailMainFileInput = materailMainDom.find("input[type=file]");
+		var materailMainFileInputDel = materailMainDom.find("input[type=hidden]");
+		
+		var materialImage	 = $(".mdu1-material-img");
+		var materailOnceDom	 = materialImage.find(".mdu1-material-once-img");
+		var materailOnceFileInput = materailOnceDom.find("input[type=file]");
+		var materailOnceFileInputDel = materailOnceDom.find("input[type=hidden]");
+		
+		formData.append("fileNameKey", skuskey);
+		formData.append("uploadPath", "sku");	//uploadPath 가 없을경우 에러 발생 (code : 400)
+		
+		for(var i=0; i<skuFileInput.length; i++){
+			if(skuFileInput.eq(i)[0].files[0] != undefined){
+				formData.append(skuFileInput.eq(i).attr("name").replace(pageId+"_", ""), skuFileInput.eq(i)[0].files[0]);
+				uploadFileCount++;
+			}
+		}
+		
+		if(materailMainFileInput.eq(0)[0].files[0] != undefined){
+			formData.append(materailMainFileInput.eq(0).attr("name").replace(pageId+"_", ""), materailMainFileInput.eq(0)[0].files[0]);
+			uploadFileCount++;
+		}
+		
+		if(uploadFileCount > 0){
+			var rdata = callAjax("form", "POST", "/com/upload/fileUpload", formData);
+			var fileResult = JSON.parse(JSON.stringify(rdata.data));
+			for(var i=0; i<fileResult.length; i++){
+				Object.assign(mskuspFileParam, fileResult[i]);
+			}
+		}
+		
+		for(var i=0; i<skuFileInputDel.length; i++){
+			var checkFlag = skuFileInputDel.eq(i).val();
+			var columnName = skuFileInputDel.eq(i).attr("name").replace(pageId+"_", "").replace("_del", "");
+			if(checkFlag == "Y"){
+				mskuspFileParam[columnName] = " ";
+			}else{
+				if(skuFileInput.eq(i).val() == ""){
+					var imgSrc = skuFileInputDel.eq(i).closest(".img-container").find("img").attr("src").trim();
+					if(imgSrc != "" && imgSrc != "/img/sy/request_file_img.jpg"){
+						mskuspFileParam[columnName] = imgSrc;
+					}
+				}
+			}
+		}
+		
+		if(materailMainFileInputDel.eq(0).val() == "Y"){
+			var columnName = materailMainFileInputDel.eq(0).attr("name").replace(pageId+"_", "").replace("_del", "");
+			mskuspFileParam[columnName] = null;
+		}else{
+			if(materailMainFileInput.eq(0).val() == ""){
+				var columnName = materailMainFileInputDel.eq(0).attr("name").replace(pageId+"_", "").replace("_del", "");
+				var imgSrc = materailMainFileInputDel.eq(0).closest(".img-container").find("img").attr("src").trim();
+				if(imgSrc != "" && imgSrc != "/img/sy/request_file_img.jpg"){
+					mskuspFileParam[columnName] = imgSrc;
+				}
+			}
+		}
+		
+		for(var i=0; i<skuTextDom.length; i++){
+			var inputDom = skuTextDom.eq(i).find("input");
+			
+			var inputcolumnName = inputDom.eq(0).attr("name").replace(pageId+"_", "");
+			mskuspFileParam[inputcolumnName] = inputDom.eq(0).val();
+		}
+		var prtimgvDom = $("input[name='mdu1_prtimgv']");
+		for(var i=0; i<prtimgvDom.length; i++){
+			if(prtimgvDom.eq(i).is(":checked")){
+				mskuspParam.prtimgv = prtimgvDom.eq(i).val();
+			}
+		}
+		
+		var sitimgvDom = $("input[name='mdu1_sitimgv']");
+		for(var i=0; i<sitimgvDom.length; i++){
+			if(sitimgvDom.eq(i).is(":checked")){
+				mskuspParam.sitimgv = sitimgvDom.eq(i).val();
+			}
+		}
+
+		//=====================================
+		// MSKUSP - 메인 작업지시서 주요작업내용 | 재단시 주의사항
+		//=====================================
+		mskuspParam.skuifrk = $("textarea[name='mdu1_skuifrk']").val();
+		mskuspParam.modifrk = $("textarea[name='mdu1_modifrk']").val();
+		mskuspParam.foundrk = $("textarea[name='mdu1_foundrk']").val();
+
+		Object.assign(param.list.mskusp, mskuspFileParam, mskuspParam);
+		
+		//=====================================
+		// MSKUIT - 메인 작업지시서 원단이미지 업로드
+		//=====================================
+		for(var i=0; i<materailOnceDom.length; i++){
+			var fileFormData = new FormData();
+			fileFormData.append("fileNameKey", skuskey);
+			fileFormData.append("uploadPath", "sku");
+			
+			//var mskuitData = new Object();
+			var itegnum = materailOnceDom.eq(i).data("itegnum");
+			var itemdiv = materailOnceDom.eq(i).data("itemdiv");
+			var itemnum = materailOnceDom.eq(i).data("itemnum");
+			var fabimnm = materailOnceDom.eq(i).find("input[name='"+pageId+"_fabimnm']").val();
+			console.log(fabimnm);
+			var fileDelDom = materailOnceDom.eq(i).find("input[type=hidden]");
+			var fileDom = materailOnceDom.eq(i).find("input[type=file]");
+			var fabimph;
+			
+			if(fileDom.val() != "" && fileDelDom.val() != "Y"){
+				var fileNameArr = fileDom.val().split("\\");
+				//var fileName = fileNameArr[fileNameArr.length-1];
+				var originFabimphKey = itemdiv+"_"+itegnum+"_"+itemnum+"_"+materailOnceFileInput.eq(i).attr("name").replace(pageId+"_", "");
+				
+				fileFormData.append(itemdiv+"_"+itegnum+"_"+itemnum+"_"+materailOnceFileInput.eq(i).attr("name").replace(pageId+"_", ""), fileDom[0].files[0]);
+				var rdata = callAjax("form", "POST", "/com/upload/fileUpload", fileFormData);
+				fabimph = rdata.data.length > 0 ? rdata.data[0][originFabimphKey] : "";
+			}
+			else if(fileDelDom.val() == "Y"){
+				//var fileName 	= null;
+				fabimph 	= null;
+			}
+			else{
+				var imgSrc = materailOnceDom.eq(i).find(".img-container").find("img").attr("src").trim();
+				if(imgSrc != "" && imgSrc != "/img/sy/request_file_img.jpg"){
+					fabimph = imgSrc;
+				}else{
+					fabimph = "";
+				}
+			}
+			
+			var mskuitData = param.list.mskuit.filter(function(e){				
+				return e.itegnum == itegnum && e.itemdiv == itemdiv && e.itemnum == itemnum;
+			})[0];
+			
+			if(mskuitData != undefined){
+				mskuitData.fabimnm = fabimnm;
+				mskuitData.fabimph = fabimph;
+			}
+		}
+		
+
+		var mskusiDom = $("#mdu1_mskusi");
+		var mskusiTableDom = mskusiDom.find("table");
+		var mskusiTheadDom = mskusiDom.find("thead");
+		var mskusiTbodyTrDom = mskusiDom.find("tbody").find("tr");
+
+		var mskusiSksizesDom = mskusiTheadDom.find("th").filter("[data-sksizes]");
+		
+		
+		for(var i=0; i<mskusiSksizesDom.length; i++){
+			var sizecod = mskusiSksizesDom.eq(i).data("sksizes");
+			
+			var nameDom = mskusiTbodyTrDom.find("td").not("[data-sksizes]");
+			var mskusiSksizesTdDom = mskusiTbodyTrDom.find("td").filter("[data-sksizes='"+sizecod+"']");
+			
+			var mskusiObject = new Object();
+			mskusiObject.skuupdn = mskusiTableDom.data("skuupdn");
+			mskusiObject.skuskey = skuskey;
+			mskusiObject.sizecod = sizecod;
+
+			for(var j=0; j<mskusiSksizesTdDom.length; j++){
+				var nameColumn = nameDom.eq(j).find("input").attr("name").replace(pageId+"_", "");
+				var nameColumnValue = nameDom.eq(j).find("input").val();
+				
+				var sizeColumnName 	= mskusiSksizesTdDom.eq(j).find("input").attr("name").replace(pageId+"_", "");
+				var sizeColumnValue = mskusiSksizesTdDom.eq(j).find("input").val();
+				if(nameColumn != "" && nameColumnValue != "") mskusiObject[nameColumn] = nameColumnValue;
+				if(sizeColumnName != "" && sizeColumnValue != "") mskusiObject[sizeColumnName] = sizeColumnValue;
+			}
+			
+			mskusiParam.push(mskusiObject);
+		}
+
+		param.list.mskusi	= mskusiParam;
+		return param;
+	}
+	else
+	{
+		alert("[[#{ms.notskutkey}]]");
+	}
+}
+
+function mdu1Depth1Vaildation(inputData, gridData){
+	var result = true;
+	
+	//-- mainInfo --
+	if(inputData.mainInfo.skudesc == undefined || inputData.mainInfo.skudesc == ""){
+		alert("[[#{ms.mdu1.notSkudesc}]]");
+		result = false;
+		return result;
+	}
+	
+	if(inputData.mainInfo.skudesc != undefined && inputData.mainInfo.skudesc != "" && inputData.mainInfo.skudesc.indexOf("&") != -1){
+		alert("[[#{ms.mdu1.notSpecialChar}]]");
+		result = false;
+		return result;
+	}
+	
+	if(inputData.mainInfo.ownerky == undefined || inputData.mainInfo.ownerky.trim() == ""){
+		alert("[[#{ms.mdu1.notOwnerky}]]");
+		result = false;
+		return result;
+	}
+	
+	if(inputData.mainInfo.designe == undefined || inputData.mainInfo.designe == ""){
+		alert("[[#{ms.mdu1.notDesigne}]]");
+		result = false;
+		return result;
+	}
+	
+	if(inputData.mainInfo.brandnm == undefined || inputData.mainInfo.brandnm == ""){
+		alert("[[#{ms.mdu1.notBrandnm}]]");
+		result = false;
+		return result;
+	}
+	
+	if(inputData.mainInfo.savetyp == undefined || inputData.mainInfo.savetyp == ""){
+		alert("[[#{ms.mdu1.notSavetyp}]]");
+		result = false;
+		return result;
+	}
+	
+	if(inputData.mainInfo.stryear == undefined || inputData.mainInfo.stryear == ""){
+		alert("[[#{ms.mdu1.notStryear}]]");
+		result = false;
+		return result;
+	}
+	
+	if(inputData.mainInfo.seasona == undefined || inputData.mainInfo.seasona == ""){
+		alert("[[#{ms.mdu1.notSeasona}]]");
+		result = false;
+		return result;
+	}
+	
+	if(inputData.mainInfo.skuupdn == undefined || inputData.mainInfo.skuupdn == ""){
+		alert("[[#{ms.mdu1.notSkuupdn}]]");
+		result = false;
+		return result;
+	}
+	
+	//-- mskuclList --
+	var mskuclList = inputData.mskuclList.filter(function(e){
+		return e.skugr04.trim() != "";
+	});
+	
+	if(mskuclList.length <= 0){
+		alert("[[#{ms.mdu1.notSkugr04}]]");
+		result = false;
+		return result;
+	}
+	else{
+		if(inputData.mskuclList[0].skugr04.trim() == ""){
+			alert("[[#{ms.mdu1.notSkugr04}]]");
+			result = false;
+			return result;
+		}
+	}
+	
+	if(inputData.sizeData.length <= 0){
+		alert("[[#{ms.mdu1.notSizecod}]]");
+		result = false;
+		return result;
+	}
+	
+	
+	var tData = inputData.tableData;
+	
+	console.log("tData => " + JSON.stringify(tData));
+	
+	for(var i=0; i<tData.length; i++){
+		//-- info --
+		if(tData[i].info.itemnam == ""){
+			alert("[[#{ms.mdu1.notItemnam}]]");
+			result = false;
+			return result;
+		}
+		
+		if(tData[i].info.mixrato == ""){
+			alert("[[#{ms.mdu1.notMixrato}]]");
+			result = false;
+			return result;
+		}
+		
+		if(tData[i].info.itemfac == ""){
+			alert("[[#{ms.mdu1.notItemfac}]]");
+			result = false;
+			return result;
+		}
+		
+		//-- Color --
+		var tColor = tData[i].color;
+		
+		console.log("tColor => " + JSON.stringify(tColor));
+		
+		for(var j=0; j<tColor.length; j++){
+			
+			if(tColor[j].itemnam != ""){
+				if(tColor[j].skucolo == ""){
+					alert("[[#{ms.mdu1.notSkucolo}]]");
+					result = false;
+					return result;
+				}
+				
+				if(tColor[j].fabcolo == ""){
+					alert("[[#{ms.mdu1.notFabcolo}]]");
+					result = false;
+					return result;
+				}
+				
+				if(tColor[j].fabpric == ""){
+					alert("[[#{ms.mdu1.notFabpric}]]");
+					result = false;
+					return result;
+				}
+			}
+		}
+		
+		//-- Size --
+		var tSize = tData[i].size;
+		for(var j=0; j<tSize.length; j++){
+
+			if(tSize[j].roinqty == ""){
+				alert("[[#{ms.mdu1.notRoinqty}]]");
+				result = false;
+				return result;
+			}
+			
+			if(tSize[j].consnum == ""){
+				alert("[[#{ms.mdu1.notConsnum}]]");
+				result = false;
+				return result;
+			}
+			
+			if(tSize[j].conspri == ""){
+				alert("[[#{ms.mdu1.notConspri}]]");
+				result = false;
+				return result;
+			}
+		}
+		
+		//-- Sidiary --
+		var tSidiary = tData[i].sidiary.filter(function(e){
+			return e.submtnm != "";
+		});
+		
+		for(var j=0; j<tSidiary.length; j++){
+			if(tSidiary[j].submtpr == ""){
+				alert("[[#{ms.mdu1.notSubmtpr}]]");
+				result = false;
+				return result;
+			}
+		}
+		
+		//-- Process --
+		var tProcess = tData[i].process.filter(function(e){
+			return e.sprotyp != "";
+		});
+		
+		for(var j=0; j<tProcess.length; j++){
+			if(tProcess[j].spronam == ""){
+				alert("[[#{ms.mdu1.notSpronam}]]");
+				result = false;
+				return result;
+			}
+			
+			if(tProcess[j].sproprc == ""){
+				alert("[[#{ms.mdu1.notSproprc}]]");
+				result = false;
+				return result;
+			}
+			
+			if(tProcess[j].sprofac == ""){
+				alert("[[#{ms.mdu1.notSprofac}]]");
+				alert("공장 입력");
+				result = false;
+				return result;
+			}
+		}
+		
+		if(inputData.selpric == ""){
+			alert("[[#{ms.mdu1.notSelpric}]]");
+			result = false;
+			return result;
+		}
+		
+	}
+	
+	return result;
+}
+
+function mdu1Depth3Vaildation(param){
+	var result = true;
+	
+	var mskupiData = param.list.mskupi;
+	
+	console.log(JSON.stringify(mskupiData));
+	
+
+	for(var i=0; i<mskupiData.length; i++){
+		if(mskupiData[i].spriimg != undefined && mskupiData[i].spriimg != ""){
+			if(mskupiData[i].spricol == "" || mskupiData[i].spricol == undefined ){
+				alert("[[#{ms.mdu1.notSpricol}]]");
+				return false;
+			}
+			if(mskupiData[i].sprfcol == "" || mskupiData[i].sprfcol == undefined ){
+				alert("[[#{ms.mdu1.notSprfcol}]]");
+				return false;
+			}
+		}
+	}
+	
+	return result;
+}
+
+function mdu1SaveCodeSave(){
+	
+	var param	= new Object();
+	param.list 	= new Object();
+	
+	var inputData 		= mdu1DetailInfoData();
+	var combinationData = mdu1CombinationData(inputData);
+	var gridData 		= mdu1DetailTableData(inputData);
+	
+	//=====================================
+	// Validation  - Start
+	//=====================================
+	var validation = mdu1Depth1Vaildation(inputData, gridData);
+	if(!validation){
+		return;
+	}
+
+	//=====================================
+	// MSKMCH - 작업지시서 원단 조합 정보 Insert
+	//=====================================
+	var mskmchArr = [];
+	
+	for(var i=0; i<combinationData.length; i++){
+		var mainData = combinationData[i].filter(function(e){
+			return e.itemdiv == "MAIN";
+		})[0];
+		
+		var subData = combinationData[i].filter(function(e){
+			return e.itemdiv == "SUB";
+		});
+			
+		for(var j=0; j<subData.length; j++){
+			subData[j].mainnum = mainData.itemnum;
+			subData[j].subinum = subData[j].itemnum;
+			
+			mskmchArr.push(subData[j]);
+		}
+	}
+	param.list.mskmch = mskmchArr;
+	
+	//=====================================
+	// MSKCST - 작업지시서 원가 계산 정보 Insert
+	//=====================================
+	var mskcstArr = [];
+	for(var i=0; i<gridData.length; i++){
+		for(var j=0; j<gridData[i].length; j++){
+			if(gridData[i][j].type != "summary"){
+				mskcstArr.push(gridData[i][j]);
+			}
+		}
+	}
+	param.list.mskcst = mskcstArr;
+	
+	//=====================================
+	// MSKUSP - 작업지시서 데이터 | 사이즈 데이터 직렬화
+	//=====================================
+	var sksizes = [];
+	for(var i=0; i<inputData.sizeData.length; i++){
+		sksizes.push(inputData.sizeData[i].sizecod);
+	}
+	
+	inputData.mainInfo.sksizes = sksizes.join("/");
+	param.list.mskusp = inputData.mainInfo;
+	
+	
+	//=====================================
+	// MSKUCL - 작업지시서 메인 컬러 데이터
+	//=====================================	
+	var materialMain = inputData.tableData.filter(function(e){
+		return e.type == "main";
+	})[0];
+	
+	var materialMainColor = materialMain.color.filter(function(e){
+		//컬러명, 원단처컬러명 필수
+		
+		var beforeskugr04Data = inputData.mskuclList.filter(function(f){
+			return f.skugr04 == e.itemnam;
+		})[0];
+		
+		e.beforeskugr04 = beforeskugr04Data.beforeskugr04;
+		e.skugr04 = e.itemnam;
+		e.fabpric = uncomma(e.fabpric);
+		return e.itemnam != "" && e.skucolo != "";
+	});
+
+	param.list.mskucl = materialMainColor;
+	
+	
+	//=====================================
+	// MSKUIT | MSKUSB | - MSKUPC 작업지시서 원단 정보, 부자재, 공정
+	//=====================================	
+	var materialArr 	= inputData.tableData;
+	var materialMskuit	= [];
+	var materialMskusb	= [];
+	var materialMskupc	= [];
+	
+	for(var i=0; i<materialArr.length; i++){
+		for(var j=0; j<materialArr[i].color.length; j++){
+			//=====================================
+			// MSKUIT - 작업지시서 원단 정보
+			//=====================================	
+			var materialRow = new Object();
+			materialRow.itegnum = materialArr[i].itegnum;
+			materialRow.itemdiv = materialArr[i].type.toUpperCase();
+			materialRow.itemnum = materialArr[i].color[j].itemnum;
+			materialRow.itemnam = materialArr[i].info.itemnam;
+			materialRow.itemfac = materialArr[i].info.itemfac;
+			materialRow.mixrato = materialArr[i].info.mixrato;
+			materialRow.skugr04 = materialArr[i].color[j].itemnam;
+			materialRow.skucolo = materialArr[i].color[j].skucolo;
+			materialRow.fabcolo = materialArr[i].color[j].fabcolo;
+			materialRow.fabpric = uncomma(materialArr[i].color[j].fabpric);
+			
+			if(materialRow.itemnam != "" && materialRow.skucolo != ""){
+				materialMskuit.push(materialRow);
+			}
+			
+			//=====================================
+			// MSKUSB - 작업지시서 부자재
+			//=====================================
+			for(var k=0; k<materialArr[i].sidiary.length; k++){
+				var materialRow = new Object();
+				materialRow.itegnum = materialArr[i].itegnum;
+				materialRow.itemdiv = materialArr[i].type.toUpperCase();
+				materialRow.itemnum = materialArr[i].color[j].itemnum;
+				materialRow.skugr04 = materialArr[i].color[j].itemnam;
+				materialRow.submtno = materialArr[i].sidiary[k].submtno;
+				materialRow.submtnm = materialArr[i].sidiary[k].submtnm;
+				materialRow.submtpr = uncomma(materialArr[i].sidiary[k].submtpr);
+				materialRow.subtext = materialArr[i].sidiary[k].subtext;
+				
+				if(materialArr[i].color[j].itemnam != "" && materialRow.submtnm != ""){
+					materialMskusb.push(materialRow);
+				}
+			}
+			
+			//=====================================
+			// MSKUPC - 작업지시서 공정
+			//=====================================
+			for(var k=0; k<materialArr[i].process.length; k++){
+				var materialRow = new Object();
+				materialRow.itegnum = materialArr[i].itegnum;
+				materialRow.itemdiv = materialArr[i].type.toUpperCase();
+				materialRow.itemnum = materialArr[i].color[j].itemnum;
+				materialRow.skugr04 = materialArr[i].color[j].itemnam;
+				materialRow.sprocno = materialArr[i].process[k].sprocno;
+				materialRow.sprotyp = materialArr[i].process[k].sprotyp;
+				materialRow.spronam = materialArr[i].process[k].spronam;
+				materialRow.sproprc = uncomma(materialArr[i].process[k].sproprc);
+				materialRow.sprofac = materialArr[i].process[k].sprofac;
+				materialRow.sproday = materialArr[i].process[k].sproday;
+				
+				if(materialArr[i].color[j].itemnam != "" && materialRow.sprotyp != ""){
+					materialMskupc.push(materialRow);
+				}
+			}
+		}
+	}
+	param.list.mskuit = materialMskuit;
+	param.list.mskusb = materialMskusb;
+	param.list.mskupc = materialMskupc;
+	
+	//=====================================
+	// MSKUSZ - 작업지시서 제품 사이즈
+	//=====================================	
+	var materialArr 	= inputData.tableData;
+	var materialMskusz	= [];
+	for(var i=0; i<materialArr.length; i++){
+		for(var j=0; j<materialArr[i].color.length; j++){
+			//=====================================
+			// MSKUSZ - 작업지시서 제품 사이즈
+			//=====================================
+			for(var k=0; k<materialArr[i].size.length; k++){
+				var materialRow = new Object();
+				materialRow.itegnum = materialArr[i].itegnum;
+				materialRow.itemdiv = materialArr[i].type.toUpperCase();
+				materialRow.itemnum = materialArr[i].color[j].itemnum;
+				materialRow.skugr04 = materialArr[i].color[j].itemnam;
+				materialRow.sizecod = materialArr[i].size[k].sizecod;
+				materialRow.roinqty = uncomma(materialArr[i].size[k].roinqty);
+				materialRow.consnum = materialArr[i].size[k].consnum;
+				materialRow.conspri = uncomma(materialArr[i].size[k].conspri);
+				
+				if(materialRow.skugr04 != ""){
+					materialMskusz.push(materialRow);
+				}
+			}
+		}
+	}
+	
+	param.list.mskusz = materialMskusz;
+	
+	if(skutkey == "" || skuskey == ""){
+		if(!$("input[name='mdu1_save_type']").is(":checked")){
+			alert("[[#{ms.mdu1.notSavetyp}]]")
+			return;
+		}
+	}
+	
+	if(inputData.mainInfo.savetyp == "new"){
+		param.skutkey = "";
+		param.skuskey = "";
+	}
+	else{
+		param.skutkey = skutkey;
+		param.skuskey = skuskey;
+	}
+	
+	if(mdu1Depth1SaveFlag == false){
+		mdu1Depth1SaveFlag = true;
+		var result = callAjax("data", "POST", "/md/mdu1Save.do", param);
+		if(result != undefined && result.code == "200"){
+			alert("[[#{ms.saveSuccess}]]");
+			
+			skutkey = result.skutkey;
+			skuskey = result.skuskey;
+			
+			mdu1PageSetInitData(mdu1CallAjaxGetInitData());
+			
+			//작업지시서 갱신
+			mdu1InitSelectData();
+			$("input[name='mdu1_save_type']").prop("checked", false);
+			
+			mdu1StepInit(2);
+		}else{
+			alert("[[#{ms.mdu1.savingError}]]");
+		}
+		mdu1Depth1SaveFlag = false;
+	}else{
+		alert("[[#{ms.mdu1.saving}]]");
+	}
+	
+	
+}
+
+//=====================================
+// 작업지시서 총정보 불러오기 (mdu1InitSelectData)
+//=====================================
+function mdu1InitSelectData(){
+	
+	if(skuskey == "" && skutkey == "" && mdu1Params != null){
+		skuskey = mdu1Params != null ? mdu1Params.skuskey : null;
+		skutkey = mdu1Params != null ? mdu1Params.skutkey : null;
+		brandnm = mdu1Params != null ? mdu1Params.brandnm : null;
+		$("input[name='mdu1_save_type']").prop("checked", false);
+		$("#mdu1_brandnm").val(brandnm).prop("selected", true);
+	}
+	
+	console.log("================mdu1InitSelectData==================");
+	console.log("skutkey => " + skutkey);
+	console.log("skuskey => " + skuskey);
+	
+	if(skutkey != undefined && skutkey.trim() != ""){
+		var param = new Object();
+		param.skutkey = skutkey;
+		
+		var result = callAjax("data", "GET", "/md/mdu1InitSelectData.do", param);
+		
+		if(result.code == "200"){
+			skuskey = result.item.skuskey;
+			var mskuspData = result.item.mskuspList[0];	//작업지시서
+			var mskuclList = result.item.mskuclList;	//컬러
+			var mskuitList = result.item.mskuitList;	//원단 아이템
+			var mskuszList = result.item.mskuszList;	//사이즈
+			var mskusbList = result.item.mskusbList;	//부자재
+			var mskupcList = result.item.mskupcList;	//공정
+			var mskmchList = result.item.mskmchList;	//원단 조합 정보
+			var mskcstList = result.item.mskcstList;	//원가계산
+			var mskusiList = result.item.mskusiList;	//재단사이즈
+			var mskupiList = result.item.mskupiList;	//공정별 이미지
+			
+			mdu1InitMskusp(mskuspData);
+			mdu1InitMskucl(mskuclList);
+			mdu1InitMskuit(mskuitList);
+			mdu1InitMskusz(mskuszList);
+			mdu1InitMskusb(mskusbList);
+			mdu1InitMskupc(mskupcList);
+
+			//원단 조합 이벤트 실행
+			mdu1CombinationRefresh();
+			mdu1InitMskmch(mskmchList);
+			
+			mdu1InitMainDetail(mskuspData, mskuitList, mskusiList);
+			mdu1InitProcessDetail(mskuspData, mskupcList, mskupiList);
+			mdu1SetSummarySubmtpr();
+			mdu1SetSummarySproprc();
+		}
+	}
+}
+
+
+//=====================================
+//작업지시서 데이터 세팅 1.Mskusp
+//=====================================
+function mdu1InitMskusp(data){
+	var skuskey;
+	
+	if(data.skuskey.length > 0){
+		var skuskeyArr = data.skuskey.split(".");
+		if(skuskeyArr.length > 1) skuskeyArr.pop();
+		skuskey= skuskeyArr.join(".").toString();
+	}
+	else{
+		skuskey = data.skuskey;
+	}
+
+	$("input[name='"+pageId+"_skutkey']").val(skuskey);
+	$("input[name='"+pageId+"_skudesc']").val(data.skudesc);
+	$("input[name='"+pageId+"_designe']").val(data.designe);
+	$("input[name='"+pageId+"_seasona'][value="+data.seasona+"]").prop("checked", true);
+	$("select[name='"+pageId+"_stryear']").val(data.stryear).prop("selected", true);
+	$("input[name='"+pageId+"_skuupdn'][value="+data.skuupdn+"]").prop("checked", true);
+	$("span[name='"+pageId+"_itmcost']").text(comma(data.itmcost));
+	$("input[name='"+pageId+"_selpric']").val(comma(data.selpric));
+}
+
+//=====================================
+//작업지시서 데이터 세팅 2.Mskucl
+//=====================================
+function mdu1InitMskucl(data){
+	var mainTableDom = $("#"+pageId+"_skugr04_row");
+	var mainMaterialTableDom = $("#mdu1MaterialMain1").find(".table-container").find(".material-color");
+	var mainMaterialTbodyDom = mainMaterialTableDom.find("tbody");
+	
+	mainTableDom.children().remove();
+	mainMaterialTbodyDom.children().remove();
+	
+	for(var i=0; i<data.length; i++){
+		mdu1Skugr04Add(null);
+		mdu1mskuitAdd(null, $("#mdu1MaterialMain1").find(".table-container").find(".material-color"));
+		mainTableDom.find("input[name='"+pageId+"_skugr04']").eq(i).closest("tr").attr("data-beforeskugr04", data[i].skugr04);
+		mainTableDom.find("input[name='"+pageId+"_skugr04']").eq(i).val(data[i].skugr04);
+		mainMaterialTbodyDom.find("input[name='"+pageId+"_mskuit_skugr04']").eq(i).val(data[i].skugr04);
+	}
+}
+
+//=====================================
+//작업지시서 데이터 세팅 3.Mskuit
+//=====================================
+function mdu1InitMskuit(data){
+	$("#mdu1_nav_tab").find("li[data-type='sub']").remove();
+	$("#mdu1_nav_tab_content").find("div[data-type='sub']").remove();
+	//=====================================
+	//탭 Dom 세팅
+	//=====================================
+	var subTabInfo = new Set();
+	var subTabItemArr = [];
+	for(var i=0; i<data.length; i++){
+		if(data[i].itemdiv == "SUB"){
+			subTabInfo.add(data[i].itegnum);
+		}
+	}
+	var subTabArr = Array.from(subTabInfo).sort();
+
+	
+	for(var i=0; i<subTabArr.length; i++){
+		var rowCount = 0;
+		
+		for(var j=0; j<data.length; j++){
+			if(data[j].itemdiv == "SUB" && data[j].itegnum == subTabArr[i]){
+				rowCount++;
+			}
+		}
+		
+		subTabItemArr[subTabArr[i]] = rowCount;
+	}
+	
+	for(var i=0; i<subTabArr.length; i++){
+		mdu1MaterialCreate("SUB");
+		
+		var rowCount = subTabItemArr[subTabArr[i]];
+		$("#mdu1MaterialSub"+subTabArr[i]).find(".table-container").find(".material-color").find("tbody").children().remove();
+	
+		for(var j=0; j<rowCount; j++){
+			mdu1mskuitAdd(null, $("#mdu1MaterialSub"+subTabArr[i]).find(".table-container").find(".material-color"), "SUB");
+		}
+	}
+	eventNavTabHref("mdu1MaterialMain1");
+
+	//=====================================
+	//원단 정보 세팅
+	//=====================================
+	for(var i=0; i<data.length; i++){
+		var itemdivCapitalize = capitalize(data[i].itemdiv.toLowerCase());
+		var itemdiv = data[i].itemdiv;
+		var itegnum = data[i].itegnum;
+		var itemnum = data[i].itemnum;
+		
+		console.log("data[i]==============================> " + JSON.stringify(data[i]));
+		// material-info
+		var materialTab = $("#mdu1Material"+itemdivCapitalize+itegnum).find(".table-container");
+		var materialInfoTableDom = materialTab.find(".material-info");
+		materialInfoTableDom.find("input[name='"+pageId+"_itemnam']").val(data[i].itemnam);
+		materialInfoTableDom.find("input[name='"+pageId+"_mixrato']").val(data[i].mixrato);
+		materialInfoTableDom.find("input[name='"+pageId+"_itemfac']").val(data[i].itemfac);
+		
+		// material-color
+		var materialColorTableDom = materialTab.find(".material-color");
+		var materialColorTbodyDom = materialColorTableDom.find("tbody");
+		var targetTrDom = materialColorTbodyDom.find(".no:contains('"+itemnum+"')").closest("tr");
+		targetTrDom.find("input[name='"+pageId+"_mskuit_skugr04']").val(data[i].skugr04);
+		targetTrDom.find("input[name='"+pageId+"_mskuit_skucolo']").val(data[i].skucolo);
+		targetTrDom.find("input[name='"+pageId+"_mskuit_fabcolo']").val(data[i].fabcolo);
+		targetTrDom.find("input[name='"+pageId+"_mskuit_fabpric']").val(comma(data[i].fabpric));
+	}
+}
+
+//=====================================
+//작업지시서 데이터 세팅 4.Mskusz
+//=====================================
+function mdu1InitMskusz(data){
+	var sizesArr = [];
+	
+	for(var i=0; i<data.length; i++){
+		sizesArr.push(data[i].sizecod);
+	}
+	
+	var sizeSet = new Set(sizesArr);
+	var sizeArr = Array.from(sizeSet);
+	
+	var sizeCheckbox = $("input[name='"+pageId+"_sksizes']");
+	
+	for(var i=0; i<sizeCheckbox.length; i++){
+		sizeCheckbox.eq(i).prop("checked", false);
+	}
+	
+	for(var i=0; i<sizeArr.length; i++){	
+		$("input[name='"+pageId+"_sksizes'][value="+sizeArr[i]+"]").prop("checked", true);
+	}
+	mdu1SksizesMapping();
+	
+	for(var i=0; i<sizeArr.length; i++){
+		var filterData = data.filter(function(e){
+			return e.sizecod == sizeArr[i];
+		});
+
+		for(var j=0; j<filterData.length; j++){
+			var itemdivCapitalize = capitalize(filterData[j].itemdiv.toLowerCase());
+			var materialTab = $("#mdu1Material"+itemdivCapitalize+filterData[j].itegnum).find(".table-container");
+			var materialSizeTableDom = materialTab.find(".material-size");
+			var targetTrDom = materialSizeTableDom.find("input[name='"+pageId+"_mskusz_sksizes'][value="+sizeArr[i]+"]").closest("tr");
+			
+			targetTrDom.find("input[name='"+pageId+"_mskusz_roinqty']").val(comma(filterData[j].roinqty));
+			targetTrDom.find("input[name='"+pageId+"_mskusz_consnum']").val(filterData[j].consnum);
+			targetTrDom.find("input[name='"+pageId+"_mskusz_conspri']").val(comma(filterData[j].conspri));
+		}
+	}
+}
+
+//=====================================
+//작업지시서 데이터 세팅 5.Mskusb
+//=====================================
+function mdu1InitMskusb(data){
+	$(".mdu1_mskusb_row").remove();
+	
+	console.log(" mdu1InitMskusb => " + JSON.stringify(data));
+	var filterData = [];
+	for(var i=0; i<data.length; i++){
+		var tmpObject = new Object();
+		tmpObject.itemdiv = data[i].itemdiv;
+		tmpObject.itegnum = data[i].itegnum;
+		tmpObject.itemnum = data[i].itemnum;
+		tmpObject.submtno = data[i].submtno;
+
+		if(i == 0){
+			filterData.push(data[i]);
+		}
+		else{
+			if(filterData.findIndex(v => v.itemdiv === data[i].itemdiv && v.itegnum === data[i].itegnum && v.submtno === data[i].submtno) > -1){
+				//아무처리도 안함
+			}else{
+				filterData.push(data[i]);
+			}
+		}
+	}
+	
+	console.log("mdu1InitMskusb filterData => " + JSON.stringify(filterData));
+	for(var i=0; i<filterData.length; i++){
+		var itemdivCapitalize = capitalize(filterData[i].itemdiv.toLowerCase());
+		var itemdiv = filterData[i].itemdiv;
+		var itegnum = filterData[i].itegnum;
+		var itemnum = filterData[i].itemnum;
+		var submtno = filterData[i].submtno;
+		
+		// material-info
+		var materialTab = $("#mdu1Material"+itemdivCapitalize+itegnum).find(".table-container");
+		var materialSidiaryTableDom = materialTab.find(".material-sidiary");
+		mdu1mskusbAdd(null, materialSidiaryTableDom);
+		var targetTrDom = materialSidiaryTableDom.find(".no:contains('"+submtno+"')").closest("tr");
+		targetTrDom.find("input[name='"+pageId+"_mskusb_submtnm']").val(filterData[i].submtnm);
+		targetTrDom.find("input[name='"+pageId+"_mskusb_submtpr']").val(comma(filterData[i].submtpr));
+		targetTrDom.find("input[name='"+pageId+"_mskusb_subtext']").val(filterData[i].subtext);
+	}
+}
+//=====================================
+//작업지시서 데이터 세팅 6.Mskupc
+//=====================================
+function mdu1InitMskupc(data){
+	$(".mdu1_mskupc_row").find(".no").not("td:contains('001')").closest("tr").remove();
+	
+	console.log(" mdu1InitMskupcdata => "+JSON.stringify(data));
+	console.log("==============================================upc Data ================" + data.length);
+	for(var i=0; i<data.length; i++){
+		var itemdivCapitalize = capitalize(data[i].itemdiv.toLowerCase());
+		var itemdiv = data[i].itemdiv;
+		var itegnum = data[i].itegnum;
+		var itemnum = data[i].itemnum;
+		var sprocno = data[i].sprocno;
+		
+		var selectedArr = [];
+		selectedArr['sprotyp'] = data[i].sprotyp;
+		selectedArr['sprofac'] = data[i].sprofac;
+		
+		// material-info
+		var materialTab = $("#mdu1Material"+itemdivCapitalize+itegnum).find(".table-container");
+		var materialProcessTableDom = materialTab.find(".material-process");
+		if(sprocno != "001"){
+			mdu1mskupcAdd(null, materialProcessTableDom);
+		}
+		var targetTrDom = materialProcessTableDom.find(".no:contains('"+sprocno+"')").closest("tr");
+		targetTrDom.find("select[name='"+pageId+"_mskupc_sprotyp']").val(data[i].sprotyp);
+		targetTrDom.find("input[name='"+pageId+"_mskupc_spronam']").val(data[i].spronam);
+		targetTrDom.find("input[name='"+pageId+"_mskupc_sproprc']").val(comma(data[i].sproprc));
+		targetTrDom.find("select[name='"+pageId+"_mskupc_sprofac']").val(data[i].sprofac);
+		targetTrDom.find("input[name='"+pageId+"_mskupc_sproday']").val(data[i].sproday);
+	}
+}
+
+//=====================================
+//작업지시서 데이터 세팅 7.Mskcst
+//=====================================
+function mdu1InitMskmch(data){
+	var combinationTableDom = $(".table-container").find(".material-combination");
+	var combinationTbodyDom = combinationTableDom.find("tbody");
+	
+	for(var i=0; i<data.length; i++){
+		var mainnum = data[i].mainnum;
+		var itegnum = data[i].itegnum;
+		var subinum = data[i].subinum;
+		
+		var targetTbodyDom = combinationTbodyDom.find("[data-combination-type='main'][data-combination-itemnum='"+mainnum+"']").closest("tbody");
+		var trDom = targetTbodyDom.find("[data-combination-type='sub'][data-combination-itegnum='"+itegnum+"']");
+		var selectDom = trDom.find("select[name='mdu1_sub_combination_fabcolo']");
+		selectDom.find("option[data-select-itemnum='"+subinum+"']").prop("selected", true);
+		selectDom.change();
+	}
+}
+
+//=====================================
+//작업지시서 구성 데이터 세팅 1
+//=====================================
+function mdu1InitMainDetail(mskuspData, mskuitData, mskusiData){
+	
+	mdu1InitMainDetailImage(mskuspData);
+	
+	var divDom = $("."+pageId+"-create-composition");
+	divDom.find("textarea[name='"+pageId+"_skuifrk']").val(mskuspData.skuifrk);
+	divDom.find("textarea[name='"+pageId+"_modifrk']").val(mskuspData.modifrk);
+	divDom.find("textarea[name='"+pageId+"_foundrk']").val(mskuspData.foundrk);
+
+	//메인 작업지시서 구성 - 원단이미지
+	mdu1MaterialImageUploadDelete();
+	for(var i=0; i<mskuitData.length; i++){
+		if(mskuitData[i].itemdiv == "MAIN") mdu1MaterialImageUploadCreate(mskuitData[i]);
+	}
+	
+	//메인 작업지시서 구성 - 치수정보 테이블 생성
+	mdu1MskusiDOMCreate(mskuspData, mskusiData);
+	mdu1InitMainDetailMskusi(mskusiData);
+}
+
+function mdu1InitMainDetailImage(mskuspData){
+	
+	var divDom = $("."+pageId+"-create-composition");
+	//메인 이미지 출력 라디오버튼 세팅
+	
+	var prtimgv = mskuspData.prtimgv != null && mskuspData.prtimgv != "" ? mskuspData.prtimgv.toLowerCase() : "";
+	var sitimgv = mskuspData.sitimgv != null && mskuspData.sitimgv != "" ? mskuspData.sitimgv : "";
+	var sitimgm = mskuspData.sitimgm != null && mskuspData.sitimgm != "" ? mskuspData.sitimgm : "/img/sy/request_file_img.jpg";
+	
+	divDom.find("input[name='"+pageId+"_prtimgv'][value='"+prtimgv+"']").prop("checked", true);
+	divDom.find("input[name='"+pageId+"_sitimgv'][value='"+sitimgv+"']").prop("checked", true);
+	
+	var mainImgDom = $("."+pageId+"-material-main-img");
+	mainImgDom.find("input[name='"+pageId+"_sitimtm']").val(mskuspData.sitimtm);
+	mainImgDom.find(".img-container").find("img").attr("src", sitimgm);
+	
+	//메인 이미지 세팅
+	var imgSpcimg1 = divDom.find("input[name='"+pageId+"_spcimg1']").closest(".img-card").find("img");
+	var imgSpcimg2 = divDom.find("input[name='"+pageId+"_spcimg2']").closest(".img-card").find("img");
+	var imgSpcimg3 = divDom.find("input[name='"+pageId+"_spcimg3']").closest(".img-card").find("img");
+	var imgSpcimg4 = divDom.find("input[name='"+pageId+"_spcimg4']").closest(".img-card").find("img");
+	var imgSpcimg5 = divDom.find("input[name='"+pageId+"_spcimg5']").closest(".img-card").find("img");
+	
+	var spcimg1 = mskuspData.spcimg1 != null && mskuspData.spcimg1.trim() != "" ? mskuspData.spcimg1 : "/img/sy/request_file_img.jpg";
+	var spcimg2 = mskuspData.spcimg2 != null && mskuspData.spcimg2.trim() != "" ? mskuspData.spcimg2 : "/img/sy/request_file_img.jpg";
+	var spcimg3 = mskuspData.spcimg3 != null && mskuspData.spcimg3.trim() != "" ? mskuspData.spcimg3 : "/img/sy/request_file_img.jpg";
+	var spcimg4 = mskuspData.spcimg4 != null && mskuspData.spcimg4.trim() != "" ? mskuspData.spcimg4 : "/img/sy/request_file_img.jpg";
+	var spcimg5 = mskuspData.spcimg5 != null && mskuspData.spcimg5.trim() != "" ? mskuspData.spcimg5 : "/img/sy/request_file_img.jpg";
+	
+	imgSpcimg1.attr("src", spcimg1);
+	imgSpcimg2.attr("src", spcimg2);
+	imgSpcimg3.attr("src", spcimg3);
+	imgSpcimg4.attr("src", spcimg4);
+	imgSpcimg5.attr("src", spcimg5);
+	
+	var imgSpcimt1 = divDom.find("input[name='"+pageId+"_spcimt1']").val(mskuspData.spcimt1);
+	var imgSpcimt2 = divDom.find("input[name='"+pageId+"_spcimt2']").val(mskuspData.spcimt2);
+	var imgSpcimt3 = divDom.find("input[name='"+pageId+"_spcimt3']").val(mskuspData.spcimt3);
+	var imgSpcimt4 = divDom.find("input[name='"+pageId+"_spcimt4']").val(mskuspData.spcimt4);
+	var imgSpcimt5 = divDom.find("input[name='"+pageId+"_spcimt5']").val(mskuspData.spcimt5);
+}
+
+function mdu1InitMainDetailMskusi(mskusiList){
+	
+	var divDom = $("#"+pageId+"_mskusi");
+	
+	for(var i=0; i<mskusiList.length; i++){
+		var tableDom = divDom.find("[data-skuupdn='"+mskusiList[i].skuupdn+"']");
+		
+		var keyArr = Object.keys(mskusiList[i]);
+
+		var trDom = tableDom.find("tr");
+		var tdDom = trDom.find("td[data-sksizes='"+mskusiList[i].sizecod+"']");
+		var tdNotDataDom = trDom.not("th, td[data-sksizes]");
+
+		tdDom.filter(function(e){
+			var inputDom = $(this).find("input");
+			var attrNameArr = inputDom.attr("name").split("_");
+			var value = mskusiList[i][attrNameArr[1]];
+			inputDom.val(value);
+		});
+
+		tdNotDataDom.filter(function(e){
+			var inputDom = $(this).children().not("[data-sksizes]").find("input");
+			
+			if(inputDom.length > 0){
+				var attrNameArr = inputDom.attr("name").split("_");
+				var value = mskusiList[i][attrNameArr[1]];
+				inputDom.val(value);
+			}
+		});
+	}
+}
+
+//=====================================
+// MSKUSP - 메인 작업지시서 구성 세이브
+//=====================================
+function mdu1SaveOrderMainDetailSave(){
+	
+	if(skuskey != undefined && skuskey.trim() != ""){
+		
+		var param = mdu1Depth1Data();
+		param.skutkey = skutkey;
+		
+		//=====================================
+		// MSKUSP - 메인 작업지시서 이미지 업로드
+		//=====================================
+		var mskuspParam = new Object();
+		var mskuitParam = [];
+		var mskusiParam = [];
+		
+		var uploadFileCount = 0;
+		var mskuspFileParam = new Object();
+		
+		var formData	 = new FormData();
+		var skuImage	 = $(".mdu1-sku-img");
+		var skuTextDom	 = skuImage.find(".print-spcimt");
+		var skuFileInput	= skuImage.find("input[type=file]");
+		var skuFileInputDel = skuImage.find("input[type=hidden]");
+		
+		var materialImage	 = $(".mdu1-material-img");
+		var materailMainDom	 = materialImage.find(".mdu1-material-main-img");
+		var materailMainFileInput = materailMainDom.find("input[type=file]");
+		var materailMainFileInputDel = materailMainDom.find("input[type=hidden]");
+		
+		var materialImage	 = $(".mdu1-material-img");
+		var materailOnceDom	 = materialImage.find(".mdu1-material-once-img");
+		var materailOnceFileInput = materailOnceDom.find("input[type=file]");
+		var materailOnceFileInputDel = materailOnceDom.find("input[type=hidden]");
+		
+		formData.append("fileNameKey", skuskey);
+		formData.append("uploadPath", "sku");	//uploadPath 가 없을경우 에러 발생 (code : 400)
+		
+		for(var i=0; i<skuFileInput.length; i++){
+			if(skuFileInput.eq(i)[0].files[0] != undefined){
+				formData.append(skuFileInput.eq(i).attr("name").replace(pageId+"_", ""), skuFileInput.eq(i)[0].files[0]);
+				uploadFileCount++;
+			}
+		}
+		
+		if(materailMainFileInput.eq(0)[0].files[0] != undefined){
+			formData.append(materailMainFileInput.eq(0).attr("name").replace(pageId+"_", ""), materailMainFileInput.eq(0)[0].files[0]);
+			uploadFileCount++;
+		}
+
+		if(uploadFileCount > 0){
+			var rdata = callAjax("form", "POST", "/com/upload/fileUpload", formData);
+			var fileResult = JSON.parse(JSON.stringify(rdata.data));
+			for(var i=0; i<fileResult.length; i++){
+				Object.assign(mskuspFileParam, fileResult[i]);
+			}
+		}
+		
+		for(var i=0; i<skuFileInputDel.length; i++){
+			var checkFlag = skuFileInputDel.eq(i).val();
+			var columnName = skuFileInputDel.eq(i).attr("name").replace(pageId+"_", "").replace("_del", "");
+			if(checkFlag == "Y"){
+				mskuspFileParam[columnName] = " ";
+			}else{
+				if(skuFileInput.eq(i).val() == ""){
+					var imgSrc = skuFileInputDel.eq(i).closest(".img-container").find("img").attr("src").trim();
+					if(imgSrc != "" && imgSrc != "/img/sy/request_file_img.jpg"){
+						mskuspFileParam[columnName] = imgSrc;
+					}
+				}
+			}
+		}
+		
+		if(materailMainFileInputDel.eq(0).val() == "Y"){
+			var columnName = materailMainFileInputDel.eq(0).attr("name").replace(pageId+"_", "").replace("_del", "");
+			mskuspFileParam[columnName] = null;
+		}else{
+			if(materailMainFileInput.eq(0).val() == ""){
+				var columnName = materailMainFileInputDel.eq(0).attr("name").replace(pageId+"_", "").replace("_del", "");
+				var imgSrc = materailMainFileInputDel.eq(0).closest(".img-container").find("img").attr("src").trim();
+				if(imgSrc != "" && imgSrc != "/img/sy/request_file_img.jpg"){
+					mskuspFileParam[columnName] = imgSrc;
+				}
+			}
+		}
+		
+		for(var i=0; i<skuTextDom.length; i++){
+			var inputDom = skuTextDom.eq(i).find("input");
+			
+			var inputcolumnName = inputDom.eq(0).attr("name").replace(pageId+"_", "");
+			mskuspFileParam[inputcolumnName] = inputDom.eq(0).val();
+		}
+		var prtimgvDom = $("input[name='mdu1_prtimgv']");
+		for(var i=0; i<prtimgvDom.length; i++){
+			if(prtimgvDom.eq(i).is(":checked")){
+				mskuspParam.prtimgv = prtimgvDom.eq(i).val();
+			}
+		}
+		
+		var sitimgvDom = $("input[name='mdu1_sitimgv']");
+		for(var i=0; i<sitimgvDom.length; i++){
+			if(sitimgvDom.eq(i).is(":checked")){
+				mskuspParam.sitimgv = sitimgvDom.eq(i).val();
+			}
+		}
+
+		//=====================================
+		// MSKUSP - 메인 작업지시서 주요작업내용 | 재단시 주의사항
+		//=====================================
+		mskuspParam.skuifrk = $("textarea[name='mdu1_skuifrk']").val();
+		mskuspParam.modifrk = $("textarea[name='mdu1_modifrk']").val();
+		mskuspParam.foundrk = $("textarea[name='mdu1_foundrk']").val();
+
+		Object.assign(param.list.mskusp, mskuspFileParam, mskuspParam);
+		
+		//=====================================
+		// MSKUIT - 메인 작업지시서 원단이미지 업로드
+		//=====================================
+		for(var i=0; i<materailOnceDom.length; i++){
+			var fileFormData = new FormData();
+			fileFormData.append("fileNameKey", skuskey);
+			fileFormData.append("uploadPath", "sku");
+			
+			//var mskuitData = new Object();
+			var itegnum = materailOnceDom.eq(i).data("itegnum");
+			var itemdiv = materailOnceDom.eq(i).data("itemdiv");
+			var itemnum = materailOnceDom.eq(i).data("itemnum");
+			var fabimnm = materailOnceDom.eq(i).find("input[name='"+pageId+"_fabimnm']").val();
+			var fileDelDom = materailOnceDom.eq(i).find("input[type=hidden]");
+			var fileDom = materailOnceDom.eq(i).find("input[type=file]");
+			var fabimph = null;
+			
+			if(fileDom.val() != "" && fileDelDom.val() != "Y"){
+				var fileNameArr = fileDom.val().split("\\");
+				//var fileName = fileNameArr[fileNameArr.length-1];
+				var originFabimphKey = itemdiv+"_"+itegnum+"_"+itemnum+"_"+materailOnceFileInput.eq(i).attr("name").replace(pageId+"_", "");
+				
+				fileFormData.append(itemdiv+"_"+itegnum+"_"+itemnum+"_"+materailOnceFileInput.eq(i).attr("name").replace(pageId+"_", ""), fileDom[0].files[0]);
+				var rdata = callAjax("form", "POST", "/com/upload/fileUpload", fileFormData);
+				fabimph = rdata.data.length > 0 ? rdata.data[0][originFabimphKey] : "";
+			}
+			else if(fileDelDom.val() == "Y"){
+				//var fileName 	= null;
+				fabimph 	= null;
+			}
+			else{
+				var imgSrc = materailOnceDom.eq(i).find(".img-container").find("img").attr("src").trim();
+				if(imgSrc != "" && imgSrc != "/img/sy/request_file_img.jpg"){
+					fabimph = imgSrc;
+				}else{
+					fabimph = "";
+				}
+			}
+			
+			var mskuitData = param.list.mskuit.filter(function(e){				
+				return e.itegnum == itegnum && e.itemdiv == itemdiv && e.itemnum == itemnum;
+			})[0];
+			
+			mskuitData.fabimnm = fabimnm;
+			mskuitData.fabimph = fabimph;
+		}
+
+		var mskusiDom = $("#mdu1_mskusi");
+		var mskusiTableDom = mskusiDom.find("table");
+		var mskusiTheadDom = mskusiDom.find("thead");
+		var mskusiTbodyTrDom = mskusiDom.find("tbody").find("tr");
+
+		var mskusiSksizesDom = mskusiTheadDom.find("th").filter("[data-sksizes]");
+		
+		
+		for(var i=0; i<mskusiSksizesDom.length; i++){
+			var sizecod = mskusiSksizesDom.eq(i).data("sksizes");
+			
+			var nameDom = mskusiTbodyTrDom.find("td").not("[data-sksizes]");
+			var mskusiSksizesTdDom = mskusiTbodyTrDom.find("td").filter("[data-sksizes='"+sizecod+"']");
+			
+			var mskusiObject = new Object();
+			mskusiObject.skuupdn = mskusiTableDom.data("skuupdn");
+			mskusiObject.skuskey = skuskey;
+			mskusiObject.sizecod = sizecod;
+
+			for(var j=0; j<mskusiSksizesTdDom.length; j++){
+				var nameColumn = nameDom.eq(j).find("input").attr("name").replace(pageId+"_", "");
+				var nameColumnValue = nameDom.eq(j).find("input").val();
+				
+				var sizeColumnName 	= mskusiSksizesTdDom.eq(j).find("input").attr("name").replace(pageId+"_", "");
+				var sizeColumnValue = mskusiSksizesTdDom.eq(j).find("input").val();
+				if(nameColumn != "" && nameColumnValue != "") mskusiObject[nameColumn] = nameColumnValue;
+				if(sizeColumnName != "" && sizeColumnValue != "") mskusiObject[sizeColumnName] = sizeColumnValue;
+			}
+			
+			mskusiParam.push(mskusiObject);
+		}
+
+		param.list.mskusi	= mskusiParam;
+
+		if(mdu1Depth2SaveFlag == false){
+			mdu1Depth2SaveFlag = true;
+			
+			var result = callAjax("data", "POST", "/md/mdu1Save.do", param);
+			
+			if(result != undefined && result.code == "200"){
+				alert("[[#{ms.saveSuccess}]]");
+				$("select[name='mdu1_mskusp_list']").change();
+				mdu1StepInit(3);
+			}
+			else{
+				alert("[[#{ms.mdu1.savingError}]]");
+			}
+			
+			mdu1Depth2SaveFlag = false;
+		}else{
+			alert("[[#{ms.mdu1.saving}]]");
+		}
+	}
+	else
+	{
+		alert("[[#{ms.notskutkey}]]");
+	}
+}
+
+//=====================================
+// 메인 작업지시서 원단이미지 업로드 DOM 생성
+//=====================================
+function mdu1MaterialImageUploadCreate(data){
+	console.log("data=> " + JSON.stringify(data));
+	
+	var fabimnm = data.fabimnm == null || data.fabimnm.trim() == "" ? "" : data.fabimnm;
+	var fabimph = data.fabimph == null || data.fabimph.trim() == "" ? "/img/sy/request_file_img.jpg" : data.fabimph;
+	
+	var imgDivDom = $("<div></div>",{
+		"class" : "img-card mdu1-material-once-img",
+		"data-itemdiv" : data.itemdiv,
+		"data-itegnum" : data.itegnum,
+		"data-itemnum" : data.itemnum
+	});
+	
+	var fabimnmDivDom = $("<div></div>",{
+		"class" : "print-spcimt"
+	});
+	var fabimnmInputDom = $("<input/>",{
+		"class" : "mdu-control",
+		"type" : "text",
+		"name" : "mdu1_fabimnm",
+		"value" : fabimnm
+	});
+	
+	fabimnmDivDom.append(fabimnmInputDom);
+	
+	var imgContainerDivDom = $("<div></div>",{
+		"class" : "img-container"
+	});
+	
+	var imgContainerAreaDivDom = $("<div></div>",{
+		"class" : "img-area"
+	});
+	
+	var imgDom = $("<img/>",{
+		"class" : "card-img",
+		"src" : fabimph
+	});
+	
+	var imgDelAncherDom = $("<a></a>",{
+		"class" : "btn-img-del"
+	});
+	
+	var imgDelAncherIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-xmark"
+	});
+	
+	var imgFileBtnDom = $("<div></div>",{
+		"class" : "img-file-btn"
+	});
+	
+	var imgInputFileDom = $("<input/>",{
+		"class" : "img-input",
+		"type" : "file",
+		"name" : "mdu1_fabimph"
+	});
+	
+	var imgInputFileDelDom = $("<input/>",{
+		"class" : "img-input",
+		"type" : "hidden",
+		"name" : "mdu1_fabimph_del"
+	});
+	
+	var imgButtonCameraUploadDom = $("<button></button>",{
+		"class" : "btn btn-combination",
+		"type" : "button",
+		"name" : "mdu1_btn_camera_img",
+		"text" : "[[#{md.mdu1.camera}]]"
+	});
+	var imgButtonCameraUploadIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-camera"
+	});
+	
+	var imgButtonFileUploadDom = $("<button></button>",{
+		"class" : "btn btn-combination",
+		"type" : "button",
+		"name" : "mdu1_btn_file_img",
+		"text" : "[[#{bt.upload}]]"
+	});
+	var imgButtonFileUploadIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-arrow-up-from-bracket"
+	});
+	
+	imgDelAncherDom.append(imgDelAncherIconDom);
+	imgButtonCameraUploadDom.prepend(imgButtonCameraUploadIconDom);
+	imgButtonFileUploadDom.prepend(imgButtonFileUploadIconDom);
+	
+	imgContainerAreaDivDom.append(
+		imgDom,
+		imgDelAncherDom
+	);
+	imgFileBtnDom.append(
+		imgInputFileDom,
+		imgInputFileDelDom,
+		imgButtonCameraUploadDom,
+		imgButtonFileUploadDom
+	);
+	
+	imgContainerDivDom.append(imgContainerAreaDivDom, imgFileBtnDom);
+	imgDivDom.append(fabimnmDivDom, imgContainerDivDom);
+	
+	$(".mdu1-material-img.single").append(imgDivDom);
+}
+
+function mdu1MaterialImageUploadDelete(){
+	$(".img-card.mdu1-material-once-img").remove();
+}
+
+//=====================================
+// MSKUSI - 치수정보 테이블 생성
+//=====================================
+function mdu1MskusiDOMCreate(data, mskusiData){
+
+	var columnInitItemArr;
+	
+	if(data.skuupdn == "UP") columnInitItemArr = pageInitData.mskusiUpItem;
+	else if(data.skuupdn == "DN") columnInitItemArr = pageInitData.mskusiDownItem;
+	else columnInitItemArr = [];
+	
+	console.log("columnInitItemArr => " + JSON.stringify(columnInitItemArr));
+	
+	var columnFront = pageId+"_"+data.skuupdn;
+	var columnMiddleName 	= "SIZN";
+	var columnMiddleNumber 	= "SIZE";
+	var columnNumber;
+	var columnInitData = new Object();
+	
+	if(mskusiData != null || mskusiData.length <= 0){
+		for(var i=0; i<columnInitItemArr.length; i++){
+			var columnKey = pageId+"_"+data.skuupdn.toLowerCase()+"sizn"+(i+1).toString().padStart(2, '0');
+			columnInitData[columnKey] = columnInitItemArr[i].combonm;
+		}
+	}
+
+	
+	var sksizesArr = data.sksizes.split("/");
+	sksizesArr.unshift("column");
+	
+	var idDom = $("#mdu1_mskusi");
+	idDom.children().remove();
+	
+	var tableDom = $("<table></table>",{
+		"class" : "table table-mdu",
+		"data-skuupdn" : data.skuupdn
+	});
+	var theadDom = $("<thead></thead>");
+	var tbodyDom = $("<tbody></tbody>");
+	
+	var trDom 		= [];
+	var tdDom 		= [];
+	var inputDom 	= [];
+	
+	
+	var trtheadDom = $("<tr></tr>");
+	var thDom = $("<th></th>",{
+		"text" : "항목"
+	});
+	
+	trtheadDom.append(thDom);
+	
+	for(var i=0; i<sksizesArr.length; i++){
+		
+		if(sksizesArr[i] != "column"){
+			var thDom = $("<th></th>",{
+				"text" : sksizesArr[i],
+				"data-sksizes" : sksizesArr[i]
+			});
+			trtheadDom.append(thDom);
+		}
+	}
+	
+	theadDom.append(trtheadDom);
+	tableDom.append(theadDom);
+	
+	var tabindex = 1;
+	for(var i=1; i<=20; i++){
+		columnNumber = i.toString().padStart(2, '0');
+		var nameColumn 	= (columnFront+columnMiddleName+columnNumber) != ""  ? (columnFront+columnMiddleName+columnNumber).toLowerCase() : "";
+		var valueColumn = (columnFront+columnMiddleNumber+columnNumber) != ""  ? (columnFront+columnMiddleNumber+columnNumber).toLowerCase() : "";
+		
+		trDom[i] = $("<tr></tr>");
+
+		for(var j=0; j<sksizesArr.length; j++){
+			if(sksizesArr[j] == "column"){
+				tdDom[j] = $("<td></td>");
+				inputDom[j] = $("<input/>",{
+					"type" : "text",
+					"class" : "mdu-control",
+					"name" : nameColumn,
+					"value" : columnInitData[nameColumn]
+				});
+			}
+			else{
+				
+				tdDom[j] = $("<td></td>",{
+					"data-sksizes" : sksizesArr[j]
+				});
+				inputDom[j] = $("<input/>",{
+					"tabindex" : i+((j-1)*20),
+					"type" : "text",
+					"onkeyup" : "onlyFloat(this);",
+					"class" : "mdu-control mdu1-number",
+					"name" : valueColumn
+				});
+				
+				tabindex++;
+			}
+			
+			
+			tdDom[j].append(inputDom[j]);
+			trDom[i].append(tdDom[j]);
+		}
+	}
+	
+	for(var i=0; i<trDom.length; i++){
+		tbodyDom.append(trDom[i]);
+	}
+
+	tableDom.append(tbodyDom);
+	idDom.append(tableDom);
+}
+
+
+//==============================================
+// Summary 
+//==============================================
+function mdu1SetSummarySubmtpr(){
+	var tableDom = $(".material-sidiary");
+	
+	console.log(tableDom.length);
+	
+	for(var i=0; i<tableDom.length; i++){
+		var submtprPrice = 0;
+		var submtprDom = tableDom.eq(i).find("input[name='"+pageId+"_mskusb_submtpr']");
+		
+		for(var j=0; j<submtprDom.length; j++){
+			if(submtprDom.eq(j).val().trim() != ""){
+				submtprPrice = Number(submtprPrice) + Number(uncomma(submtprDom.eq(j).val()));
+			}
+			
+		}
+		tableDom.eq(i).find(".summary-mskusb-price").text(comma(submtprPrice));
+	}
+}
+
+function mdu1SetSummarySproprc(){
+	var tableDom = $(".material-process");
+	
+	console.log(tableDom.length);
+	
+	for(var i=0; i<tableDom.length; i++){
+		var sproprcPrice = 0;
+		var sproprcDom = tableDom.eq(i).find("input[name='"+pageId+"_mskupc_sproprc']");
+		
+		for(var j=0; j<sproprcDom.length; j++){
+			if(sproprcDom.eq(j).val().trim() != ""){
+				sproprcPrice = Number(sproprcPrice) + Number(uncomma(sproprcDom.eq(j).val()));
+			}
+			
+		}
+		tableDom.eq(i).find(".summary-mskupc-price").text(comma(sproprcPrice));
+	}
+}
+
+//=====================================
+//MSKUSZ - 공정 정보 지시서
+//=====================================
+function mdu1InitProcessDetail(mskuspData, mskupcList, mskupiList){
+
+	var divParentDom = $("."+pageId+"-create-process");
+	divParentDom.children().remove();
+	var divDomArr = [];
+
+	var tmpList = [];
+	
+	var mainData = mskupcList.filter(function(e){
+		return e.itemdiv == "MAIN";
+	})[0];
+	
+	var mainProcessList = mskupcList.filter(function(e){
+		return e.itemdiv == mainData.itemdiv && e.itegnum == mainData.itegnum && e.itemnum == mainData.itemnum;
+	});
+	
+	
+	for(var i=0; i<mainProcessList.length; i++){
+		
+		var divDom = $("<div></div>",{
+			"class" : pageId+"-process-block"
+		});
+		
+		divDom.attr({
+			"data-itemdiv" : mskupcList[i].itemdiv,
+			"data-itemnum" : mskupcList[i].itemnum,
+			"data-itegnum" : mskupcList[i].itegnum,
+			"data-sprocno" : mskupcList[i].sprocno,
+			"data-sprotyp" : mskupcList[i].sprotyp,
+			"data-spronam" : mskupcList[i].spronam,
+			"data-sproprc" : mskupcList[i].sproprc,
+			"data-sprofac" : mskupcList[i].sprofac,
+			"data-sproday" : mskupcList[i].sproday,
+		});
+		
+		divDom.append(mdu1InitProcessDetailTopDomCreate(mskuspData, mskupcList[i], mainProcessList[i], mskupiList));
+		divDomArr.push(divDom);
+	}
+	
+	for(var i=0; i<divDomArr.length; i++){
+		divParentDom.append(divDomArr[i]);
+	}
+}
+
+//=====================================
+//공정 정보 지시서 상단 DOM 
+//=====================================
+function mdu1InitProcessDetailTopDomCreate(mskuspData, mskupcData, positionData, mskupiList){
+	var blockDom = $("<div></div>",{
+		"class" : "block"
+	});
+	
+	var titleDivDom = $("<div></div>",{
+		"class" : "mdu-title"
+	});
+	var titleH4Dom = $("<h4></h4>");
+	
+	var titleSpan1Dom = $("<span></span>",{
+		"class" : "span-mglr5",
+		"text" : mskuspData.brandnm
+	});
+	
+	var titleSpan2Dom = $("<span></span>",{
+		"class" : "span-mglr5",
+		"text" : mskupcData.spronam
+	});
+	
+	var titleSpan3Dom = $("<span></span>",{
+		"class" : "span-mglr5",
+		"text" : "[[#{md.mdu1.title}]]"
+	});
+	
+	titleH4Dom.append(titleSpan1Dom, titleSpan2Dom, titleSpan3Dom);
+	
+	var tableCotainerDom = $("<div></div>",{
+		"class" : "table-container"
+	});
+	
+	//infoTable 시작
+	var infotableDom = $("<table></table>",{
+		"class" : "table process_info table-mdu"
+	});
+	
+	var infotableColgroupDom = $("<colgroup></colgroup>");
+	var infotableCol1Dom = $("<col></col>",{width:"16%"});
+	var infotableCol2Dom = $("<col></col>",{width:"34%"});
+	var infotableCol3Dom = $("<col></col>",{width:"16%"});
+	var infotableCol4Dom = $("<col></col>",{width:"34%"});
+
+	infotableColgroupDom.append(infotableCol1Dom, infotableCol2Dom, infotableCol3Dom, infotableCol4Dom );
+	infotableDom.append(infotableColgroupDom);
+	
+	var infotbodyDom 	= $("<tbody></tbody>");
+	var infotrRow1Dom 	= $("<tr></tr>");
+	var infotrRow2Dom 	= $("<tr></tr>");
+	
+	//tr1 Dom
+	var infotrRow1td1Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.brandnm}]]"
+	});
+	
+	var infotrRow1td2Dom	= $("<td></td>");
+	var infotrRow1td2SpanDom = $("<span></span>",{
+		"name" : pageId+"_brandnm",
+		"text" : mskuspData.brandnm
+	});
+	
+	infotrRow1td2Dom.append(infotrRow1td2SpanDom);
+	
+	var infotrRow1td3Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.factory}]]"
+	});
+	var infotrRow1td4Dom	= $("<td></td>");
+	var infotrRow1td4SpanDom = $("<span></span>",{
+		"name" : pageId+"_sprofac",
+		"text" : mskupcData.sprofac
+	});
+	
+	infotrRow1td4Dom.append(infotrRow1td4SpanDom);
+	
+	infotrRow1Dom.append(
+		infotrRow1td1Dom,
+		infotrRow1td2Dom,
+		infotrRow1td3Dom,
+		infotrRow1td4Dom
+	);
+	
+	infotbodyDom.append(infotrRow1Dom);
+	infotableDom.append(infotbodyDom);
+	//infoTable 끝
+	
+	//contactTable 시작
+	var contacttableDom = $("<table></table>",{
+		"class" : "table process_contact table-mdu no-border"
+	});
+	
+	var contactTableColgroupDom = $("<colgroup></colgroup>");
+	var contactTableCol1Dom = $("<col></col>",{width:"16%"});
+	var contactTableCol2Dom = $("<col></col>",{width:"34%"});
+	var contactTableCol3Dom = $("<col></col>",{width:"16%"});
+	var contactTableCol4Dom = $("<col></col>",{width:"34%"});
+
+	contactTableColgroupDom.append(contactTableCol1Dom, contactTableCol2Dom, contactTableCol3Dom, contactTableCol4Dom );
+	contacttableDom.append(contactTableColgroupDom);
+	
+	var contacttbodyDom 	= $("<tbody></tbody>");
+	var contacttrRow1Dom 	= $("<tr></tr>");
+	
+	//tr1 Dom
+	var contacttrRow1td1Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.designer}]]"
+	});
+	
+	var contacttrRow1td2Dom	= $("<td></td>");
+	var contacttrRow1td2SpanDom = $("<span></span>",{
+		"name" : pageId+"_designe",
+		"text" : mskuspData.designe
+	});
+	contacttrRow1td2Dom.append(contacttrRow1td2SpanDom);
+	
+	var contacttrRow1td3Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.phone}]]"
+	});
+	
+	var contacttrRow1td4Dom	= $("<td></td>");
+	var contacttrRow1td4inputDom = $("<span></span>",{
+		"name" : pageId+"_phone",
+		"text" : mskuspData.designe
+	});
+	contacttrRow1td4Dom.append(contacttrRow1td4inputDom);
+	contacttrRow1Dom.append(
+		contacttrRow1td1Dom,
+		contacttrRow1td2Dom,
+		contacttrRow1td3Dom,
+		contacttrRow1td4Dom
+	);
+	contacttbodyDom.append(contacttrRow1Dom);
+	contacttableDom.append(contacttbodyDom); 
+	//contactTable 끝
+	
+	
+	//detail테이블 시작
+	var detailtableDom = $("<table></table>",{
+		"class" : "table process_detail table-mdu no-border"
+	});
+	
+	var detailTableColgroupDom = $("<colgroup></colgroup>");
+	var detailTableCol1Dom = $("<col></col>",{width:"16%"});
+	var detailTableCol2Dom = $("<col></col>",{width:"auto"});
+
+	detailTableColgroupDom.append(detailTableCol1Dom, detailTableCol2Dom);
+	detailtableDom.append(detailTableColgroupDom);
+	
+	var detailtbodyDom 	= $("<tbody></tbody>");
+	var detailtrRow1Dom 	= $("<tr></tr>");
+	var detailtrRow2Dom 	= $("<tr></tr>");
+	var detailtrRow3Dom 	= $("<tr></tr>");
+	
+	//tr1 Dom
+	var detailtrRow1td1Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.sprdosu}]]"
+	});
+	var detailtrRow1td2Dom	= $("<td></td>");
+	var detailtrRow1td2inputDom = $("<input/>",{
+		"class" : "mdu-control",
+		"name" : pageId+"_mskupc_sprdosu",
+		"value" : mskupcData.sprdosu != null ? mskupcData.sprdosu : ""
+	});
+	detailtrRow1td2Dom.append(detailtrRow1td2inputDom);
+	detailtrRow1Dom.append(detailtrRow1td1Dom, detailtrRow1td2Dom);
+	
+	//tr2 Dom
+	var detailtrRow2td1Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.size}]]"
+	});
+	var detailtrRow2td2Dom	= $("<td></td>");
+	var detailtrRow2td2TextareaDom = $("<textarea></textarea>",{
+		"class" : "mdu-text-control",
+		"name" : pageId+"_mskupc_sprosiz",
+		"text" : mskupcData.sprosiz != null ? mskupcData.sprosiz : ""
+	});
+	detailtrRow2td2Dom.append(detailtrRow2td2TextareaDom);
+	detailtrRow2Dom.append(detailtrRow2td1Dom, detailtrRow2td2Dom);
+	//tr3 Dom
+	var detailtrRow3td1Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.sproreq}]]"
+	});
+	var detailtrRow3td2Dom	= $("<td></td>");
+	var detailtrRow3td2TextareaDom = $("<textarea></textarea>",{
+		"class" : "mdu-text-control",
+		"name" : pageId+"_mskupc_sproreq",
+		"text" : mskupcData.sproreq != null ? mskupcData.sproreq : ""
+	});
+	detailtrRow3td2Dom.append(detailtrRow3td2TextareaDom);
+	detailtrRow3Dom.append(detailtrRow3td1Dom, detailtrRow3td2Dom);
+	detailtbodyDom.append(
+		detailtrRow1Dom,
+		detailtrRow2Dom,
+		detailtrRow3Dom
+	);
+	detailtableDom.append(detailtbodyDom);
+	
+	//=====================================================
+	// 위치 테이블 추가
+	//=====================================================
+		
+	//위치 테이블 시작
+	var positionTableDom = $("<table></table>",{
+		"class" : "table table-mdu no-border"
+	});
+	
+	var positionTableColgroupDom = $("<colgroup></colgroup>");
+	var positionTableCol1Dom = $("<col></col>",{width:"16%"});
+	var positionTableCol2Dom = $("<col></col>",{width:"auto"});
+
+	positionTableColgroupDom.append(positionTableCol1Dom, positionTableCol2Dom);
+	positionTableDom.append(positionTableColgroupDom);
+	
+	var positiontbodyDom 	= $("<tbody></tbody>");
+	var positiontrRow1Dom 	= $("<tr></tr>");
+	var positiontrRow1th1Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.position}]]"
+	});
+	
+	var positiontrRow1td2Dom	= $("<td></td>");	
+	var positionReturnDom 		= mdu1InitProcessDetailMiddleDomCreate(positionData);
+	positiontrRow1td2Dom.append(positionReturnDom);
+	positiontrRow1Dom.append(positiontrRow1th1Dom, positiontrRow1td2Dom);
+	//positiontbodyDom.append(positiontrRow1Dom);
+	
+	var positiontrRow2Dom 	= $("<tr></tr>");
+	var positiontrRow2th1Dom	= $("<th></th>",{
+		"text" : "[[#{md.mdu1.color}]]"
+	});
+	var positiontrRow2td2Dom	= $("<td></td>",{
+		"class" : "pl-0"
+	});
+	var colorReturnDom = mdu1InitProcessDetailBottomDomCreate(positionData, mskupiList);
+	positiontrRow2td2Dom.append(colorReturnDom);
+	positiontrRow2Dom.append(positiontrRow2th1Dom, positiontrRow2td2Dom);
+	positiontbodyDom.append(positiontrRow1Dom, positiontrRow2Dom);
+	
+	
+	positionTableDom.append(positiontbodyDom);
+	//=====================================================
+	// 칼라 테이블 추가
+	//=====================================================
+	
+	//모든 테이블 append
+	tableCotainerDom.append(infotableDom, contacttableDom, detailtableDom, positionTableDom);
+
+	//테이블 상단 제목
+	titleDivDom.append(titleH4Dom);
+	
+	//블럭 
+	blockDom.append(titleDivDom, tableCotainerDom);
+	return blockDom;
+}
+//=====================================
+//공정 정보 지시서 중단 DOM - 위치 이미지 업로드 
+//=====================================
+function mdu1InitProcessDetailMiddleDomCreate(data){
+	
+	var spxytxt = data.spxytxt == null || data.spxytxt.trim() == "" ? "" : data.spxytxt;
+	var spxyimg = data.spxyimg == null || data.spxyimg.trim() == "" ? "/img/sy/request_file_img.jpg" : data.spxyimg;
+	
+	var divDom = $("<div></div>",{
+		"class" : "block block-img mdu1-process-img"
+	});
+	
+	var imgDivDom = $("<div></div>",{
+		"class" : "img-card",
+		"data-itemdiv" : data.itemdiv,
+		"data-itegnum" : data.itegnum,
+		"data-itemnum" : data.itemnum
+	});
+	
+	var spxytxtDivDom = $("<div></div>",{
+		"class" : "print-spcimt mt-2"
+	});
+	var spxytxtInputDom = $("<textarea></textarea>",{
+		"class" : "mdu-text-control",
+		"type" : "text",
+		"name" : "mdu1_spxytxt",
+		"text" : spxytxt
+	});
+	
+	spxytxtDivDom.append(spxytxtInputDom);
+	
+	var imgContainerDivDom = $("<div></div>",{
+		"class" : "img-container"
+	});
+	
+	var imgContainerAreaDivDom = $("<div></div>",{
+		"class" : "img-area"
+	});
+	
+	var imgDom = $("<img/>",{
+		"class" : "card-img",
+		"src" : spxyimg
+	});
+	
+	var imgDelAncherDom = $("<a></a>",{
+		"class" : "btn-img-del",
+		"text" : "X"
+	});
+	
+	var imgFileBtnDom = $("<div></div>",{
+		"class" : "img-file-btn"
+	});
+	
+	var imgInputFileDom = $("<input/>",{
+		"class" : "img-input",
+		"type" : "file",
+		"name" : "mdu1_spxyimg"
+	});
+	
+	var imgInputFileDelDom = $("<input/>",{
+		"class" : "img-input",
+		"type" : "hidden",
+		"name" : "mdu1_spxyimg_del"
+	});
+	
+	var imgButtonCameraUploadDom = $("<button></button>",{
+		"class" : "btn btn-combination",
+		"type" : "button",
+		"name" : "mdu1_btn_camera_img",
+		"text" : "[[#{md.mdu1.camera}]]"
+	});
+	
+	var imgButtonCameraUploadDomIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-camera"
+	});
+	
+	var imgButtonFileUploadDom = $("<button></button>",{
+		"class" : "btn btn-combination",
+		"type" : "button",
+		"name" : "mdu1_btn_file_img",
+		"text" : "[[#{bt.upload}]]"
+	});
+	
+	var imgButtonFileUploadIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-arrow-up-from-bracket"
+	});
+	
+	imgButtonCameraUploadDom.prepend(imgButtonCameraUploadDomIconDom);
+	imgButtonFileUploadDom.prepend(imgButtonFileUploadIconDom);
+	
+	imgContainerAreaDivDom.append(
+		imgDom,
+		imgDelAncherDom
+	);
+	imgFileBtnDom.append(
+		imgInputFileDom,
+		imgInputFileDelDom,
+		imgButtonCameraUploadDom,
+		imgButtonFileUploadDom
+	);
+	
+	imgContainerDivDom.append(imgContainerAreaDivDom, imgFileBtnDom);
+	imgDivDom.append(imgContainerDivDom, spxytxtDivDom);
+	divDom.append(imgDivDom);
+
+	return divDom;
+}
+
+//=====================================
+//공정 정보 지시서 하단 DOM - 칼라 이미지 업로드 
+//=====================================
+function mdu1InitProcessDetailBottomDomCreate(mskupcData, data){
+
+	var fileDomLength = 0;
+	
+	var fileImgDom = data.filter(function(e){
+		return e.itegnum == mskupcData.itegnum && e.sprocno == mskupcData.sprocno && e.itemdiv == mskupcData.itemdiv && e.itemnum == mskupcData.itemnum;
+	});
+	
+	var divDom = $("<div></div>",{
+		"class" : "block block-img mdu1-process-sku-img"
+	});
+
+	var divBtnDom = $("<div></div>");
+	
+	var createBtnDom = $("<button></button>",{
+		"class" : "mdu-add-button",
+		"onclick" : "mdu1ProcessDetailImageDomCreate(this)",
+		"text" : "[[#{bt.add}]]"
+	});
+
+	var createBtnIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-plus"
+	});
+
+	createBtnDom.prepend(createBtnIconDom);
+	divBtnDom.append(createBtnDom);
+	divDom.append(divBtnDom);
+	
+	if(fileImgDom.length > 0){
+		for(var i=0; i<fileImgDom.length; i++){
+			var spricol = fileImgDom[i] == undefined || fileImgDom[i].spricol == null || fileImgDom[i].spricol.trim() == "" ? "" : fileImgDom[i].spricol;
+			var sprfcol = fileImgDom[i] == undefined || fileImgDom[i].sprfcol == null || fileImgDom[i].sprfcol.trim() == "" ? "" : fileImgDom[i].sprfcol;
+			var spriimg = fileImgDom[i] == undefined || fileImgDom[i].spriimg == null || fileImgDom[i].spriimg.trim() == "" ? "/img/sy/request_file_img.jpg" : fileImgDom[i].spriimg;
+			
+			var imgDivDom = $("<div></div>",{
+				"class" : "img-card"
+			});
+			
+			var spricolDivDom = $("<div></div>",{
+				"class" : "input-box"
+			});
+			var spricolInput1Dom = $("<input/>",{
+				"class" : "mdu-control",
+				"type" : "text",
+				"name" : "mdu1_spricol",
+				"value" : spricol
+			});
+			var spricolInput2Dom = $("<input/>",{
+				"class" : "mdu-control",
+				"type" : "text",
+				"name" : "mdu1_sprfcol",
+				"value" : sprfcol
+			});
+			
+			var spricolDelBtnDom = $("<a></a>",{
+				"text" : "X",
+				"onclick" : "mdu1ProcessDetailImageDomRemove(this)"
+			});
+			
+			if(i == 0) spricolDivDom.append(spricolInput1Dom, spricolInput2Dom);
+			else spricolDivDom.append(spricolInput1Dom, spricolInput2Dom, spricolDelBtnDom);
+			
+			var imgContainerDivDom = $("<div></div>",{
+				"class" : "img-container"
+			});
+			
+			var imgContainerAreaDivDom = $("<div></div>",{
+				"class" : "img-area"
+			});
+			
+			var imgDom = $("<img/>",{
+				"class" : "card-img",
+				"src" : spriimg
+			});
+			
+			var imgDelAncherDom = $("<a></a>",{
+				"class" : "btn-img-del"
+			});
+			
+			var imgDelAncherIconDom = $("<i></i>",{
+				"class" : "fa-solid fa-xmark"
+			});
+			imgDelAncherDom.append(imgDelAncherIconDom);
+			
+			
+			var imgFileBtnDom = $("<div></div>",{
+				"class" : "img-file-btn"
+			});
+			
+			var imgInputFileDom = $("<input/>",{
+				"class" : "img-input",
+				"type" : "file",
+				"name" : "mdu1_spriimg"
+			});
+			
+			var imgInputFileDelDom = $("<input/>",{
+				"class" : "img-input",
+				"type" : "hidden",
+				"name" : "mdu1_spriimg_del"
+			});
+			
+			var imgButtonCameraUploadDom = $("<button></button>",{
+				"class" : "btn btn-combination",
+				"type" : "button",
+				"name" : "mdu1_btn_camera_img",
+				"text" : "[[#{md.mdu1.camera}]]"
+			});
+			
+			var imgButtonCameraUploadIconDom = $("<i></i>",{
+				"class" : "fa-solid fa-camera"
+			});
+			imgButtonCameraUploadDom.prepend(imgButtonCameraUploadIconDom);
+			
+			var imgButtonFileUploadDom = $("<button></button>",{
+				"class" : "btn btn-combination",
+				"type" : "button",
+				"name" : "mdu1_btn_file_img",
+				"text" : "[[#{bt.upload}]]"
+			});
+			var imgButtonFileUploadIconDom = $("<i></i>",{
+				"class" : "fa-solid fa-arrow-up-from-bracket"
+			});
+			imgButtonFileUploadDom.prepend(imgButtonFileUploadIconDom);
+			
+			imgContainerAreaDivDom.append(
+				imgDom,
+				imgDelAncherDom
+			);
+			imgFileBtnDom.append(
+				imgInputFileDom,
+				imgInputFileDelDom,
+				imgButtonCameraUploadDom,
+				imgButtonFileUploadDom
+			);
+			
+			imgContainerDivDom.append(imgContainerAreaDivDom, imgFileBtnDom);
+			imgDivDom.append(spricolDivDom, imgContainerDivDom);
+			divDom.append(imgDivDom);
+		}
+	}
+	else{
+		var imgDivDom = $("<div></div>",{
+			"class" : "img-card"
+		});
+		
+		var spricolDivDom = $("<div></div>",{
+			"class" : "input-box"
+		});
+		
+		var spricolInput1Dom = $("<input/>",{
+			"class" : "mdu-control",
+			"type" : "text",
+			"name" : "mdu1_spricol"
+		});
+		var spricolInput2Dom = $("<input/>",{
+			"class" : "mdu-control",
+			"type" : "text",
+			"name" : "mdu1_sprfcol"
+		});
+		
+		spricolDivDom.append(spricolInput1Dom, spricolInput2Dom);
+		
+		var imgContainerDivDom = $("<div></div>",{
+			"class" : "img-container"
+		});
+		
+		var imgContainerAreaDivDom = $("<div></div>",{
+			"class" : "img-area"
+		});
+		
+		var imgDom = $("<img/>",{
+			"class" : "card-img",
+			"src" : "/img/sy/request_file_img.jpg"
+		});
+		
+		var imgDelAncherDom = $("<a></a>",{
+			"class" : "btn-img-del"
+		});
+		var imgDelAncherIconDom = $("<i></i>",{
+			"class" : "fa-solid fa-xmark"
+		});
+		imgDelAncherDom.append(imgDelAncherIconDom);
+		
+		var imgFileBtnDom = $("<div></div>",{
+			"class" : "img-file-btn"
+		});
+		
+		var imgInputFileDom = $("<input/>",{
+			"class" : "img-input",
+			"type" : "file",
+			"name" : "mdu1_spriimg"
+		});
+		
+		var imgInputFileDelDom = $("<input/>",{
+			"class" : "img-input",
+			"type" : "hidden",
+			"name" : "mdu1_spriimg_del"
+		});
+		
+		var imgButtonCameraUploadDom = $("<button></button>",{
+			"class" : "btn btn-combination",
+			"type" : "button",
+			"name" : "mdu1_btn_camera_img",
+			"text" : "[[#{md.mdu1.camera}]]"
+		});
+		
+		var imgButtonCameraUploadIconDom = $("<i></i>",{
+			"class" : "fa-solid fa-camera"
+		});
+		imgButtonCameraUploadDom.prepend(imgButtonCameraUploadIconDom);
+		
+		var imgButtonFileUploadDom = $("<button></button>",{
+			"class" : "btn btn-combination",
+			"type" : "button",
+			"name" : "mdu1_btn_file_img",
+			"text" : "[[#{bt.upload}]]"
+		});
+		var imgButtonFileUploadIconDom = $("<i></i>",{
+			"class" : "fa-solid fa-arrow-up-from-bracket"
+		});
+		imgButtonFileUploadDom.prepend(imgButtonFileUploadIconDom);
+		
+		imgContainerAreaDivDom.append(
+			imgDom,
+			imgDelAncherDom
+		);
+		imgFileBtnDom.append(
+			imgInputFileDom,
+			imgInputFileDelDom,
+			imgButtonCameraUploadDom,
+			imgButtonFileUploadDom
+		);
+		
+		imgContainerDivDom.append(imgContainerAreaDivDom, imgFileBtnDom);
+		imgDivDom.append(spricolDivDom, imgContainerDivDom);
+		divDom.append(imgDivDom);
+	}
+
+	return divDom;
+}
+
+function mdu1ProcessDetailImageDomCreate(e){
+	
+	var targetDom = $(e).closest("."+pageId+"-process-sku-img");
+	
+	var imgDivDom = $("<div></div>",{
+		"class" : "img-card"
+	});
+	
+	var spricolDivDom = $("<div></div>",{
+		"class" : "input-box"
+	});
+	var spricolInput1Dom = $("<input/>",{
+		"class" : "mdu-control",
+		"type" : "text",
+		"name" : "mdu1_spricol"
+	});
+	var spricolInput2Dom = $("<input/>",{
+		"class" : "mdu-control",
+		"type" : "text",
+		"name" : "mdu1_sprfcol"
+	});
+	
+	spricolDivDom.append(spricolInput1Dom, spricolInput2Dom);
+	
+	var imgContainerDivDom = $("<div></div>",{
+		"class" : "img-container"
+	});
+	
+	var imgContainerAreaDivDom = $("<div></div>",{
+		"class" : "img-area"
+	});
+	
+	var imgDom = $("<img/>",{
+		"class" : "card-img",
+		"src" : "/img/sy/request_file_img.jpg"
+	});
+	
+	var imgDelAncherDom = $("<a></a>",{
+		"class" : "btn-img-del"
+	});
+	var imgDelAncherIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-xmark"
+	});
+	imgDelAncherDom.append(imgDelAncherIconDom);
+	
+	var imgFileBtnDom = $("<div></div>",{
+		"class" : "img-file-btn"
+	});
+	
+	var imgInputFileDom = $("<input/>",{
+		"class" : "img-input",
+		"type" : "file",
+		"name" : "mdu1_spriimg"
+	});
+	
+	var imgInputFileDelDom = $("<input/>",{
+		"class" : "img-input",
+		"type" : "hidden",
+		"name" : "mdu1_spriimg_del"
+	});
+	
+	var imgButtonCameraUploadDom = $("<button></button>",{
+		"class" : "btn btn-combination",
+		"type" : "button",
+		"name" : "mdu1_btn_camera_img",
+		"text" : "[[#{md.mdu1.camera}]]"
+	});
+	
+	var imgButtonCameraUploadIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-camera"
+	});
+	imgButtonCameraUploadDom.prepend(imgButtonCameraUploadIconDom);
+	
+	var imgButtonFileUploadDom = $("<button></button>",{
+		"class" : "btn btn-combination",
+		"type" : "button",
+		"name" : "mdu1_btn_file_img",
+		"text" : "[[#{bt.upload}]]"
+	});
+	var imgButtonFileUploadIconDom = $("<i></i>",{
+		"class" : "fa-solid fa-arrow-up-from-bracket"
+	});
+	imgButtonFileUploadDom.prepend(imgButtonFileUploadIconDom);
+	
+	imgContainerAreaDivDom.append(
+		imgDom,
+		imgDelAncherDom
+	);
+	imgFileBtnDom.append(
+		imgInputFileDom,
+		imgInputFileDelDom,
+		imgButtonCameraUploadDom,
+		imgButtonFileUploadDom
+	);
+	
+	imgContainerDivDom.append(imgContainerAreaDivDom, imgFileBtnDom);
+	imgDivDom.append(spricolDivDom, imgContainerDivDom);
+	targetDom.append(imgDivDom);
+}
+
+function mdu1ProcessDetailImageDomRemove(e){
+	$(e).closest(".img-card").remove();
+}
+//=====================================
+//MSKUSP - 공정 작업지시서 구성 세이브
+//=====================================
+function mdu1SaveProcessDetailSave(){
+	mdu1Depth3SaveFlag = true;
+	
+	var param = mdu1Depth2Data();
+	console.log("param.savetyp => " + param.savetyp);
+	if(param.savetyp == "new"){
+		param.skutkey = "";
+		param.skuskey = "";
+	}
+	else{
+		param.skutkey = skutkey;
+		param.skuskey = skuskey;
+	}
+	
+	
+	var processContianer = $("."+pageId+"-create-process");
+	var domList = processContianer.find("."+pageId+"-process-block");
+
+	var mskupcArr = [];
+	var mskupiArr = [];
+	
+	spinnerOpen();
+	
+	for(var i=0; i<domList.length; i++){
+		
+		var processDom = domList.eq(i);
+		
+		var itemdiv = processDom.data("itemdiv");
+		var itemnum = processDom.data("itemnum");
+		var itegnum = processDom.data("itegnum");
+		var sprocno = processDom.data("sprocno");
+		var spronam = processDom.data("spronam");
+		var sproprc = processDom.data("sproprc");
+		var sprofac = processDom.data("sprofac");
+		var sproday = processDom.data("sproday");
+		var sprotyp = processDom.data("sprotyp");
+		
+		var mskupcObject = param.list.mskupc.filter(function(e){
+			return e.itemdiv == itemdiv && e.itegnum == itegnum && e.sprocno == sprocno;
+		});
+		
+		for(j=0; j<mskupcObject.length; j++){
+			mskupcObject[j].sprdosu = processDom.find("input[name='"+pageId+"_mskupc_sprdosu']").val();
+			mskupcObject[j].sprosiz = processDom.find("textarea[name='"+pageId+"_mskupc_sprosiz']").val();
+			mskupcObject[j].sproreq = processDom.find("textarea[name='"+pageId+"_mskupc_sproreq']").val();
+			
+			var formData	 = new FormData();
+			formData.append("fileNameKey", skuskey);
+			formData.append("uploadPath", "sku");	//uploadPath 가 없을경우 에러 발생 (code : 400)
+			
+			var processFileInput 	= processDom.find(".mdu1-process-img").find("input[type=file]");
+			var processFileInputDel = processDom.find(".mdu1-process-img").find("input[type=hidden]");
+			var fileColumnName = processFileInput.eq(0).attr("name").replace(pageId+"_", "");
+			
+			mskupcObject[j].spxytxt = processDom.find("textarea[name='"+pageId+"_spxytxt']").val();
+			
+			if(processFileInput.eq(0).val() == "" && processFileInputDel.eq(0).val() != "Y"){
+				var columnName = processFileInput.eq(0).attr("name").replace(pageId+"_", "");
+				var imgSrc = processFileInput.eq(0).closest(".img-container").find("img").attr("src").trim();
+				if(imgSrc != "" && imgSrc != "/img/sy/request_file_img.jpg"){
+					mskupcObject[j][columnName] = imgSrc;
+				}
+			}
+			
+			if(processFileInput.eq(0)[0].files[0] != undefined){
+				var originSpxyimgKey = itemdiv+"_"+itegnum+"_"+itemnum+"_"+sprocno+"_"+processFileInput.eq(0).attr("name").replace(pageId+"_", "");
+				var columnName = processFileInput.eq(0).attr("name").replace(pageId+"_", "");
+				
+				formData.append(originSpxyimgKey, processFileInput.eq(0)[0].files[0]);
+				var rdata = callAjax("form", "POST", "/com/upload/fileUpload", formData);
+				var fileResult = JSON.parse(JSON.stringify(rdata.data));
+				mskupcObject[j][columnName] = fileResult[0][originSpxyimgKey];
+			}
+		}
+		
+		var processSkuDom = processDom.find(".mdu1-process-sku-img");
+		
+		var processSkuFileInput 	= processSkuDom.find("input[type=file]");
+		var processSkuFileInputDel 	= processSkuDom.find("input[type=hidden]");
+		
+		for(var j=0; j<processSkuFileInput.length; j++){
+			var mskupiObject = new Object();
+			mskupiObject.itemdiv = processDom.data("itemdiv");
+			mskupiObject.itegnum = processDom.data("itegnum");
+			mskupiObject.itemnum = processDom.data("itemnum");
+			mskupiObject.sprocno = processDom.data("sprocno");
+			
+			var fileColumnName = processSkuFileInput.eq(j).attr("name").replace(pageId+"_", "");
+
+			mskupiObject.spricol = processSkuFileInput.eq(j).closest(".img-card").find("input[name='"+pageId+"_spricol']").val();
+			mskupiObject.sprfcol = processSkuFileInput.eq(j).closest(".img-card").find("input[name='"+pageId+"_sprfcol']").val();
+
+			console.log("processSkuFileInput => " +j+"_"+ mskupiObject.spricol );
+			
+			if(processSkuFileInput.eq(j).val() == "" && processSkuFileInputDel.eq(j).val() != "Y"){
+				var columnName = processSkuFileInput.eq(j).attr("name").replace(pageId+"_", "").replace("_del", "");
+				var imgSrc = processSkuFileInput.eq(j).closest(".img-container").find("img").attr("src").trim();
+				if(imgSrc != "" && imgSrc != "/img/sy/request_file_img.jpg"){
+					mskupiObject[columnName] = imgSrc;
+				}
+			}
+			
+			if(processSkuFileInput.eq(j)[0].files[0] != undefined){
+				
+				var originSpriimgKey = mskupiObject.itemdiv+"_"+mskupiObject.itegnum+"_"+mskupiObject.itemnum+"_"+mskupiObject.sprocno+"_"+mskupiObject.sprocno+"_"+j+"_"+processSkuFileInput.eq(j).attr("name").replace(pageId+"_", "");
+				var columnName = processSkuFileInput.eq(j).attr("name").replace(pageId+"_", "");
+				
+				var formData	 = new FormData();
+				formData.append("fileNameKey", skuskey);
+				formData.append("uploadPath", "sku");	//uploadPath 가 없을경우 에러 발생 (code : 400)
+				formData.append(originSpriimgKey, processSkuFileInput.eq(j)[0].files[0]);
+				var rdata2 = callAjax("form", "POST", "/com/upload/fileUpload", formData);
+				var fileResult2 = JSON.parse(JSON.stringify(rdata2.data));
+				mskupiObject[columnName] = fileResult2[0][originSpriimgKey];
+			}
+			
+			//if(mskupiObject.spricol.trim() != ""){
+				mskupiArr.push(mskupiObject);
+			//}
+		}
+	}
+	
+	spinnerClose();
+	
+	mdu1Depth3SaveFlag = false;
+	
+	param.list.mskupi = mskupiArr;
+	
+	var inputData 		= mdu1DetailInfoData();
+	var combinationData = mdu1CombinationData(inputData);
+	var gridData 		= mdu1DetailTableData(inputData);
+	
+	//=====================================
+	// Validation  - Start
+	//=====================================
+	var validation = mdu1Depth1Vaildation(inputData, gridData);
+	if(!validation){
+		return false;
+	}
+	
+	var validation = mdu1Depth3Vaildation(param);
+	if(!validation){
+		return false;
+	}
+	
+	if(mdu1Depth3SaveFlag == false){
+		mdu1Depth3SaveFlag = true;
+		spinnerOpen();
+		var result = callAjax("data", "POST", "/md/mdu1Save.do", param);
+		
+		if(result != undefined && result.code == "200"){
+			//작업지시서 갱신
+			skutkey = result.skutkey;
+			skuskey = result.skuskey;
+			mdu1InitSelectData();
+			$("input[name='mdu1_save_type']").prop("checked", false);
+			
+			alert("[[#{ms.saveSuccess}]]");
+		}else{
+			alert("[[#{ms.mdu1.savingError}]]");
+		}
+		mdu1Depth3SaveFlag = false;
+		spinnerClose();
+		return true;
+	}else{
+		alert("[[#{ms.mdu1.saving}]]");
+		return false;
+	}
+}
+/*************************************************
+ * MDU1 FileUpload
+ *************************************************/
+//=====================================
+// MSKUSZ - 메인지시서 메인이미지
+//=====================================
+
+function fileValidation(file){
+	
+	var result = "OK";
+	var maxSize = 4 * 1024 * 1024; // 4MB
+	
+	var ext = $(file).val().split(".").pop().toLowerCase();		
+
+	if($(file).val().trim() == ""){
+		result = "NOT";
+		return result;
+	}
+	
+	if($.inArray(ext, ["jpg", "jpeg", "png", "gif", "bmp", "pdf"]) == -1) {
+		alert("[[#{ms.fileUploadExtError}]]");
+		result = "EXT";
+		return result;
+	}
+	
+	var fileSize = $(file)[0].files[0].size;
+	
+	if(fileSize > maxSize){
+		alert("[[#{ms.fileUploadMaximumOver}]]");
+		result = "SIZE";
+		return result;
+	}
+	
+	return result;
+}
+
+$(function(){
+	
+	$(document).on("click", "button[name='mdu1_btn_file_img'], button[name='mdu1_btn_camera_img']", function(){
+		var btnDom = $(this).closest(".img-file-btn");
+		var fileDom = btnDom.find("input[type='file']");
+		fileDom.click();
+	});
+	
+	$(document).on("change", "input.img-input[type='file']",function(){
+		var fileCheck = fileValidation($(this)[0]);
+		
+		switch(fileCheck)
+		{
+			case "OK":
+				readInputFile(this, $(this).closest(".img-container").find(".card-img"));
+				$(this).closest(".img-file-btn").find("input[type='hidden']").val("");
+			break;
+			case "SIZE":
+				$(this).val("");
+			break;
+		}
+	});
+	
+	$(document).on("click", ".btn-img-del",function(){;
+		var imgDom = $(this).closest(".img-area").find("img");
+		imgDom.attr("src", "/img/sy/request_file_img.jpg");
+		var delDom = $(this).closest(".img-container").find(".img-file-btn").find("input[type='hidden']");
+		$(this).closest(".img-container").find(".img-file-btn").find("input[type='file']").val("");
+		delDom.val("Y");
+	});
+});
+
+function readInputFile(input, dom) {
+	if(input.files && input.files[0]) {
+		var reader = new FileReader();
+		reader.onload = function (e) {
+			dom.attr("src",e.target.result);
+		}
+		reader.readAsDataURL(input.files[0]);
+	}
+}
+
+function capitalize(str) {
+	return str.charAt(0).toUpperCase() + str.slice(1);
+}
+</script>
+<div class="modal fade" id="mdu1_detail_grid_modal_div" tabindex="-1">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title h4" th:text="${gnatitle}"></h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+	      	<div class="modal-body">
+	      		<div class="modal-inbody">
+		      		<div id="mdu1_detail_grid" class="mdu1_detail_grid">
+						<table class="table table-mdu" id="mdu1_detail_table">
+							<thead>
+								<tr>
+									<th colspan="7">[[#{md.mdu1.infoFabric}]]</th>
+									<th rowspan="2">[[#{md.mdu1.sidiary}]]</th>
+									<th rowspan="2">[[#{md.mdu1.sproprc}]]</th>
+									<th rowspan="2">[[#{md.mskcst.itmcost}]]</th>
+									<th rowspan="2">[[#{md.mskcst.selpric}]]</th>
+								</tr>
+								<tr>
+									<th class="td-check">대상</th>
+									<th>[[#{wm.wshpit.skugr04}]]</th>
+									<th>[[#{md.mdu1.size}]]</th>
+									<th>[[#{md.mdu1.skucolo}]]</th>
+									<th>[[#{md.mdu1.fabcolo}]]</th>
+									<th>[[#{md.mskusz.roinqty}]]</th>
+									<th>[[#{md.mskcst.consnum}]]</th>
+									<th>[[#{md.mskcst.conspri}]]</th>
+								</tr>
+							</thead>
+							<tbody>
+								
+							</tbody>
+						</table>
+					</div>
+				</div>
+	      	</div>
+	      	<div class="modal-footer">
+	        	<button type="button" id="mdu1_detail_grid_modal_close" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+	      	</div>
+	    </div>
+	</div>
+</div>
+<div class="tab-inner">
+	<div class="content-header">
+		<div class="header-left">
+			<div class="page-title">
+				 <h1 th:text="${gnatitle}"></h1>
+			</div>
+		</div>
+		<div class="header-right">
+			<button class="btn main-btn"><i class="fa-solid fa-arrows-rotate"></i></button>
+			<button class="btn main-btn"><i class="fa-solid fa-print"></i></button>	
+			<button th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}"  th:pprogrid="${gprogrid}"  onclick="bookmarkclick(this );"><i class="fa-solid fa-star"></i></button>				
+		</div>
+	</div>
+	
+	<div class="nav-tab-container">
+		<ul class="nav nav-tabs mdu1-step-nav">
+			<li class="nav-item">
+				<a href="#" id="mdu-btn1" class="nav-link active" onclick="mdu1StepInit(1);">[[#{md.mdu1.tab1Name}]]</a>
+			</li>
+			<li class="nav-item">
+				<a href="#" id="mdu-btn2" class="nav-link" onclick="mdu1StepInit(2);">[[#{md.mdu1.tab2Name}]]</a>
+			</li>
+			<li class="nav-item">
+				<a href="#" id="mdu-btn3" class="nav-link" onclick="mdu1StepInit(3);">[[#{md.mdu1.tab3Name}]]</a>
+			</li>
+		</ul>
+		<div id="mdu1-step1" class="mdu1-step">
+			<div class="mdu1-create-code" style="width:100%;">
+				<div class="contents">
+					<!-- 상품코드채번 -->
+					<div class="block">
+						<div class="mdu-title"><h4>[[#{md.mdu1.step1Title1}]]</h4></div>
+						<div class="table-scroll-container">
+							<table class="table table-mdu">
+								<colgroup>
+									<col width="16%">
+									<col width="34%">
+									<col width="16%">
+									<col width="34%">
+								</colgroup>
+								<tbody>
+									<tr>
+										<th>[[#{md.mdu1.skutkey}]]</th>
+										<td><input name="mdu1_skutkey" id="mdu1_skutkey" class="mdu-control" value="" readonly=""></td>
+										<th>[[#{md.mdu1.skudesc}]]</th>
+										<td><input name="mdu1_skudesc" id="mdu1_skudesc" class="mdu-control" value="" th:placeholder="${#messages.msg('md.mdu1.phskudesc')}"></td>
+									</tr>
+									
+								</tbody>
+							</table>
+						</div>
+					</div>
+					
+					<!-- 메인정보 -->
+					<div class="block">
+						<div class="mdu-title"><h4>[[#{md.mdu1.step1Title2}]]</h4></div>
+						<div class="table-scroll-container">
+							<table class="table table-mdu">
+								<colgroup>
+									<col width="16%">
+									<col width="34%">
+									<col width="16%">
+									<col width="34%">
+								</colgroup>
+								<tbody>
+									<tr>
+										<th>[[#{md.mskusp.ownerky}]]</th>
+										<td><input type="text" name="mdu1_ownerky" id="mdu1_ownerky" class="mdu-control" value="" readonly=""></td>
+										<th>[[#{md.mskusp.designe}]]</th>
+										<td><input type="text" name="mdu1_designe" id="mdu1_designe" class="mdu-control" value="" th:placeholder="${#messages.msg('md.mdu1.phdesigne')}"></td>
+									</tr>
+									<tr>
+										<th>[[#{md.mskusp.brandnm}]]</th>
+										<td>
+											<div class="md-row">
+												<select name="mdu1_brandnm" id="mdu1_brandnm" class="mdu-control mr-1"></select>
+											</div>
+										</td>
+										<th>[[#{md.mdu1.savetyp}]]</th>
+										<td>
+											<div class="md-row">
+												<ul id="mdu1_save_type_ul">
+													<li>
+														<span><input type="checkbox" name="mdu1_save_type"/></span>
+														<span>[[#{md.mdu1.new}]]</span>
+													</li>
+												</ul>
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<th>[[#{md.mskusp.seasona}]]</th>
+										<td >
+											<ul id="mdu1_seasona_ul"></ul>
+										</td>
+										<th>[[#{md.mskusp.stryear}]]</th>
+										<td>
+											<select name="mdu1_stryear" id="mdu1_stryear" class="mdu-control">
+												<option value="">[[#{md.mdu1.select}]]</option>
+												<option value="">[[#{md.mdu1.nowYear}]]</option>
+												<option value="">[[#{md.mdu1.nextYear}]]</option>
+											</select>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					
+					<!-- 구분 -->
+					<div class="block">
+						<div class="mdu-title"><h4>[[#{md.mdu1.sizecod}]]</h4></div>
+						<div class="table-scroll-container">
+							<table class="table table-mdu">
+								<colgroup>
+									<col width="16%">
+									<col width="auto">
+								</colgroup>
+								<tbody>
+									<tr>
+										<th>[[#{md.mdu1.updncod}]]</th>
+										<td><ul id="mdu1_skuupdn_ul"></ul>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+						
+					<!-- 상품 컬러  -->
+					<div class="block">
+						<div class="mdu-title"><h4>[[#{md.mdu1.skugr04}]]</h4></div>
+						<div class="table-scroll-container">
+							<table class="table table-mdu" id="mdu1_skugr04_main_table">
+								<colgroup>
+									<col width="16%">
+									<col width="auto">
+								</colgroup>
+								<thead>
+									<tr>
+										<th scope="col">[[#{md.mdu1.itemnum}]]</th>
+										<th scope="col" style="width: auto; ">
+											[[#{md.mdu1.skugr04}]]
+											<button id="mdu1_skugr04_add" class="mdu-add-button">
+												<i class="fa-solid fa-plus"></i>[[#{bt.add}]]
+											</button>
+										</th>
+										<!-- <th scope="col" id="mdu1_skugr04_add">+</th> -->
+									</tr>
+								</thead>
+								<tbody id="mdu1_skugr04_row">
+									<!-- function mdu1Skugr04Add -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+					
+					<!-- 사이즈 -->
+					<div class="block">
+						<div class="mdu-title"><h4>[[#{md.mdu1.size}]]</h4></div>
+						<div class="table-scroll-container">
+							<table class="table table-mdu" id="mdu1_size_main_table">
+								<colgroup>
+									<col width="16%">
+									<col width="auto">
+								</colgroup>
+								<tbody id="mdu1_sksizes_general">
+									<!-- function mdu1SksizesGeneralInit -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+					
+					<!-- 주원단/부원단 탭 -->
+					<div class="mdu-tab tab">
+						<div class="tab-li">
+							<ul class="nav nav-tabs mdu-nav-tabs" id="mdu1_nav_tab">
+								<!-- function mdu1MaterialCreate -->
+							</ul>
+						</div>
+						<div class="tab-content" id="mdu1_nav_tab_content">
+							<!-- function mdu1MaterialCreate -->
+						</div>
+						
+						<!-- 원단 조합 -->
+						<div class="border-box">
+							<div class="block">
+								<div class="mdu-title">
+									<h4>[[#{md.mdu1.combination}]]</h4>
+									<button class="btn btn-combination" onclick="mdu1CombinationRefresh();">[[#{md.mdu1.combinationRefresh}]]</button>
+								</div>
+								<div class="table-container">
+									<table class="table table-mdu table-group material-combination">
+									<!-- function mdu1CombinationCreate -->
+									</table>
+								</div>
+							</div>
+						</div>
+						
+						<!-- 가격 정보 -->
+						<div class="block mdu-price">
+							<div class="mdu-title mdu-price-title"><h4>가격 정보</h4><button type="button" class="btn btn-combination" id="mdu1_grid_detail_view">[[#{md.mdu1.detailPopup}]]</button></div>
+							<div class="table-container">
+								<table class="mdu-price-table" id="mdu1_mskusp">
+									<tbody>
+										<tr>
+											
+											<td>[[#{md.mdu1.summaryPriceTitle}]] <span name="mdu1_itmcost"></span><span>[[#{md.mdu1.currencyType}]]</span></td>
+											<td>
+												<div class="md-row">
+													<span>[[#{md.mskusp.selpric}]]</span><input name="mdu1_selpric" class="mdu-control small mr-1"><span>[[#{md.mdu1.currencyType}]]</span>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+					<div class="btn-container">
+						<button type="button" id="mdu1_depth1_save" class="btn btn-main-lg">[[#{md.mdu1.next}]]</button>
+					</div>
+				<!--  contents 끝 -->
+				</div>
+			<!-- div mdu1-create-code 끝-->
+			</div>
+		<!--  mdu1-step1 끝-->
+		</div>
+		
+		<!--  mdu1-step2 시작-->
+		<div id="mdu1-step2" class="mdu1-step" style="display: none;">	
+			<div class="mdu1-create-composition">
+				<div class="block">
+					<div class="mdu-title"><h4>[[#{md.mdu1.mainImage}]]</h4></div>
+					<div class="table-container">
+						<table class="table table-mdu">
+							<tbody>
+								<tr>
+									<th>[[#{md.mdu1.printSelect}]]</th>
+									<td>
+										<div class="block-img mdu1-sku-img">
+											<div class="img-card">
+												<div class="print-spcimt">
+													<input type="text" name="mdu1_spcimt1" id="mdu1_spcimt1" class="mdu-control" value="">
+												</div>
+												<div class="img-container">
+													<div class="print-area-radio"><input type="radio" name="mdu1_prtimgv" value="spcimg1"></div>
+													<div class="img-area">
+														<img class="card-img" src="/img/sy/request_file_img.jpg">
+														<a class="btn-img-del"><i class="fa-solid fa-xmark"></i></a>
+													</div>
+													<div class="img-file-btn">
+														<input class="img-input" type="file" name="mdu1_spcimg1" id="mdu1_spcimg1">
+														<input class="img-input" type="hidden" name="mdu1_spcimg1_del" id="mdu1_spcimg1_del">
+														<button type="button" name="mdu1_btn_camera_img" class="btn btn-combination"><i class="fa-solid fa-camera"></i>[[#{md.mdu1.camera}]]</button>
+														<button type="button" name="mdu1_btn_file_img" class="btn btn-combination"><i class="fa-solid fa-arrow-up-from-bracket"></i>[[#{bt.upload}]]</button>
+													</div>
+												</div>
+											</div>
+											<div class="img-card">
+												<div class="print-spcimt">
+													<input type="text" name="mdu1_spcimt2" id="mdu1_spcimt2" class="mdu-control" value="">
+												</div>
+												<div class="img-container">
+													<div class="print-area-radio"><input type="radio" name="mdu1_prtimgv" value="spcimg2"></div>
+													<div class="img-area">
+														<img class="card-img" src="/img/sy/request_file_img.jpg">
+														<a class="btn-img-del"><i class="fa-solid fa-xmark"></i></a>
+													</div>
+													<div class="img-file-btn">
+														<input class="img-input" type="file" name="mdu1_spcimg2" id="mdu1_spcimg2">
+														<input class="img-input" type="hidden" name="mdu1_spcimg2_del" id="mdu1_spcimg2_del">
+														<button type="button" name="mdu1_btn_camera_img" class="btn btn-combination"><i class="fa-solid fa-camera"></i>[[#{md.mdu1.camera}]]</button>
+														<button type="button" name="mdu1_btn_file_img"class="btn btn-combination"><i class="fa-solid fa-arrow-up-from-bracket"></i>[[#{bt.upload}]]</button>
+													</div>
+												</div>
+											</div>
+											<div class="img-card">
+												<div class="print-spcimt">
+													<input type="text" name="mdu1_spcimt3" id="mdu1_spcimt3" class="mdu-control" value="">
+												</div>
+												<div class="img-container">
+													<div class="print-area-radio"><input type="radio" name="mdu1_prtimgv" value="spcimg3"></div>
+													<div class="img-area">
+														<img class="card-img" src="/img/sy/request_file_img.jpg">
+														<a class="btn-img-del"><i class="fa-solid fa-xmark"></i></a>
+													</div>
+													<div class="img-file-btn">
+														<input class="img-input" type="file" name="mdu1_spcimg3" id="mdu1_spcimg3">
+														<input class="img-input" type="hidden" name="mdu1_spcimg3_del" id="mdu1_spcimg3_del">
+														<button type="button" name="mdu1_btn_camera_img" class="btn btn-combination"><i class="fa-solid fa-camera"></i>[[#{md.mdu1.camera}]]</button>
+														<button type="button" name="mdu1_btn_file_img" class="btn btn-combination"><i class="fa-solid fa-arrow-up-from-bracket"></i>[[#{bt.upload}]]</button>
+													</div>
+												</div>
+											</div>
+											<div class="img-card">
+												<div class="print-spcimt">
+													<input type="text" name="mdu1_spcimt4" id="mdu1_spcimt4" class="mdu-control" value="">
+												</div>
+												<div class="img-container">
+													<div class="print-area-radio"><input type="radio" name="mdu1_prtimgv" value="spcimg4"></div>
+													<div class="img-area">
+														<img class="card-img" src="/img/sy/request_file_img.jpg">
+														<a class="btn-img-del"><i class="fa-solid fa-xmark"></i></a>
+													</div>
+													<div class="img-file-btn">
+														<input class="img-input" type="file" name="mdu1_spcimg4" id="mdu1_spcimg4">
+														<input class="img-input" type="hidden" name="mdu1_spcimg4_del" id="mdu1_spcimg4_del">
+														<button type="button" name="mdu1_btn_camera_img" class="btn btn-combination"><i class="fa-solid fa-camera"></i>[[#{md.mdu1.camera}]]</button>
+														<button type="button" name="mdu1_btn_file_img" class="btn btn-combination"><i class="fa-solid fa-arrow-up-from-bracket"></i>[[#{bt.upload}]]</button>
+													</div>
+												</div>
+											</div>
+											<div class="img-card">
+												<div class="print-spcimt">
+													<input type="text" name="mdu1_spcimt5" id="mdu1_spcimt5" class="mdu-control" value="">
+												</div>
+												<div class="img-container">
+													<div class="print-area-radio"><input type="radio" name="mdu1_prtimgv" value="spcimg5"></div>
+													<div class="img-area">
+														<img class="card-img" src="/img/sy/request_file_img.jpg">
+														<a class="btn-img-del"><i class="fa-solid fa-xmark"></i></a>
+													</div>
+													<div class="img-file-btn">
+														<input class="img-input" type="file" name="mdu1_spcimg5" id="mdu1_spcimg5">
+														<input class="img-input" type="hidden" name="mdu1_spcimg5_del" id="mdu1_spcimg5_del">
+														<button type="button" name="mdu1_btn_camera_img" class="btn btn-combination"><i class="fa-solid fa-camera"></i>[[#{md.mdu1.camera}]]</button>
+														<button type="button" name="mdu1_btn_file_img" class="btn btn-combination"><i class="fa-solid fa-arrow-up-from-bracket"></i>[[#{bt.upload}]]</button>
+													</div>
+												</div>
+											</div>
+										</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<div class="block">
+					<div class="mdu-title"><h4>전달사항</h4></div>
+					<div class="table-container">
+						<table class="table table-mdu">
+							<tbody>
+								<tr>
+									<th>주요작업내용</th>
+									<td style="width: auto; "><textarea name="mdu1_skuifrk" class="mdu-text-control" placeholder="내용을 입력하세요"></textarea></td>
+								</tr>
+								<tr>
+									<th>수정사항</th>
+									<td style="width: auto; "><textarea name="mdu1_modifrk" class="mdu-text-control"></textarea></td>
+								</tr>
+								<tr>
+									<th>재단시 주의사항</th>
+									<td style="width: auto; "><textarea name="mdu1_foundrk" class="mdu-text-control" placeholder="내용을 입력하세요"></textarea></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<div class="block">
+					<div class="mdu-title"><h4>원단이미지</h4></div>
+					<div class="table-container">
+						<table class="table table-mdu">
+							<tbody>
+								<tr>
+									<th>인쇄선택</th>
+									<td style="width: auto;">
+										<div class="print-area">
+											<div class="print-area-radio">
+												<ul>
+													<li><input type="radio" name="mdu1_sitimgv" value="mskusp"><span>메인만</span></li>
+												</ul>	
+											</div>
+										</div>
+										<div class="block-img mdu1-material-img">
+											<div class="img-card mdu1-material-main-img">
+												<div class="print-spcimt">
+													<input type="text" name="mdu1_sitimtm" id="mdu1_sitimtm" class="mdu-control" value="">
+												</div>
+												<div class="img-container">
+													<div class="img-area">
+														<img class="card-img" src="/img/sy/request_file_img.jpg">
+														<a class="btn-img-del"><i class="fa-solid fa-xmark"></i></a>
+													</div>
+													<div class="img-file-btn">
+														<input class="img-input" type="file" name="mdu1_sitimgm" id="mdu1_sitimgm">
+														<input class="img-input" type="hidden" name="mdu1_sitimgm_del" id="mdu1_sitimgm_del">
+														<button type="button" name="mdu1_btn_camera_img" class="btn btn-combination"><i class="fa-solid fa-camera"></i>[[#{md.mdu1.camera}]]</button>
+														<button type="button" name="mdu1_btn_file_img" class="btn btn-combination"><i class="fa-solid fa-arrow-up-from-bracket"></i>[[#{bt.upload}]]</button>
+													</div>
+												</div>
+											</div>
+										</div>
+									</td>
+									<td style="width: auto;">
+										<div class="print-area">
+											<div class="print-area-radio">
+												<ul>
+													<li><input type="radio" name="mdu1_sitimgv" value="mskuit"><span>하나씩</span></li>
+												</ul>	
+											</div>
+										</div>
+										<div class="block-img mdu1-material-img single">
+										</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<!-- 치수 정보 -->
+				<div class="block">
+					<div class="mdu-title"><h4>[[#{md.mdu1.infoMskusi}]]</h4></div>
+					<div class="table-container" id="mdu1_mskusi">
+					</div>
+				</div>
+				<div class="btn-container">
+					<button type="button" id="mdu1_depth2_save" class="btn btn-main-lg">[[#{md.mdu1.next}]]</button>
+				</div>
+			</div>
+		</div>
+		<!--  mdu1-step2 끝-->
+		
+		<!--  mdu1-step3 시작-->
+		<div id="mdu1-step3" class="mdu1-step" style="display: none;">	
+			<div class="mdu1-create-process" name="mdu1_process_container">
+			</div>
+			<div class="btn-container">
+				<button type="button" id="mdu1_depth3_save" class="btn btn-main-lg">[[#{bt.save}]]</button>
+			</div>
+		</div>
+		<!--  mdu1-step3 끝 -->
+	<!-- nav-tab-container 끝 -->
+	</div>
+<!-- tab-inner 끝 -->	
+</div>					
+</div>
+</html>

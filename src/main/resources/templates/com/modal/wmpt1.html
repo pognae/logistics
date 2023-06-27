@@ -1,0 +1,460 @@
+<div class="modal fade" id="wmpt1ModalLayerPopup" tabindex="-1">
+	<div class="modal-dialog modal-xl">
+		<div class="modal-content">
+			<div class="modal-body">
+				<div class="modal-top-btn-area">
+		      		<button type="button" id="wmpt1ModalLayerPopupPrintBtn" class="btn btn-primary"><i class="fa-solid fa-print"></i></button>
+					<button type="button" id="wmpt1ModalLayerPopupCloseBtn" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+	      		</div>
+				<div class="wmpt1-wrap">
+					<div class="layout-a4" id="wmpt1_print_wrap">
+						<div class="wmpt1-contents-wrap">
+							<div class="wmpt1-header">
+								<div class="wmpt1-title"><span id="wmpt1_brand">메인</span><span id="wmpt1_title_name">작업지시서</span></div>
+							</div>
+							<div class="wmpt1-middle">
+								<div class="wmpt1-content-header">
+									<ul>
+										<li>
+											<p class="wd-15">날짜</p>
+											<p class="wd-35" id="wmpt1_credate"></p>
+											<p class="wd-15">디자이너</p>
+											<p class="wd-35" id="wmpt1_designe"></p>
+										</li>
+										<li>
+											<p class="wd-15">품번</p>
+											<p class="wd-35" id="wmpt1_skutkey"></p>
+											<p class="wd-15">생산처</p>
+											<p class="wd-35" id="wmpt1_ptnamlc"></p>
+										</li>
+										<li>
+											<p class="wd-15">품명</p>
+											<p class="wd-35" id="wmpt1_skudesc"></p>
+											<p class="wd-15">1절 장수</p>
+											<p class="wd-35" id="wmpt1_roinqty"></p>
+										</li>
+										<li>
+											<p class="wd-15">소재</p>
+											<p class="wd-35" id="wmpt1_itemnam"></p>
+											<p class="wd-15">혼용률</p>
+											<p class="wd-35" id="wmpt1_mixrato"></p>
+										</li>
+									</ul>
+								</div>
+								<div class="wmpt1-content-middle">
+									<div class="wmpt1-content-images">
+										<div class="wmpt1-img-container">
+											<img src="/img/sy/request_file_img.jpg" id="wmpt1_spcimg">
+										</div>
+									</div>
+									<div class="wmpt1-content-table">
+										<div class="wmpt1-content-table-right">
+											<ul class="info">
+												<li class="info-top-title">
+													<p class="wd-100 ht-100 bd-none"><원가계산></p>
+												</li>
+												<li>
+													<p class="info-title">원단가</p>
+													<p class="info-contents" id="wmpt1_fabpric"></p>
+												</li>
+												<!-- li>
+													<p class="info-title">리쁘</p>
+													<p class="info-contents"></p>
+												</li-->
+												<li>
+													<p class="info-title">요척</p>
+													<p class="info-contents" id="wmpt1_consnum"></p>
+												</li>
+												
+												<li>
+													<p class="info-title">공임</p>
+													<p class="info-contents" id="wmpt1_sproprc"></p>
+												</li>
+												<li>
+													<p class="info-title">원가</p>
+													<p class="info-contents" id="wmpt1_itmcost"></p>
+												</li>
+												<li>
+													<p class="info-title">판매가</p>
+													<p class="info-contents" id="wmpt1_selpric"></p>
+												</li>
+											</ul>
+										</div>
+									</div>
+								</div>
+								<div class="wmpt1-content-middle modify-area">
+									<div class="wmpt1-content-textarea">
+										<div class="wmpt1-content-textarea-flex">
+											<div class="wmpt1_skuifrk_view">
+												<p><주요사항></p>
+												<div id="wmpt1_skuifrk"></div>
+											</div>
+											<div class="wmpt1_modifrk_view">
+												<p><수정사항></p>
+												<div id="wmpt1_modifrk"></div>
+											</div>
+											<div class="wmpt1_foundrk_view">
+												<p><주의사항></p>
+												<div id="wmpt1_foundrk"></div>
+											</div>
+										</div>
+									</div>
+									<div class="wmpt1-content-table">
+										<div class="wmpt1-content-table-right">
+											<ul class="wmpt1-sidiary" id="wmpt1_sidiary">
+												<li class="wmpt1-sidiary-top-title">
+													<p class="wd-100 ht-100 bd-none"><부자재></p>
+												</li>
+											</ul>
+										</div>
+									</div>
+								</div>
+								<div class="wmpt1-content-middle">
+									<div class="wmpt1-content-images wmpt1-bottom-image">
+										<div class="wmpt1-img-container" id="wmpt1_sitimgv">
+											<img src="/img/sy/request_file_img.jpg"/>
+										</div>
+									</div>
+									<div class="wmpt1-content-table">
+										<div class="wmpt1-content-table-right wmpt1-content-size-table" id="wmpt1_size_table">
+											<ul id="wmpt1_size_tbody">
+											</ul>
+										</div>
+									</div>
+								</div>
+								
+							</div>
+							<div class="wmpt1-footer">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script th:inline="javascript">
+$(function(){
+	var pageId = "wmpt1";
+	var parentParam = /*[[${params}]]*/ null;
+	    
+	var wmpt1ModalOBject = $("#wmpt1ModalLayerPopup");
+	wmpt1ModalOBject.modal("show");
+	
+	initData(parentParam);
+	
+	function initDate(){
+		var today = new Date();
+		var date = today.getFullYear()+'.'+(today.getMonth()+1).toString().padStart(2,"0")+'.'+today.getDate().toString().padStart(2,"0");
+		var time = today.getHours().toString().padStart(2,"0")+':'+today.getMinutes().toString().padStart(2,"0")+':'+today.getSeconds().toString().padStart(2,"0");
+		$(".wmpt1-print-date-span").text(date);
+		$(".wmpt1-print-time-span").text(time);
+	}
+	
+		
+	function qrCreate(url){
+		var urlText = url ? url : "http://www.naver.com"; 
+		$(".qr-code").children().remove();
+		$(".qr-code").qrcode({   //qrcode 시작        
+			render : "canvas",      //table, canvas 형식 두 종류가 있다.         
+			width : 150,            //넓이 조절        
+			height : 150,           //높이 조절        
+			text   : urlText
+		});
+	}
+	
+	function initData(param){
+		var rData = callAjax("data", "GET", "/wm/wmpt1List.do", param);
+		
+		if(rData.item.mskuspData.length > 0){
+			initInfoTable(rData.item);
+			initInfoMskuszTable(rData.item);
+			initInfoMskusbTable(rData.item);
+			initInfoMskuitTable(rData.item);
+			initInfoMskuitTableCost(rData.item);
+			initInfoMskusiTable(rData.item);
+		}
+	}
+
+	function initInfoTable(data){
+		var mskuspData = data.mskuspData[0];
+		
+		$("#"+pageId+"_credate").text(mskuspData.credate);
+		$("#"+pageId+"_designe").text(mskuspData.designe);
+		$("#"+pageId+"_skutkey").text(mskuspData.skutkey);
+		$("#"+pageId+"_skudesc").text(mskuspData.skudesc);
+		$("#"+pageId+"_spcimg").attr("src", mskuspData[mskuspData.prtimgv]);
+		
+		$("#"+pageId+"_ptnamlc").text(mskuspData.ptnamlc);
+		$("#"+pageId+"_itemnam").text(mskuspData.itemnam);
+		$("#"+pageId+"_mixrato").text(mskuspData.mixrato);
+		
+		$("#"+pageId+"_sproprc").text(comma(mskuspData.sproprc));
+		$("#"+pageId+"_itmcost").text(comma(mskuspData.itmcost));
+		$("#"+pageId+"_selpric").text(comma(mskuspData.selpric));
+		
+		$("."+pageId+"_skuifrk_view").hide();
+		$("."+pageId+"_modifrk_view").hide();
+		$("."+pageId+"_foundrk_view").hide();
+		
+		if(mskuspData.skuifrk != undefined && mskuspData.skuifrk.trim() != ""){
+			$("."+pageId+"_skuifrk_view").show();
+			$("#"+pageId+"_skuifrk").text(mskuspData.skuifrk);
+		}
+		if(mskuspData.modifrk != undefined && mskuspData.modifrk.trim() != ""){
+			$("."+pageId+"_modifrk_view").show();
+			$("#"+pageId+"_modifrk").text(mskuspData.modifrk);
+		}
+		if(mskuspData.foundrk != undefined && mskuspData.foundrk.trim() != ""){
+			$("."+pageId+"_foundrk_view").show();
+			$("#"+pageId+"_foundrk").text(mskuspData.foundrk);
+		}
+	}
+	
+	function initInfoMskuitTableCost(data){
+		var mskuitData = data.mskuitData;
+		
+		var htmlFabpric = "";
+		
+		for(var i=0; i<mskuitData.length; i++){
+			htmlFabpric += mskuitData[i].skugr04;
+			htmlFabpric += "(";
+			htmlFabpric += comma(mskuitData[i].fabpric);
+			htmlFabpric += ")";
+			htmlFabpric += " ";
+		}
+		
+		$("#"+pageId+"_fabpric").text(htmlFabpric);
+	}
+	
+	function initInfoMskuszTable(data){
+		var mskuszData = data.mskuszData;
+
+		var htmlRoinqty = "";
+		var htmlConsnum = "";
+		
+		for(var i=0; i<mskuszData.length; i++){
+			htmlRoinqty += mskuszData[i].sizecod;
+			htmlRoinqty += "(";
+			htmlRoinqty += mskuszData[i].roinqty;
+			htmlRoinqty += ")";
+			htmlRoinqty += " ";
+		}
+		
+		for(var i=0; i<mskuszData.length; i++){
+			htmlConsnum += mskuszData[i].sizecod;
+			htmlConsnum += "(";
+			htmlConsnum += mskuszData[i].consnum;
+			htmlConsnum += ")";
+			htmlConsnum += " ";
+		}
+		
+		$("#"+pageId+"_roinqty").text(htmlRoinqty);
+		$("#"+pageId+"_consnum").text(htmlConsnum);
+	}
+	
+	function initInfoMskusbTable(data){
+		var mskusbData = data.mskusbData;
+		var sidiaryDom = $("#"+pageId+"_sidiary");
+		
+		for(var i=0; i<mskusbData.length; i++){
+			var liDom = $("<li></li>");
+			var titleDom = $("<p></p>",{
+				"class" : "wmpt1-sidiary-title",
+				"text" : mskusbData[i].submtnm
+			})
+			var contentDom = $("<p></p>",{
+				"class" : "wmpt1-sidiary-contents",
+				"text" : mskusbData[i].subtext+" "+"("+comma(mskusbData[i].submtpr)+")"
+			})
+			liDom.append(titleDom, contentDom);
+			sidiaryDom.append(liDom);
+		}
+		
+	}
+	
+	function initInfoMskuitTable(data){
+		var mskuspData = data.mskuspData[0];
+		var imgDivDom = $("#"+pageId+"_sitimgv");
+		
+		if(mskuspData.sitimgv == "mskusp"){
+			if(mskuspData.sitimgm != "" && mskuspData.sitimgm != null){
+				imgDivDom.children().remove();
+				var imgDom = $("<img/>",{
+					"src" : mskuspData.sitimgm
+				});
+				imgDivDom.append(imgDom);
+			}
+		}else if(mskuspData.sitimgv == "mskuit"){
+			var mskuitData = data.mskuitData;
+			if(mskuitData.length > 0){
+				imgDivDom.children().remove();
+				for(var i=0; i<mskuitData.length; i++){
+					
+					if(mskuitData[i].fabimph != "" && mskuitData[i].fabimph != null){
+						var imgDom = $("<img></img>",{
+							"src" : mskuitData[i].fabimph
+						});
+						imgDivDom.append(imgDom);
+					}
+				}
+			}
+		}
+		
+	}
+	
+	function initInfoMskusiTable(data){
+		var skuupdn = "";
+		
+		var sizeTableDom = $("#wmpt1_size_table");
+		var sizeTbodyDom = $("#wmpt1_size_tbody");
+		sizeTbodyDom.children().remove();
+		
+		var mskusiData = data.mskusiData;
+		
+		if(mskusiData.length > 0){
+			skuupdn = mskusiData[0].skuupdn;
+		}
+		
+		var rowCount = 0;
+
+		var sizeDataArr = [];
+		for(var i=0; i<mskusiData.length; i++){
+			
+			var sizeData = new Object();
+			sizeData.sizecod = mskusiData[i].sizecod;
+			sizeData.columnName 	= [];
+			sizeData.columnValue 	= [];
+			
+			for(var j=0; j<20; j++){
+				var columnName 	= skuupdn.toLowerCase()+"sizn"+(j+1).toString().padStart(2, '0');
+				var columnValue = skuupdn.toLowerCase()+"size"+(j+1).toString().padStart(2, '0');
+				
+				if(mskusiData[i][columnName] != null && mskusiData[i][columnName] != "" && mskusiData[i][columnValue] != null && mskusiData[i][columnValue] != "" ){
+					sizeData.columnName.push(mskusiData[i][columnName]);
+					sizeData.columnValue.push(mskusiData[i][columnValue]);
+				}
+			}
+
+			if(sizeData.columnName.length > 0 && sizeData.columnValue.length > 0){
+				sizeDataArr.push(sizeData);
+			}
+		}
+	
+		for(var i=0; i<sizeDataArr.length; i++){
+			if(i==0){
+				var trTopDom = $("<li></li>");
+				var tdDom = $("<p></p>",{
+					"class" : "p-title",
+					"text" : "<SIZE>"
+				});
+				trTopDom.append(tdDom);
+				sizeTbodyDom.append(trTopDom);
+			}
+			else{
+				trTopDom = sizeTbodyDom.find("li").eq(0);
+			}
+			var tdDom = $("<p></p>",{
+				"text" : sizeDataArr[i].sizecod
+			});
+			trTopDom.append(tdDom);
+			
+			for(var j=0; j<sizeDataArr[i].columnName.length; j++){
+				if(i==0){
+					var trDom = $("<li></li>");
+					var tdDom = $("<p></p>",{
+						"class" : "p-title",
+						"text" : sizeDataArr[i].columnName[j]
+					});
+					
+					trDom.append(tdDom);
+					sizeTbodyDom.append(trDom);
+				}
+				
+				var trDom = sizeTbodyDom.find("li").eq(j+1);
+				var tdDom = $("<p></p>",{
+					"text" : sizeDataArr[i].columnValue[j]
+				});
+					
+				trDom.append(tdDom);
+			}
+			
+			//sizeTbodyDom.append(trDom);
+		}
+		
+		//sizeTbodyDom.append(trTopDom);
+		
+	}
+	
+	function dateFunction(type){
+		
+		var result;
+		var today = new Date();
+		
+		switch(type){
+		
+			case "halfdate":
+				var year = today.getFullYear();
+				var month = ('0' + (today.getMonth() + 1)).slice(-2);
+				var day = ('0' + today.getDate()).slice(-2);
+	
+				var dateString = year.toString().substring(2) + '-' + month  + '-' + day;
+				
+				result = dateString;
+			break;
+			
+			case "date":
+				var year = today.getFullYear();
+				var month = ('0' + (today.getMonth() + 1)).slice(-2);
+				var day = ('0' + today.getDate()).slice(-2);
+
+				var dateString = year + '-' + month  + '-' + day;
+				
+				result = dateString;
+			break;
+			
+			case "week":
+				const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+				var week = WEEKDAY[today.getDay()];
+				
+				result = "("+week+")";
+			break;
+			
+			case "time":
+				var hours = ('0' + today.getHours()).slice(-2); 
+				var minutes = ('0' + today.getMinutes()).slice(-2);
+				var seconds = ('0' + today.getSeconds()).slice(-2); 
+
+				var timeString = hours + ':' + minutes  + ':' + seconds;
+				
+				result = timeString;
+			break;
+		}
+		
+		return result;
+	}
+	
+	
+	/*
+	 * Event 영역
+ 	 */
+	$("#wmpt1ModalLayerPopupCloseBtn").click(function(){
+		wmpt1ModalOBject.modal("hide");
+	});
+	
+	$("#wmpt1ModalLayerPopupPrintBtn").click(function(){
+		wmpt1Print();
+	});
+	
+	function wmpt1Print(){
+		
+		$(".layout-a4").printThis({
+			//importCSS:false,
+			//loadCSS: "/css/pt/pt.css",
+			//loadCSS : ,
+			//importStyle : true 
+			//'<style media="print">@page {size:80mm; margin:0;}</style>'
+		});
+	}
+});
+</script>

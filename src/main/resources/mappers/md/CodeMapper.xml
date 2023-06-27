@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.logistics.md.mapper.CodeMapper">
+
+	<!-- Mcount -->
+    <select id="selectMcountList" resultType="com.logistics.md.domain.McountVO">
+    	select
+    		 CONCAT(COMPKEY, NATNKEY, NATN2KY) AS ROWKEY 
+    		, COMPKEY
+			, NATNKEY, NATN2KY
+			, NATNLNM, NATNKNM, NATNENM
+			, NATNGR1, NATNGR2, NATNGR3
+			, date_format(CREDATE, '%Y-%m-%d') as CREDATE
+			, date_format(CRETIME, '%H-%i-%s') as CRETIME
+			, CREUSER
+			, date_format(LMODATE, '%Y-%m-%d') as LMODATE
+			, date_format(LMOTIME, '%H-%i-%s') as LMOTIME
+			, LMOUSER
+			, INDIBZL
+			, INDIARC
+			, UPDTCHK		
+		  from MCOUNT 				
+		  where 1=1
+		  and COMPKEY = #{userData.compkey}
+    </select>
+    
+	<!-- *********************************************** -->
+    <!-- 사유코드 : MRSCMA  -->
+    <!-- *********************************************** -->        
+    <!-- 사유코드 조회 -->    
+     
+    <!-- mdc6 : 사유코드 조회 -->
+    <select id="selectMrscmaList" resultType="com.logistics.md.domain.MrscmaDTO">
+    	select
+    		 CONCAT(A.COMPKEY, A.WAREKEY, A.DOCCATE, A.DOCTYPE, A.RSNCODE) AS ROWKEY 
+    		 , A.COMPKEY
+		     , A.WAREKEY, (select C.WHNAMLC from MWARMA C where A.COMPKEY = C.COMPKEY and A.WAREKEY  = C.WAREKEY ) as COMCDTX				
+		     , A.DOCCATE, B.DOCCTNM
+		     , A.DOCCATE as DOCCTCD
+		     , A.DOCTYPE, B.DOCTYNM
+		     , A.DOCTYPE as DOCTYCD
+		     , A.RSNCODE, A.RSNCDNM				
+		     , A.RSNCDOD				
+		     , A.RSCATE1, A.RSCATE2, A.RSCATE3				
+		     , A.RSATTR1, A.RSATTR2, A.RSATTR3				
+		     , str_to_date(A.CREDATE,'%Y%m%d') as CREDATE, str_to_date(A.CRETIME,'%H%i%s') AS CRETIME, fn_sy_usernam_test(A.COMPKEY , A.CREUSER) AS CREUSER				
+		     , str_to_date(A.LMODATE,'%Y%m%d') as LMODATE, str_to_date(A.LMOTIME,'%H%i%s') AS LMOTIME, fn_sy_usernam_test(A.COMPKEY , A.LMOUSER) AS LMOUSER				
+		  from MRSCMA A 				
+		  left outer join MDOCMA B on A.COMPKEY  = B.COMPKEY
+		  						  and A.WAREKEY  = B.WAREKEY			
+		                          and A.DOCCATE  = B.DOCCATE 				
+		                          and A.DOCTYPE  = B.DOCTYPE
+		  where 1=1
+		  <if test='warekey != null and warekey != " "'>
+		  and UPPER(A.WAREKEY) = UPPER(#{warekey})
+		  </if>
+		  <if test='docctnm != null and docctnm != ""'>
+		  and UPPER(B.DOCCTNM) like concat('%',#{docctnm},'%')
+		  </if>
+		  <if test='doctynm != null and doctynm != ""'>
+		  and UPPER(B.DOCTYNM) like concat('%',#{doctynm},'%')
+		  </if>
+		  order by A.COMPKEY, A.WAREKEY, A.DOCCATE, A.DOCTYPE, A.RSNCDOD 
+    </select>
+    
+    <!-- mdc6 : 사유코드 INSERT -->
+    <insert id="insertMrscma" parameterType="hashmap">
+    	insert into MRSCMA
+		(
+			  COMPKEY, WAREKEY, DOCCATE, DOCTYPE
+			, RSNCODE, RSNCDNM, RSNMLKY, RSNCDOD
+			, RSCATE1, RSCATE2, RSCATE3
+			, RSATTR1, RSATTR2, RSATTR3
+			, CREDATE, CRETIME,	CREUSER
+			, LMODATE, LMOTIME
+		)
+		values
+		<foreach collection="insertList" item="item"  separator=",">
+		(
+			  #{userData.compkey}, #{item.warekey}, #{item.doccate}, #{item.doctype}
+			, #{item.rsncode}, #{item.rsncdnm}, #{item.rsnmlky}, #{item.rsncdod}
+			, #{item.rscate1}, #{item.rscate2}, #{item.rscate3}
+			, #{item.rsattr1}, #{item.rsattr2}, #{item.rsattr3}
+			, DATE_FORMAT(SYSDATE(), '%Y%m%d'), DATE_FORMAT(SYSDATE(), '%H%i%s'), #{userData.useract}
+			, DATE_FORMAT(SYSDATE(), '%Y%m%d'), DATE_FORMAT(SYSDATE(), '%H%i%s')
+		)
+		</foreach>
+    </insert> 
+    
+    <!-- mdc6 : 사유코드 UPDATE -->
+    <update id="updateMrscma" parameterType="hashmap">
+    	<foreach collection="updateList" item="item"  separator=";">
+    	update MRSCMA
+		set 
+			  WAREKEY = #{item.warekey}
+			, DOCCATE = #{item.doccate}
+			, DOCTYPE = #{item.doctype}
+			, RSNCODE = #{item.rsncode}
+			, RSNCDNM = #{item.rsncdnm}
+			, RSNMLKY = #{item.rsnmlky}
+			, RSNCDOD = #{item.rsncdod}
+			, RSCATE1 = #{item.rscate1}
+			, RSCATE2 = #{item.rscate2}
+			, RSCATE3 = #{item.rscate3}
+			, RSATTR1 = #{item.rsattr1}
+			, RSATTR2 = #{item.rsattr2}
+			, RSATTR3 = #{item.rsattr3}
+			, LMODATE = DATE_FORMAT(SYSDATE(), '%Y%m%d')
+			, LMOTIME = DATE_FORMAT(SYSDATE(), '%H%i%s')
+			, LMOUSER = #{userData.useract}
+		where 1=1
+		and COMPKEY = #{item.compkey}
+		and WAREKEY = #{item.beforewarekey}
+		and DOCCATE = #{item.doccate}
+		and DOCTYPE = #{item.doctype}
+		and	RSNCODE = #{item.beforersncode}
+		</foreach>
+    </update>
+    
+    <!-- mdc6 : 사유코드 DELETE -->
+    <delete id="deleteMrscma" parameterType="com.logistics.md.domain.MrscmaDTO">
+    	<foreach collection="deleteList" item="item"  separator=";">
+    	delete from MRSCMA
+		where COMPKEY = #{item.compkey}
+		and WAREKEY = #{item.warekey}
+		and DOCCATE = #{item.doccate}
+		and DOCTYPE = #{item.doctype}
+		and RSNCODE = #{item.rsncode}
+		</foreach>
+    </delete> 
+    
+    <!-- *********************************************** -->
+    <!-- 공통코드 : MCODEM  -->
+    <!-- *********************************************** -->        
+    <!-- 공통코드 조회 -->
+    <select id="selectMcodem" resultType="HashMap"> 
+		 select COMCDVL as combovl
+		      , COMCDTX as combonm
+		   from MCODEM
+		  where 1=1
+		    and COMPKEY = #{userData.compkey}
+		    and COMCDKY = #{comcdky}
+		    and CODELYN = 'N'
+		<if test="comcdvls != null and comcdvls.size != 0"> 
+		    and COMCDVL in
+		    <foreach collection="comcdvls" item="item" index="index" open="(" close=")" separator=",">
+		      #{item}
+		    </foreach>
+		</if>
+		<if test="cdcate1 != null and cdcate1 !=''">
+			and CDCATE1 = #{cdcate1}
+		</if>
+		<if test="cdcate2 != null and cdcate2 !=''">
+			and CDCATE2 = #{cdcate2}
+		</if>
+		<if test="mdp3Comcdvl != null and mdp3Comcdvl !=''">
+			and COMCDVL != #{mdp3Comcdvl}
+		</if>
+		  order by COMCDOR asc           
+    </select>  
+    
+     
+    <!-- mdc7 : 공통코드 조회 -->
+    <select id="selectMcodemList" resultType="com.logistics.md.domain.McodemDTO">
+    	select concat(COMPKEY,COMCDKY,COMCDVL) as ROWKEY
+		 	 , COMPKEY, COMCDKY, COMCDVL, COMKYTX, COMCDTX
+			 , COMCDOR, COMCDSY, CDCATE1, CDCATE2, CDCATE3
+			 , CDATTR1, CDATTR2, CDATTR3, CODELYN
+		     , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%Y-%m-%d') as CRETIME, fn_sy_usernam_test(COMPKEY, CREUSER) as CREUSER
+		     , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%Y-%m-%d') as LMOTIME, fn_sy_usernam_test(COMPKEY, LMOUSER) as LMOUSER
+		     , UPDTCHK
+		  from MCODEM
+		 where 1=1
+		   and COMPKEY = #{userData.compkey}
+		<if test='comcdvl != null and comcdvl != ""'>
+		   and UPPER(COMCDVL) like UPPER(concat('%',#{comcdvl},'%'))
+		</if>
+		<if test='comkytx != null and comkytx != ""'>
+		   and UPPER(COMKYTX) like UPPER(concat('%',#{comkytx},'%'))
+		</if>
+		<if test='comcdtx != null and comcdtx != ""'>
+		   and UPPER(COMCDTX) like UPPER(concat('%',#{comcdtx},'%'))
+		</if>
+		 order by COMCDKY, COMCDOR asc           
+    </select>
+    
+    <!-- mdc7 : 공통코드 INSERT -->
+    <insert id="insertMcodem" parameterType="com.logistics.md.domain.McodemDTO">
+    	insert into MCODEM
+		( COMPKEY, COMCDKY, COMCDVL, COMKYTX, COMCDTX
+		, COMCDOR, COMCDSY, CDCATE1, CDCATE2, CDCATE3
+		, CDATTR1, CDATTR2, CDATTR3, CODELYN
+		, CREDATE, CRETIME, CREUSER
+		, LMODATE, LMOTIME, LMOUSER )
+		values
+		<foreach collection="list" item="item"  separator=",">
+		( #{item.compkey}, UPPER(#{item.comcdky}), UPPER(#{item.comcdvl}), #{item.comkytx}, #{item.comcdtx}
+		, #{item.comcdor}, #{item.comcdsy}, #{item.cdcate1}, #{item.cdcate2}, #{item.cdcate3}
+		, #{item.cdattr1}, #{item.cdattr2}, #{item.cdattr3}, #{item.codelyn}
+		, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+		</foreach>
+    </insert>
+    
+    <!-- mdc7 : 공통코드 UPDATE -->
+    <update id="updateMcodem" parameterType="hashmap">
+    	<foreach collection="list" item="item"  separator=";">
+		update MCODEM
+		   set COMCDKY = #{item.comcdky}
+			 , COMCDVL = #{item.comcdvl}
+			 , COMKYTX = #{item.comkytx}
+			 , COMKYTX = #{item.comkytx}
+    	     , COMCDTX = #{item.comcdtx}
+    	     , COMCDOR = #{item.comcdor}
+    	     , COMCDSY = #{item.comcdsy}
+    	     , CDCATE1 = #{item.cdcate1}
+    	     , CDCATE2 = #{item.cdcate2}
+    	     , CDCATE3 = #{item.cdcate3}
+    	     , CDATTR1 = #{item.cdattr1}
+    	     , CDATTR2 = #{item.cdattr2}
+    	     , CDATTR3 = #{item.cdattr3}
+    	     , CODELYN = #{item.codelyn}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		     , LMOTIME = to_char(NOW() ,'hh24miss')
+		     , LMOUSER = #{userData.useract}
+		 where 1=1
+		   and COMPKEY = #{item.compkey}
+		   and UPDTCHK = #{item.updtchk}
+	   <choose>
+	    	<when test="item.beforecomcdky != null and item.beforecomcdky !=''">
+	       and COMCDKY = #{item.beforecomcdky}
+	    	</when>
+	    	<otherwise>
+	       and COMCDKY = #{item.comcdky}
+	    	</otherwise>
+	    </choose>
+		<choose>
+	    	<when test="item.beforecomcdvl != null and item.beforecomcdvl !=''">
+		   and COMCDVL = #{item.beforecomcdvl}
+			</when>
+			<otherwise>
+		   and COMCDVL = #{item.comcdvl}
+			</otherwise>
+		</choose>
+		</foreach>
+    </update>   
+    
+</mapper>

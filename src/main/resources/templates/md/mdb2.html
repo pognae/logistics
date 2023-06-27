@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent">
+	<div class="content-header">
+		<div class="header-left">
+			<div class="page-title">
+				<h1 th:text="${gnatitle}"></h1>
+			</div>
+		</div>
+		<div class="header-right">
+			<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>					
+		</div>
+	</div>
+	<div class="nav-tab-container">
+		<ul class="nav nav-tabs" id="mdb2_selectTAB">
+			<li class="nav-item" id="mdb2_FAQTAB"><a class="nav-link active" data-toggle="tab" data-type="FAQ" href="#" id="mdb2_FAQTAB" th:text="${#messages.msg('md.mdb2.faq')}" ></a></li>
+			<li class="nav-item" id="mdb2_QnATAB"><a class="nav-link" data-toggle="tab" href="#" data-type="QnA" id="mdb2_QnATAB" th:text="${#messages.msg('md.mdb2.qna')}" ></a></li>
+		</ul>
+		<div class="mdb2-search-container">
+			<div class="mdb2-search-box">
+				<div style="display: flex;">
+					<select class="form-control" id="searchBox">
+						<option value="qutitle" th:text="${#messages.msg('md.mboard.botitle')}" selected></option>
+						<option value="creuser" th:text="${#messages.msg('md.mboard.creuser')}"></option>
+					</select>
+					<input type="text" class="form-control" id="searchValue">
+					<button id="mdb2_FAQBtnSearch" class="btn btn-outline-success" th:text="${#messages.msg('bt.search')}" onclick="findData(this.id)"></button>
+					<button id="mdb2_QnABtnSearch" class="btn btn-outline-success td-check" th:text="${#messages.msg('bt.search')}" onclick="findData(this.id)"></button>
+				</div>
+			</div>
+		</div>
+		<!-- ######################### FAQ  ####################### -->
+		<div class="tab-content position-relative mdb2-tabpanel">
+			<div class="tab-pane fade show active" id="mdb2_FAQdiv">
+				<div class="table-tool">
+					<div class="tool-left">
+						<ul>
+							<li class="cate active" value="" th:text="${#messages.msg('wm.wmoa1.all')}"></li>	
+						</ul>
+					</div>
+				</div>
+				<div class="table-container">
+					<table class="table faq-table">
+						<colgroup>
+							<col width="12%">
+							<col width="82%">
+							<col width="5%">
+						</colgroup>
+						<thead id="FAQthead"> 
+							<tr>
+								<th data-faq-col="comtype" th:text="${#messages.msg('md.mdu1.sizecod')}"></th>
+								<th data-faq-col="qutitle" colspan="2" th:text="${#messages.msg('md.mboard.botitle')}"></th>
+							</tr>
+						</thead> 
+						<tbody id="FAQtbody">
+						</tbody>
+					</table>
+				</div>
+				<div class="table-bottom">
+					<button class="btn main-btn" id="mdb2_FAQWriteModalBtn" onclick="mdb2_openPopUp('FAQ')"><i class="fa-solid fa-pen-clip"></i><span  th:text="${#messages.msg('md.mboard.writeBoard')}"></span></button>
+					<nav aria-label="Page navigation example" id="mdb2_FAQ_pagination" style=" position: relative; width: 100%; display: flex; justify-content: center;">
+						<ul class="pagination"></ul>
+					</nav>
+				</div>
+			</div>		
+			<!-- ######################### QnA  ####################### -->
+			<div class="tab-pane fade show" id="mdb2_QnAdiv">		
+				<div class="table-tool">
+					<div class="tool-left">
+						<ul>
+							<li class="cate active" id="" th:text="${#messages.msg('wm.wmoa1.all')}"></li>	
+						</ul>
+					</div>
+					<div class="tool-right">
+						<ul>
+							<li class="cate active" id="NEW" th:text="${#messages.msg('md.mdb2.new')}"></li>
+							<li class="cate" id="VIEWCNT" th:text="${#messages.msg('md.mdb2.orderBy')}"></li>
+						</ul>
+					</div>
+				</div>	
+				<div class="table-container">
+					<table class="table qna-table">
+						<colgroup>
+							<col width="14%">
+							<col width="*">
+							<col width="10%">
+							<col width="14%">
+							<col width="8%">
+							<col width="8%">
+						</colgroup>
+						<thead id="QnAthead"> 
+							<tr>
+								<th data-qna-col="comtype" th:text="${#messages.msg('md.mdu1.sizecod')}"></th>
+								<th data-qna-col="qutitle" th:text="${#messages.msg('md.mboard.botitle')}"></th>
+								<th data-qna-col="creuser" th:text="${#messages.msg('md.mdb2.creuser')}"></th>
+								<th data-qna-col="credate" th:text="${#messages.msg('md.mdb2.credate')}"></th>
+								<th data-qna-col="viewcnt" th:text="${#messages.msg('md.mboard.viewcnt')}"></th>
+								<th data-qna-col="refcnt" th:text="${#messages.msg('md.mboard.refcont')}"></th>
+							</tr>
+						</thead> 
+						<tbody id="QnAtbody">
+						</tbody>
+					</table>
+				</div>
+				<div class="table-bottom">
+					<button class="btn main-btn td-check" id="mdb2_QnAWriteModalBtn" onclick="mdb2_openPopUp('QnA')"><i class="fa-solid fa-pen-clip"></i><span th:text="${#messages.msg('md.mboard.writeBoard')}"></span></button>
+					<nav aria-label="Page navigation example" id="mdb2_QnA_pagination" style=" position: relative; width: 100%; display: flex; justify-content: center;">
+						<ul class="pagination"></ul>
+					</nav>
+				</div>		
+			</div>
+		</div>	
+	</div>
+		<!-- 글쓰기 Modal Popup (공통) -->
+	<div class="modal fade" id="mdb2_writeModalPopup" tabindex="-1">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title h4" th:text="${#messages.msg('md.mboard.writeBoard')}"></h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="modal-inbody">
+						<div class="row gx-3 mb-3">
+							<div class="col-md-12 mb-3">
+								<div class="form-check td-check" id="mdb2_QnAOpenCheck">
+								  <input class="form-check-input" name="mdb2_copenyn" type="checkbox" style="margin:none;" checked>
+								  <label class="form-check-label" for="mdb2_copenyn" th:text="${#messages.msg('md.mboard.openRecont')}"></label>
+							  	</div>
+							</div>
+							<div class="col-md-12 mb-3">	  	
+								<label class="small mb-1" th:text="${#messages.msg('md.mdb2.type')}"></label> 
+								<select class="form-control" id="mdb2_writeComtype">
+									<option value="" selected th:text="${#messages.msg('md.mdb2.comtypeAll')}"></option>
+								</select>
+							</div>
+							<div class="col-md-12 mb-3">
+								<label class="small mb-1"
+									th:text="${#messages.msg('md.mboard.botitle')}"></label> <input
+									class="form-control" name="mdb2_qutitle" id="mdb2_qutitle"
+									type="text" maxLength="100" />
+							</div>
+							<div class="col-md-12">
+								<label class="small mb-1"
+									th:text="${#messages.msg('md.mboard.boconte')}"></label>
+								<textarea class="form-control" name="mdb2_quconte"
+									placeholder="" id="mdb2_quconte" style="min-height : 274px;" maxlength="2000"></textarea>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-main-lg" id="mdb2_writeSaveBtn" th:text="${#messages.msg('bt.save')}"></button>
+						<button type="button" class="btn btn-border-lg" th:text="${#messages.msg('bt.close')}" onclick="mdb2_close('write')"></button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 	세부정보 글보기 Modal Popup (공통) -->
+    <div class="modal fade show" id="mdb2_detailModalPopup" tabindex="-1" data-dismiss="modal" style="display: none;">
+    	<div class="modal-dialog modal-lg" style="overflow-y: auto;">
+			<div class="modal-content full-content">
+            	<div class="modal-header">
+             		<h5 class="modal-title" id="mdb2_dt_qutitle" data-col-name="mdb2_dt_title"></h5>
+	                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	                	<span aria-hidden="true">&times;</span>
+	                </button>
+	             </div>
+		        <div class="modal-header-row">
+		           <div class="row-left">
+		              <span id="mdb2_dt_credate" data-col-name="mdb2_dt_credate"></span>
+		              <span><i class="fa-regular fa-eye"></i><span id="mdb2_dt_viewcnt" data-col-name="mdb2_dt_viewcnt"></span></span>
+		              <span><i class="fa-regular fa-comment-dots"></i><span id="mdb2_dt_refcnt" data-col-name="mdb2_dt_refcnt"></span></span>
+	             	  <span class="td-check" id="mdb2_dt_commseq" data-col-name="mdb2_dt_commseq"></span>
+		           </div>
+		           <div class="row-right">
+		              <div class="form-check" id="mdb2_dt_QnAOpenCheck"> 
+						<input class="form-input" name="mdb2_dt_copenyn" id="mdb2_dt_copenyn" type="checkbox">
+						<label class="form-check-label" for="mdb2_dt_copenyn" th:text="${#messages.msg('md.mboard.openRecont')}"></label>
+	 				  </div>
+		           </div>
+		        </div>
+				<div class="modal-body">
+					<div class="modal-text-container">
+						<textarea class="form-control modal-text-view" id="mdb2_dt_quconte" data-col-name="mdb2_dt_quconte" style="min-height:274px; margin-right:10px;" maxlength="2000"></textarea>
+					</div>
+					<div class="modal-inbody">
+						<div class="row gx-3 mb-3">
+							<div class="col-md-12">
+								<label class="small mb-1 mt-4 mb-2" th:text="${#messages.msg('md.mboard.refcont')}"></label>
+								<div class="comment-box">
+									<span class="user-thumb"><img src="/img/ex/ex_user.png"></span>
+									<textarea class="form-control" name="mdb2_dt_refcont" id="mdb2_dt_refcont" data-col-name="mdb2_dt_refcont" style="height: 55px;"></textarea>
+									<button type="button" id="mdb2_QnADetailRefOpenBtn" class="btn btn-pen"><i class="fa-solid fa-pen"></i></button>
+								</div>
+	                       </div>
+	                       <div class="col-md-12" id="mdb2_quconteContainer">
+	                          <div class="comemnt-list" id="mdb1_dt_refcont">
+	                             <ul id="mdb2_dt_conteList">
+	                             </ul>
+	                          </div>
+	                       </div>
+	                    </div>
+					</div>
+					<div class="modal-footer" style="border : none;">
+						<button type="button" class="btn btn-border-lg" id="mdb2_detailModalCloseBtn" th:text="${#messages.msg('bt.close')}" onclick="mdb2_close('detail')"></button>
+					</div>
+				</div>       
+			</div>
+		</div>	
+	</div>
+	<script>
+		$(function() {
+			mdb2Init();
+			mdb2InitTab();
+
+ 		//=================================================================
+ 		// TAB별 상세페이지 조회
+ 		//=================================================================		
+ 			 $("#QnAtbody").on("click", "tr", function(e){
+ 				$("#mdb2_dt_conteList").children().remove(); //답변란
+ 				$("textarea[name='mdb2_dt_refcont']").val(""); //댓글기입란
+ 				
+ 				var key = $("#searchBox option:selected").val();
+ 				var data = { commseq : $(this).data("seq") , comcate : "QnA" , [key] : $("#searchValue").val() };
+ 				var aul = new AjaxUtil_Order("/md/mdb2DetailList.do", data , "GET");	
+ 				aul.setCallbackSuccess(setQnADetailCallback);
+ 				aul.send();
+ 			});
+	 			 
+		//=================================================================
+		// 상세페이지 수정
+		//=================================================================		
+			$(".modal-footer").on("click", "#mdb2_detailModalSaveBtn" ,function(e){
+				var detailTagName = e.target.name.substring(5,8);
+				var result = confirm("[[#{md.mboard.chkUpdate}]]");
+				var data = new Object();
+				
+				if($("#mdb2_dt_quconte").val() == ""){
+					alert("[[#{md.mboard.chkQuconte}]]");
+					return false;
+				}
+				
+				// 특수문자 치환
+				var qutitle = charcterEncoding($("#mdb2_dt_qutitle").text());
+				var quconte = charcterEncoding($("#mdb2_dt_quconte").val());
+				
+				if(result == true){
+					data = { commseq : $("#mdb2_dt_commseq").text() , 
+							 qutitle : qutitle ,
+					 		 quconte : quconte ,
+					 		 comcate : detailTagName };	
+					
+					if(detailTagName == "QnA"){
+						data["copenyn"]= $("#mdb2_dt_copenyn").is(":checked");
+					}
+					
+					var aul = new AjaxUtil_Order("/md/mdb2WriteUpdate.do", data);	
+					aul.setCallbackSuccess(setDetailUpdateCallback);
+					aul.send();
+				}
+			});
+			
+		//============================================================
+		// QnA 댓글 등록 
+		//============================================================
+			$("#mdb2_QnADetailRefOpenBtn").click(function(){
+				var data = { commseq : $("#mdb2_dt_commseq").text() , 
+					 		 refcont : $("textarea[name='mdb2_dt_refcont']").val() ,
+							 orderby : $("#mdb2_QnAdiv .table-tool .tool-right ul").find("li.cate.active")[0].id 
+					 	    };
+				var aul = new AjaxUtil_Order("/md/mdb2RefContSave.do", data);	
+				aul.setCallbackSuccess(function(dataParam){
+					alert("[[#{ms.saveSuccess}]]");
+					$("#mdb2_detailModalPopup").modal("hide");
+					
+					$("#mdb2_detailModalPopup").on("hidden.bs.modal", function (e) {  
+						var data = { comcate : "QnA" , 
+									 comtype : $("#mdb2_QnAdiv .table-tool .tool-left ul").find("li.cate.active")[0].id  ,
+									 orderby : $("#mdb2_QnAdiv .table-tool .tool-right ul").find("li.cate.active")[0].id 
+								   };
+						var aul = new AjaxUtil_Order("/md/mdb2TABSelect.do", data,"GET");
+						aul.setCallbackSuccess(setMdb2ListCallback);
+						aul.send();
+					});
+				});
+				aul.send(); 
+			});
+			
+		//============================================================
+		// QnA 게시글 DELETE 
+		//============================================================
+			$(".modal-footer").on("click", "#mdb2_detailModalDelBtn" ,function(e){
+				var result = confirm("[[#{md.mboard.chkDelt}]]");
+				if(result == true){
+					var data = { commseq : $("#mdb2_dt_commseq").text() ,
+								 comcate : e.target.name.substring(5,8) ,
+								 orderby : $("#mdb2_QnAdiv .table-tool .tool-left ul").find("li.cate.active")[0].id
+							   };
+					var aul = new AjaxUtil_Order("/md/mdb2WriteDelete.do", data);	
+					aul.setCallbackSuccess(function(dataParam){
+						alert("[[#{md.mboard.delBoard}]]");
+						$("#mdb2_detailModalPopup").modal("hide");
+						
+						$("#mdb2_detailModalPopup").on("hidden.bs.modal", function (e) {   
+							var data = { comcate : "QnA" , 
+										 comtype : $("#mdb2_QnAdiv .table-tool .tool-left ul").find("li.cate.active")[0].id ,
+										 orderby : $("#mdb2_QnAdiv .table-tool .tool-right ul").find("li.cate.active")[0].id 
+									   };
+							var aul = new AjaxUtil_Order("/md/mdb2TABSelect.do", data,"GET");
+							aul.setCallbackSuccess(setMdb2ListCallback);
+							aul.send();
+						});
+					});
+					aul.send();
+				}
+			});
+			
+		//============================================================
+		// 탭 전환 
+		//============================================================
+			$("#mdb2_selectTAB").click(function(e){
+				var tabId=  e.target;
+				var tabParent = $(tabId).parents(".nav.nav-tabs");
+				var otherTab = tabParent.children().not($(tabId).parent())[0].id.substring(5,8);
+				
+				$("#mdb2_" + tabId.id.substring(5,8) + "div").addClass("active");
+				$("#mdb2_" + otherTab + "div").removeClass("active");
+				
+				$("#mdb2_" + tabId.id.substring(5,8) + "_pagination").removeClass("td-check");
+	 			$("#mdb2_" + otherTab + "_pagination").addClass("td-check");
+	 			
+	 			$("#mdb2_" + tabId.id.substring(5,8) + "BtnSearch").removeClass("td-check");
+	 			$("#mdb2_" + otherTab + "BtnSearch").addClass("td-check");
+	 			
+	 			$("#mdb2_" + tabId.id.substring(5,8) + "WriteModalBtn").removeClass("td-check");
+	 			$("#mdb2_" + otherTab + "WriteModalBtn").addClass("td-check");
+	 			
+				$("#searchBox").val("qutitle");
+	 			$("#searchValue").val("");
+				
+	 			$("#mdb2_" + tabId.id.substring(5,8) + "div .table-tool .tool-left ul li").removeClass("active");
+	 			$("#mdb2_" + tabId.id.substring(5,8) + "div .table-tool .tool-left ul li:eq(0)").addClass("active");
+	 			
+	 			$("#mdb2_" + otherTab + "div .table-tool .tool-right ul li").removeClass("active");
+	 			$("#mdb2_" + otherTab + "div .table-tool .tool-right ul li:eq(0)").addClass("active");
+	 			
+	 			var orderby = $("#mdb2_" + tabId.id.substring(5,8) + "div .table-tool .tool-left ul").find("li.cate.active")[0].id;
+	 			var orderByParam = tabId.dataset.type === "QnA" ? orderby : ""; 
+	 			
+	 			var data = { comcate : tabId.id.substring(5,8) , comtype : orderby , orderby  : orderByParam };
+	 			var aul = new AjaxUtil_Order("/md/mdb2TABSelect.do", data,"GET");
+	 			aul.setCallbackSuccess(setMdb2ListCallback);
+	 			aul.send();		
+			});
+		
+			
+		//============================================================	
+		// 글쓰기 저장 
+		//============================================================
+			$("#mdb2_writeSaveBtn").click(function(){
+				var comcate = $(".nav.nav-tabs li").children(".nav-link.active")[0].id.substring(5,8);
+				var result = confirm("[[#{ms.checksave}]]");
+				var data = new Object();
+
+				if($("#mdb2_writeComtype option:selected").val() == ""){
+					alert("[[#{md.mboard.chkComtype}]]");
+					return false;
+				}
+				
+				if($("#mdb2_qutitle").val().trim() == ""){
+					alert("[[#{md.mboard.chkTitle}]]");
+					return false;
+				}
+				if($("textarea[name='mdb2_quconte']").val().trim() == ""){
+					alert("[[#{md.mboard.chkComtype}]]");
+					return false;
+				}
+				
+				var qutitle = charcterEncoding($("input[name='mdb2_qutitle']").val())
+				var quconte = charcterEncoding($("textarea[name='mdb2_quconte']").val())
+				
+				if(result == true){
+					data = { comcate : comcate ,
+							 comtype : $("#mdb2_writeComtype option:selected").val() , 
+							 copenyn : comcate == "FAQ" ? "N" : $('input[name="mdb2_copenyn"]').is(":checked") ,
+							 qutitle : qutitle ,
+							 quconte : quconte 
+						    };
+					var aul = new AjaxUtil_Order("/md/mdb2WriteSave.do", data);
+					aul.setCallbackSuccess(setMdb2WriteSaveList);
+					aul.send();
+				}
+			});
+		});
+	
+		
+	//============================================================
+	// 검색 
+	//============================================================
+		function findData(param){
+			var key = $("#searchBox option:selected").val();
+			var comtype = $('#' + param.substring(0,8) + "div .table-tool .tool-left ul").find("li.cate.active");
+			var orderby = null;
+			
+			if($("#" + param.substring(0,8)  + "div .table-tool .tool-right")[0]){
+				orderby = $("#" + param.substring(0,8) + "div .table-tool .tool-right ul").find("li.cate.active")[0].id
+			}else{
+				orderby = "";
+			}
+			
+			var data = { comcate : param.substring(5,8) , [key] : $("#searchValue").val() , comtype : comtype[0].id , orderby : orderby };
+			var aul = new AjaxUtil_Order("/md/mdb2TABSelect.do", data , "GET");
+			aul.setCallbackSuccess(setMdb2ListCallback);
+			aul.send();
+		}
+	
+	//=================================================================
+	// QnA 상세페이지 콜백
+	//=================================================================		
+		function setQnADetailCallback(data){
+			var qnaData = data.dataList.qnaData;
+			//게시글 공개 여부
+			if(qnaData.copenyn == "Y"){ 
+				$("#mdb2_detailModalPopup").modal("show");
+				setQnADetailList(data);
+			}else{
+				if(qnaData.writer !== "[[${session.useract}]]"){
+					alert("[[#{ms.notAccess}]]");
+					return false;
+				}else{
+					$("#mdb2_detailModalPopup").modal("show");
+					setQnADetailList(data);
+				}
+			}
+		};
+	
+	//============================================================
+	// 글쓰기 OPEN
+	//============================================================
+		function mdb2_openPopUp(param){
+			$("#mdb2_writeModalPopup").modal("show");
+			
+			$("#mdb2_writeModalPopup").on("shown.bs.modal" , function(evt){
+				var otherTab = $(".nav.nav-tabs li").children().not(".active")[0].id.substring(5,8);
+				
+				$("#mdb2_writeComtype").val("");
+				$("#mdb2_qutitle").val("");
+				$("textarea[name='mdb2_quconte']").val("");
+				
+				if(param == "QnA"){
+					$("#mdb2_QnAOpenCheck").removeClass("td-check");
+				}else{
+ 					$("#mdb2_QnAOpenCheck").addClass("td-check");
+				}
+			});
+		};
+	
+	//============================================================
+	// QnA 상세 조회 
+	//============================================================	
+		function setQnADetailList(data){
+			var qnaData = data.dataList.qnaData;
+			var answerData = data.dataList.ansData;
+			var dataColNameDom = $("#mdb2_detailModalPopup").find("[data-col-name]");
+			for(idx in dataColNameDom){
+				if(typeof dataColNameDom[idx].id !== "undefined"){
+					var domId = dataColNameDom[idx].id;
+					var dataVal = domId.lastIndexOf("_"); 
+					
+					$("#" + domId).html(qnaData[domId.substring(dataVal +1)]);
+				}
+			}
+			
+			$("#mdb2_quconteContainer").addClass("inline-block");
+			$("#mdb2_dt_QnAOpenCheck").addClass("inline-block");
+	
+			qnaData.copenyn == "Y" ? $('input[name="mdb2_dt_copenyn"]').prop("checked", true) : $('input[name="mdb2_dt_copenyn"]').prop("checked", false);
+			
+			if(qnaData.writer == "[[${session.useract}]]"){
+				$("#mdb2_detailModalCloseBtn").prev().prev().remove();
+				//답변 수정 
+				$("#mdb2_dt_quconte").attr("disabled", false);
+				//댓글 공개
+				$("#mdb2_dt_QnAOpenCheck").addClass("inline-block");
+				$("#mdb2_dt_QnAOpenCheck").removeClass("td-check");
+				//버튼
+				$("#mdb2_detailModalCloseBtn").prev().remove();
+				$("#mdb2_detailModalCloseBtn").before('<button type="button" name="mdb2_QnA_detailSave" id="mdb2_detailModalSaveBtn" class="btn btn-main-lg">[[#{bt.save}]]</button>' + 
+													  '<button type="button" name="mdb2_QnA_detailDel" id="mdb2_detailModalDelBtn" class="btn btn-main-lg">[[#{bt.delete}]]</button>');		
+			}else{
+				//답변 수정 
+				$("#mdb2_dt_quconte").attr("disabled" , true);
+				//댓글 공개
+				$("#mdb2_dt_QnAOpenCheck").removeClass("inline-block");
+				$("#mdb2_dt_QnAOpenCheck").addClass("td-check");
+				//버튼
+				$("#mdb2_detailModalCloseBtn").prev().prev().remove();
+				$("#mdb2_detailModalCloseBtn").prev().remove(); 
+			}
+			
+		//댓글란 dom 생성
+		if(answerData.length > 0){
+			var div = "";
+			$(answerData).each(function(i){
+				div += '<li>' + 
+					   '<div>' + 
+					   '<span class="thumb">' + 
+					   '<img src="/img/ex/ex_user.png">' + 
+					   '</span>' + 
+					   '<span>'+ answerData[i].creuser.substring(0,1) + '******' + '</span>' + 
+					   '<span class="comment-date">' + answerData[i].credate +'</span>' + 
+					   '</div>';
+				div += '<span class="comment">' + answerData[i].refcont + '</span></li>';
+			});
+		}
+		$("#mdb2_dt_conteList").html(div);	
+	};
+		
+	//============================================================
+	// Modal CLOSE 
+	//============================================================
+		function mdb2_close(param){
+			$("#mdb2_" + param + "ModalPopup").modal("hide");
+		};
+		
+	//============================================================
+	// 글쓰기 저장 콜백 
+	//============================================================
+		function setMdb2WriteSaveList(data){
+			alert("[[#{ms.saveSuccess}]]");
+			$("#mdb2_writeModalPopup").modal("hide");
+			$(".pagination").children().remove();
+			
+			// 모달 창 닫히고 이벤트 실행
+			$("#mdb2_writeModalPopup").on("hidden.bs.modal", function (e) {   
+				if($("#mdb2_QnAOpenCheck").hasClass("td-check")){
+					data.comcate = "FAQ";                        
+					data.comtype = $("#mdb2_FAQdiv .table-tool .tool-left ul").find("li.cate.active")[0].id;
+					data.orderby = "";
+				}else{                                           
+					data.comcate = "QnA";
+					data.comtype = $("#mdb2_QnAdiv .table-tool .tool-left ul").find("li.cate.active")[0].id;
+					data.orderby = $("#mdb2_QnAdiv .table-tool .tool-right ul").find("li.cate.active")[0].id;
+				}	
+				var aul = new AjaxUtil_Order("/md/mdb2TABSelect.do", data, "GET");
+				aul.setCallbackSuccess(setMdb2ListCallback);
+				aul.send();
+			});
+		};	
+			
+		//============================================================
+		// 리스트 콜백 
+		//============================================================
+			function setMdb2ListCallback(data){
+				$('#QnAtbody').children().remove();
+				$('#FAQtbody').children().remove();
+				
+				let QnAtr = "", FAQtr = "";
+
+				let list = data.boardList.list;
+				if(list.length == 0){
+					alert("[[#{ms.getDataZero}]]");
+					return false;
+				}else{
+					$(list).each(function(i){
+						let lmodate = "&nbsp" + "(" + list[i].lmodate.substring(4,6) + "/" + list[i].lmodate.substring(6,8) + "[[#{md.mdb2.lmodate}]]";
+						// ######### QnA 
+						if(list[i].comcate == "QnA"){
+							let trQnaData = $("#QnAthead").children("tr").children();
+							QnAtr += '<tr data-seq="' + list[i]['commseq'] + '">'; 
+							
+							for(tr of trQnaData){
+								let datasetName = tr.dataset.qnaCol;
+								
+								if(datasetName == "qutitle"){
+
+									QnAtr += "<td class='text-left'>" + list[i][datasetName];
+									//게시글작성일
+									if(list[i]["newCnt"] == 0){
+										if(list[i]["lmodate"] !== " "){
+	 										QnAtr += lmodate;
+										}
+										QnAtr += "&nbsp" + "<span>N</span>";
+	 								}else if(list[i]["lmodate"] !== " "){
+	 									QnAtr += lmodate;	
+	 								}
+									
+									if(list[i]["copenyn"] == "N"){
+		 								QnAtr += '<img src="/img/remixicon/System/lock-2-line.svg"></img></td>';
+		 							}else{
+		 								QnAtr += "</td>";
+		 							}
+								}else{
+									QnAtr += "<td>" + list[i][datasetName] + "</td>";
+								}
+							}
+							QnAtr += '</tr>';
+						}else{   
+						// ########## FAQ 
+							let trFaQData = $("#FAQthead").children("tr").children();
+							FAQtr += '<tr data-seq="' + list[i].commseq + '" onclick="faqToggle(this)">';
+							for(tr of trFaQData){
+								var datasetName = tr.dataset.faqCol;
+								
+								if(datasetName == "qutitle"){
+								
+									FAQtr += "<td class='text-left'>" + list[i][datasetName];
+									//게시글작성일
+									if(list[i]["newCnt"] == 0){
+										if(list[i]["lmodate"] !== " "){
+											FAQtr += lmodate;
+										}
+										FAQtr += "&nbsp" + "<span>N</span>";
+	 								}else if(list[i]["lmodate"] !== " "){
+	 									FAQtr += lmodate;	
+	 								}
+								}else{
+									FAQtr += "<td>" + list[i][datasetName] + "</td>";
+								}
+							}
+							FAQtr += '<td><i class="fa-solid fa-angle-down"></i></td></tr>';
+							FAQtr += '</tr>';
+							
+							if(data.userType == "BINBLUR"){
+								FAQtr += '<tr class="hide" style="display:none;">' + 
+										 '<td></td>' + 
+										 '<td class="text-left" colspan="2" data-seq="' + list[i].commseq + '">' + 
+										 '<pre id="faqText_1" class="faq-text">' + list[i].quconte + '</pre>' + 
+										 '<button id="faqButton_1" class="btn-faq-text" onclick="reviseFormOpen(this)">[[#{bt.updateBoard}]]</button>' +
+										 '<div class="faq-revise-form">' +
+										 '<textarea id="reviseText_1"></textarea>' +
+										 '<button class="btn-faq-text" onclick="reviseText(this)">[[#{bt.save}]]</button><button class="btn-faq-close" onclick="reviseCancel(this)">[[#{bt.cancel}]]</button>' + 
+										 '</div>' +
+										 '</td>' + 
+										 '</tr>';
+							}else{
+								FAQtr += '<tr class="hide" style="display:none;"><td></td><td class="text-left" colspan="2" data-seq="' + list[i].commseq + '"><pre id="faqText_1" class="faq-text1">' + list[i].quconte + '</pre></td></tr>';
+							}
+						}
+					});
+
+					if(QnAtr !== ""){
+						$("#QnAtbody").html(QnAtr);
+						$(".pagination").html(data.page);
+						
+						$("#mdb2_QnAWriteModalBtn").removeClass("td-check");
+					}else{
+						$("#FAQtbody").html(FAQtr);
+						$(".pagination").html(data.page);
+						
+						if(data.userType == "BINBLUR"){ 
+							$("#mdb2_FAQWriteModalBtn").removeClass("td-check");
+						}else{
+							$("#mdb2_FAQWriteModalBtn").addClass("td-check");
+						}
+					}
+				}
+			};
+		
+			$(".pagination").on("click", ".page-item", function(e){
+				let target = e.currentTarget.parentElement.parentElement.id.substring(5,8)
+				let orderby = $(".tool-right ul").find("li.cate.active");
+		    	let comtype = $("#mdb2_" + target + "Div .table-tool .tool-left ul").find("li.cate.active")[0].id  ,
+		    	data = { pageNum : e.target.name , 
+			    	 	 comcate : target ,  
+			    	 	 comtype : comtype ,
+			    		 orderby : orderby[0].id  
+		    		    };
+		    	let aul = new AjaxUtil_Order("/md/mdb2TABSelect.do", data , "GET");
+				aul.setCallbackSuccess(setMdb2ListCallback);
+				aul.send();
+			}); 	
+				
+		//============================================================
+		// 상세페이지 저장 콜백
+		//============================================================	
+			function setDetailUpdateCallback(data){
+				alert("[[#{md.mdo2.saveSuccess}]]");
+				
+				$("#mdb2_detailModalPopup").modal("hide");
+				$(".pagination").children().remove();
+				
+				// 모달 창 닫히고 이벤트 실행
+				$("#mdb2_detailModalPopup").on("hidden.bs.modal", function (e) {   
+					var tabType = $("#mdb2_detailModalSaveBtn").attr("name").substring(5,8);
+					var comtype = $("#mdb2_QnAdiv .tool-left ul").find("li.cate.active");
+					var orderby = $(".tool-right ul").find("li.cate.active");
+					var data = { comcate : tabType , comtype : comtype[0].id , orderby : orderby[0].id };
+					var aul = new AjaxUtil_Order("/md/mdb2TABSelect.do", data,"GET");
+					aul.setCallbackSuccess(setMdb2ListCallback);
+					aul.send();
+				});
+			};
+	
+		//============================================================
+		// FAQ 답변 toggle Event 
+		//============================================================
+			function faqToggle(tr){
+				if($(tr).hasClass("open")){
+					$(tr).next("tr").hide();
+				}else{
+					$(tr).next("tr").show();
+				}
+				$(tr).toggleClass("open");
+			};
+			
+		//============================================================
+		// FAQ & QnA 카테고리별 조회
+		//============================================================
+			$(".tool-left").on("click", "ul li" , function(e){
+				var targetId = event.currentTarget.parentElement.parentElement.id;
+				var beforeLiDom = $("#" + targetId + " .table-tool .tool-left ul").find("li.cate.active");
+				if(beforeLiDom){
+					beforeLiDom.removeClass("active");
+					$(e.target).addClass("active");
+				}
+				
+				var comcate = $(".nav-item").children(".nav-link.active")[0].id.substring(5,8);
+				var comtype = e.target.id == "[[#{wm.wmi2.all}]]" ?  "" : e.target.id;
+				var key = $("#searchBox option:selected").val();
+				var value = $("#searchValue").val();	
+				var orderby = null;
+				
+				if($("#" + targetId  + " .table-tool .tool-right")[0]){
+					orderby = $("#" + targetId  + " .table-tool .tool-right ul").find("li.cate.active")[0].id
+				}else{
+					orderby = "";
+				}
+
+				var data = { comcate : comcate , comtype : comtype , [key] : value , orderby : orderby };
+				var aul = new AjaxUtil_Order("/md/mdb2TABSelect.do" , data , "GET");
+				aul.setCallbackSuccess(setMdb2ListCallback);
+				aul.send();
+			});
+		
+		
+			$(".tool-right").on("click", "ul li" , function(e){
+				var targetId = event.currentTarget.parentElement.parentElement.id;
+				var activeDom = $(e.target).parent().find("li.cate.active");
+				var comtype = $("#" + targetId + " .table-tool .tool-left ul").find("li.cate.active")[0].id;
+				
+				if(activeDom){
+					activeDom.removeClass("active");
+					$(e.target).addClass("active");
+				}
+				
+				var data = { comcate : "QnA" , comtype : comtype , orderby : e.target.id };
+				var aul = new AjaxUtil_Order("/md/mdb2TABSelect.do" , data , "GET");
+				aul.setCallbackSuccess(setMdb2ListCallback);
+				aul.send();
+			});
+			
+		//============================================================
+		// FAQ 답변 수정 
+		//============================================================	
+			function reviseFormOpen(param){
+				$(param).parent().find(".faq-text").hide();	
+				$(param).hide();
+				$(param).next(".faq-revise-form").show();
+				$(param).next(".faq-revise-form").find("textarea").val($(param).parent().find(".faq-text").text());
+			};
+			
+			function reviseText(param){
+				var quconte = charcterEncoding(param.previousElementSibling.value);
+				var data = { quconte : quconte , 
+							 commseq : param.parentNode.parentNode.dataset.seq, comcate :"FAQ" };
+				var aul = new AjaxUtil_Order("/md/mdb2WriteUpdate.do" , data );
+				aul.setCallbackSuccess(function(data){
+					$(param).parent().parent().find(".faq-text").show();
+					$(param).parent().parent().find(".faq-text").text($(param).parent().find("textarea").val());
+					$(param).closest(".faq-revise-form").hide();
+					$(param).closest("td").find(".btn-faq-text").show();	
+				});
+				aul.send();
+			};     
+	        
+		//============================================================
+		// FAQ 답변 수정 취소
+		//============================================================	
+			function reviseCancel(param){
+				$(param).parent().parent().find(".faq-text").show();	
+				$(param).closest(".faq-revise-form").hide();
+				$(param).parent().parent().closest("td").find(".btn-faq-text").show();	
+				$(param).parent().parent().closest(".faq-revise-form").show();	
+			};
+		
+		//============================================================	
+		// 특수문자 치환
+		//============================================================	
+			function charcterEncoding(str){
+				 str = str.replace(/</g,"＜");
+				 str = str.replace(/>/g,"＞");
+				 return str;
+			};
+			
+			
+			function mdb2Init(){
+				var InitData = callAjax("data", "GET", "/md/mdb2SelectBox.do", { comcdky : "COMTYPE" , codelyn : "N" } );
+				var writeCate = $("#mdb2_writeComtype");
+				var liDom = $(".tool-left ul");
+				var list = InitData.item;
+				
+				list.filter(function(data) {
+					writeCate.append('<option value="' + data.combonm + '">' + data.combonm + '</option>');
+					liDom.append('<li class="cate" id="' + data.combonm + '">' + data.combonm +'</li>');
+				});
+			};
+			
+			function mdb2InitTab(){
+				var mdb2_tabType = { comcate : "FAQ" , orderby : "" };
+				var mdb2_FAQAul = new AjaxUtil_Order("/md/mdb2TABSelect.do", mdb2_tabType, "GET");
+				mdb2_FAQAul.setCallbackSuccess(setMdb2ListCallback);
+				mdb2_FAQAul.send();
+			};
+	</script>
+</div>
+</html>

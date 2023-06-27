@@ -1,0 +1,54 @@
+<html lagn="ko" xmlns:th="http://www.thymeleaf.org">
+
+
+	<div th:fragment="fragments-mainContent" id="wrapperddd"   >
+	<!--  mainConten 시작 -->
+		 
+    
+		<!--  dashboard 시작 -->
+		<div id="content" class="main-content">
+
+			<th:block th:if="${session.usertyp == 'BINBLUR'}">
+				<div id="dashboard">	
+<!-- 					<th:block th:if="${session.rolgkey == 'BINBLUR_WH'}">
+						<th:block th:replace="/com/dashboard/binblur_logist.html :: fragments-dashboard"></th:block>
+					</th:block> -->
+					
+					<div th:unless="${session.rolgkey == 'BINBLUR_WH'}">
+						<th:block th:replace="/com/dashboard/binblur.html :: fragments-dashboard"></th:block>
+					</div>
+				</div>
+			</th:block>
+	
+<!-- 			<th:block th:if="${session.usertyp == 'LOGIST'}"> 
+		        <div id="dashboard">
+		        	<th:block th:replace="/com/dashboard/logist.html :: fragments-dashboard"></th:block>
+		        </div>					
+			</th:block> -->
+				
+			<th:block th:if="${session.usertyp == 'OWNER'}"> 
+		        <div id="dashboard">
+		        	<th:block th:replace="/com/dashboard/owner.html :: fragments-dashboard"></th:block>
+		        </div>
+			</th:block>
+			
+			<th:block th:if="${session.usertyp == 'CUSTOMER'}"> 
+		        <div id="dashboard">
+		        	<th:block th:replace="/com/dashboard/wholesale.html :: fragments-dashboard"></th:block>
+		        </div>
+			</th:block>
+	
+			<th:block th:if="${session.usertyp == 'VENDER'}"> 
+		        <div id="dashboard">
+		        	<th:block th:replace="/com/dashboard/vender.html :: fragments-dashboard"></th:block>
+		        </div>
+			</th:block>
+ 
+					
+		</div>
+		<!--  dashboard 종료 --> 
+
+	 
+	 <!--  mainConten 종료 -->	 
+	</div>
+</html>

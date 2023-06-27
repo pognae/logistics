@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div id="mainHeader" th:fragment="fragments-mainHeader">
+<!--  해더 시작  -->
+		<div class="header-wrap">
+		
+			<!--header nav start -->
+			<header class="header">
+				<nav class="navbar navbar-expand-lg">
+
+					<a class="navbar-brand" href="/main/mainPage3TopTAB.do"><img src="/img/binblur_wh3.png" width=120 title="binblur"></a>
+					<button class="navbar-toggler">
+						<i class="fa-solid fa-bars"></i>
+					</button>
+									 
+		 
+					 
+					<div class="menu-wrap">
+						<!--menu 닫기-->
+						<button class="menu-close"><i class="fa-solid fa-xmark"></i></button>
+						<!--//menu 닫기-->
+						
+						 
+						
+												
+						<!--가로 menu 메뉴 생성 start -->
+						<nav>
+							<!-- lvl 1  -->
+							<ul class="main-menu depth1" id="sideMenuBar"></ul>  
+						</nav>
+						<!--가로 menu 메뉴 생성 end -->
+						
+						<!-- user info start -->						
+						<div class="menu-right">
+							
+							
+							<span th:text="${session.usernam}"></span>
+							
+							<button class="right-item search"><i class="fa-solid fa-magnifying-glass"></i></button>
+							
+							<!-- sidebar search -->
+							<div class="top-search-wrap">
+								<i class="fa-solid fa-magnifying-glass"></i>
+								<input type="text" id="searchcmd" name="searchcmd" class="form-control" placeholder="메뉴코드를 입력하세요" onkeyPress="searchcmdKeyevent(this);" autocomplete='on' >
+							</div>
+							<!-- sidebar search end -->
+							
+							<th:block th:if="${session.usertyp == 'BINBLUR'}  OR ${session.usertyp == 'OWNER'} OR ${session.usertyp == 'CUSTOMER'}"> 
+						        <a href="javascript:mainProgramCMD('tmp2');" title="운송상태 모니터링"><button class="right-item"><i class='fa-solid fa-truck'></i></button></a>
+							</th:block> 			
+							<th:block th:if="${session.usertyp == 'OWNER'} OR ${session.usertyp == 'CUSTOMER'}"> 
+						        <a href="javascript:mainProgramCMD('omm3');" id="btnomm3"><button class="right-item"><i class="fa-solid fa-bell"></i></button></a>
+							</th:block>
+ 											
+							
+							
+							<a href="#" id="btnEditProfile" title="Edit Profile"><button class="right-item"><i class="fa-solid fa-gear"></i></button></a>
+							<a href="/logout" title="Logout"><button class="right-item"><i class="fa-solid fa-arrow-right-from-bracket"></i></button></a>
+							
+							<input type="hidden" id="token" data-token-name="${_csrf.headerName}" placeholder="Password" value="${_csrf.token}">
+							<input type="hidden" id="gSessionDatas" th:gthemety="${session.themety} ? ${session.themety} : 'MAIN1SD'" th:gfavoryn="${session.favoryn} ? ${session.favoryn} : 'N'" >
+							
+						</div>
+						
+						<!-- user info start -->
+						 
+					</div>
+				</nav>
+				
+				
+			</header>
+			<!--header nav end -->
+			
+		</div> 
+
+
+<!--  해더 종료  -->
+<script type="text/javascript"> 
+	// 메뉴트리 구성
+	getUserMenuList();
+	
+	// search 입력
+	function searchcmdKeyevent(o){
+		if(event.keyCode==13){ 
+			var tprogcmd = o.value.toLowerCase();
+			mainSearchKeyevent(tprogcmd);
+			//$('.top-search-wrap').toggle('block');
+			$('.top-search-wrap').toggle('none');
+		}
+	}
+	
+	//  검색 열기/닫기
+	$(document).ready(function(){
+		$('.navbar-toggler').click(function(){			
+			$('.header-wrap .menu-wrap').addClass('open');
+		});
+		$('.menu-close').click(function(){
+			$('.header-wrap .menu-wrap').removeClass('open');
+		})
+		$('.main-menu > li > span').click(function(){
+			$(this).next('ul').toggleClass('open')
+		})
+		$('.right-item.search').click(function(){
+			$(this).next('.top-search-wrap').toggle();
+			$('#searchcmd').focus();
+		})
+		//$('#searchcmd').blur(function(){
+		//	$('.top-search-wrap').toggle('none');
+		//}) 
+		
+	})
+</script>		 
+</div>
+</html>

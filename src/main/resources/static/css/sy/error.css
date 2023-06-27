@@ -1,0 +1,89 @@
+@import 'https://fonts.googleapis.com/css?family=Inconsolata';
+ 
+html {
+	min-height: 100%;
+}
+
+body {  
+	margin: 0; 
+} 
+
+.err403 {  
+	margin: 0;
+	box-sizing: border-box;
+	height: 100%;
+
+	background: url('../../img/sy/error_403.png')no-repeat;
+	background-color: #f3f4f8;
+	background-position: center 25%;
+	background-size: auto; 
+	text-align: center; 
+} 
+.err404 {  
+	margin: 0;
+	box-sizing: border-box;
+	height: 100%;
+
+	background: url('../../img/sy/error_404.png')no-repeat;
+	background-color: #f3f4f8;
+	background-position: center 25%;
+	background-size: auto; 
+	text-align: center; 
+} 
+.err408 {  
+	margin: 0;
+	box-sizing: border-box;
+	height: 100%;
+
+	background: url('../../img/sy/error_408.png')no-repeat;
+	background-color: #f3f4f8;
+	background-position: center 25%;
+	background-size: auto; 
+	text-align: center; 
+} 
+
+.err500 {  
+	margin: 0;
+	box-sizing: border-box;
+	height: 100%;
+
+	background: url('../../img/sy/error_500.png')no-repeat;
+	background-color: #f3f4f8;
+	background-position: center 25%;
+	background-size: auto; 
+	text-align: center; 
+} 
+.terminal {
+	box-sizing: inherit;
+	position: absolute;
+	margin-top: 50vh;
+	height: 50%;
+	width: 100%;
+	max-width: 100%;
+	padding: 0;
+	text-transform: uppercase;
+}
+h2{
+	color: #3d3d4e; 
+	font-size: 40px; 
+	font-family: 'AppleSDGothicNeoM';
+	margin-bottom: 50px;
+}
+p{
+	font-size: 20px;
+	color: #6e6d7a;
+	font-family: 'AppleSDGothicNeoL';
+	margin-bottom: 20px; 
+}
+a {  color: #fff;  
+	padding: 13px 30px; 
+	background: #ffffff;
+	display: inline-block;
+	border: 1px solid #c9c9c9; 
+	border-radius: 3px;
+	text-decoration: none;
+	color: #0d0c22; 
+	font-family: 'AppleSDGothicNeoM';
+	font-size: 16px;
+	margin-top: 50px;
+}

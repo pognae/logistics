@@ -1,0 +1,24 @@
+{
+    "version": "1.0.0",
+    "name": "동대문 의류 전문 물류업체",    
+    "short_name": "BINBLUR",
+    "description": "BINBLUR WEB",
+    "scope": "/",
+    "start_url": "/login",    
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "icons": [ 
+	    {
+	      "src": "/img/favicon.ico",
+	      "sizes": "64x64 32x32 24x24 16x16",
+	      "type": "image/x-icon"
+	    },
+	    {
+	      "src": "/img/binblur.png",
+	      "sizes": "32x32",
+	      "type": "image/png"
+	    } 
+    ]
+
+}

@@ -1,0 +1,1085 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+ 
+ <mapper namespace="com.logistics.sy.mapper.UserMapper">
+
+ 
+    <!-- *********************************************** -->
+    <!-- 로그인 -->
+    <!-- *********************************************** -->        
+    <!-- 계정 정보 : 회사, 사용자아이디 -->
+    <select id="selectUserCompanyAccount" resultType="com.logistics.sy.domain.UserVo">
+        select * 
+          from SUSRMA
+         where COMPKEY=#{compkey} 
+           and USERACT=#{useract}
+    </select>   
+	
+    <select id="selectCompanyUserRoleList" resultType="com.logistics.sy.domain.UserRoleProgramDTO"> 
+		 select B.PROGRID
+		      , B.COMPKEY, B.ROLEKEY
+		      , B.POSACTV, B.GETACTV, B.PUTACTV, B.DELACTV
+		   from SUSRMA S
+		  inner join SROLGR A on S.COMPKEY = A.COMPKEY and S.ROLGKEY = A.ROLGKEY 
+		  inner join SROLPG B on A.COMPKEY = B.COMPKEY and A.ROLEKEY = B.ROLEKEY     
+		  where S.COMPKEY = #{compkey} 
+		    and S.USERACT = #{useract}  
+		    and B.GETACTV = 'Y'      
+    </select>
+    
+    <select id="selectSusrmaBox" resultType="hashmap">
+    	select
+    		  USERACT
+    		, USERNAM
+    	from
+    		SUSRMA
+    	where 1=1
+    	and compkey = #{compkey}
+    	<if test="ownerky != null and ownerky !=''">
+    	and ownerky = #{ownerky}
+    	</if>
+    	<if test="custkey != null and custkey !=''">
+    	and custkey = #{custkey}
+    	</if>
+    </select>
+ 
+    <select id="selectSusrmaBoxByOml1" resultType="hashmap">
+    	select
+    		  USERACT as combovl
+    		, USERNAM as combonm
+    	from
+    		SUSRMA
+    	where 1=1
+    	and compkey = #{compkey}
+    	<if test="ownerky != null and ownerky !=''">
+    	and ownerky = #{ownerky}
+    	</if>
+    </select>
+         
+	<!-- 계정 메뉴 : 메뉴 리스트 정보 -->
+    <select id="selectCompanyUserMenuList" resultType="com.logistics.sy.domain.UserMenuDTO">
+		select #{compkey} as COMPKEY, '*BOOKMARK' as MENUKEY, '0000000000' as MENUIKY, 'FLD' as MENUGBN, 'SYB' as PROGRID
+		     , 'menu.sy.bookmark' as MENULKY, 1 as MENULVL, '즐겨찾기'  as MENUNAM, 0 as MENUORD
+		     , '/img/icon/book.svg' as MENUICO, ' ' as OPENTYP
+		     , ' ' as PROGCMD
+		 union all		     
+		select B.COMPKEY, '*BOOKMARK' as MENUKEY, '0000000000' as MENUIKY, B.MENUGBN, B.PROGRID, B.MENULKY, 2 as MENULVL, B.MENUNAM, B.MENUORD
+		     , B.MENUICO, B.OPENTYP
+		     , C.PROGCMD
+		  from SUSRMA S
+ 		 inner join SMNUBM B on B.COMPKEY = S.COMPKEY and B.USERACT = S.USERACT
+          left join SPROGM C on C.COMPKEY = B.COMPKEY and C.PROGRID = B.PROGRID 		 
+		 where S.COMPKEY= #{compkey}
+		   and S.USERACT= #{useract}
+		   and (B.MENUGBN != 'PGM' or ifnull(C.PROGCMD,'X') != 'X')
+	     union all
+		select B.COMPKEY, B.MENUKEY, B.MENUIKY, B.MENUGBN, B.PROGRID, B.MENULKY, B.MENULVL, B.MENUNAM, B.MENUORD
+		     , B.MENUICO, B.OPENTYP
+		     , C.PROGCMD
+		  from SUSRMA S
+		 inner join SROLGR A on S.COMPKEY = A.COMPKEY and S.ROLGKEY = A.ROLGKEY 
+ 		 inner join SMNUIT B on A.COMPKEY = B.COMPKEY and A.MENUKEY = B.MENUKEY
+          left join SPROGM C on B.COMPKEY = C.COMPKEY and B.PROGRID = C.PROGRID 		 
+		 where S.COMPKEY= #{compkey}
+		   and S.USERACT= #{useract}
+		   and (B.MENUGBN != 'PGM' or ifnull(C.PROGCMD,'X') != 'X')		   
+	     order by MENUKEY, MENUORD   
+<!-- 		select B.COMPKEY, B.MENUKEY, B.MENUIKY, B.MENUGBN, B.PROGRID, B.MENULKY, B.MENULVL, B.MENUNAM, B.MENUORD
+		     , B.MENUICO, B.OPENTYP
+		     , C.PROGCMD
+		  from SUSRMA S
+		 inner join SROLGR A on S.COMPKEY = A.COMPKEY and S.ROLGKEY = A.ROLGKEY 
+ 		 inner join SMNUIT B on A.COMPKEY = B.COMPKEY and A.MENUKEY = B.MENUKEY
+          left join SPROGM C on B.COMPKEY = C.COMPKEY and B.PROGRID = C.PROGRID 		 
+		 where S.COMPKEY= #{compkey}  
+		   and S.USERACT= #{useract}
+		   and (B.MENUGBN != 'PGM' or ifnull(C.PROGCMD,'X') != 'X')
+	     order by B.MENUORD   -->       
+    </select>
+    
+    <!-- 계정 메뉴 : 즐겨찾기 추가 -->
+    <insert id="insertCompanyUserMenuBookmark"   parameterType="map">
+		insert 
+		  into SMNUBM (COMPKEY, USERACT, PROGRID
+		  			 , MENUGBN, MENULKY, MENULVL, MENUNAM, MENUORD
+		  			 , MENUICO, OPENTYP
+		  			 , CREDATE, CRETIME, CREUSER
+		  			 , LMODATE, LMOTIME, LMOUSER)
+				select B.COMPKEY, #{useract}, B.PROGRID
+					 , B.MENUGBN, B.MENULKY,  B.MENULVL, B.MENUNAM, B.MENUORD
+				     , B.MENUICO, B.OPENTYP
+               		 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{useract}
+			   		 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{useract}  
+				  from SUSRMA S
+				 inner join SROLGR A on S.COMPKEY = A.COMPKEY and S.ROLGKEY = A.ROLGKEY 
+		 		 inner join SMNUIT B on A.COMPKEY = B.COMPKEY and A.MENUKEY = B.MENUKEY
+		          left join SPROGM C on B.COMPKEY = C.COMPKEY and B.PROGRID = C.PROGRID 		 
+				 where S.COMPKEY = #{compkey}
+				   and S.USERACT = #{useract}
+				   and B.PROGRID = #{progrid} 
+    </insert>    
+    
+    <!-- 계정 메뉴 : 즐겨찾기 삭제 -->
+    <delete id="deleteCompanyUserMenuBookmark"   parameterType="map">
+    	delete  
+    	  from SMNUBM 
+    	 where COMPKEY = #{compkey}
+    	   and USERACT = #{useract}
+    	   and PROGRID = #{progrid} 
+    </delete>   
+    
+
+	<!-- 계정 메뉴 : 즐겨찾기- 메뉴정보 -->
+    <select id="selectCCompanyBookmarkProgram" resultType="com.logistics.sy.domain.UserMenuDTO">
+		select B.COMPKEY, '*BOOKMARK' as MENUKEY, '0000000000' as MENUIKY, B.MENUGBN, B.PROGRID, B.MENULKY, 2 as MENULVL, B.MENUNAM, B.MENUORD
+		     , B.MENUICO, B.OPENTYP
+		     , C.PROGCMD
+		  from SUSRMA S
+ 		 inner join SMNUBM B on B.COMPKEY = S.COMPKEY and B.USERACT = S.USERACT
+          left join SPROGM C on C.COMPKEY = B.COMPKEY and C.PROGRID = B.PROGRID 		 
+		 where S.COMPKEY= #{compkey}
+		   and S.USERACT= #{useract}
+		   and (B.MENUGBN != 'PGM' or ifnull(C.PROGCMD,'X') != 'X')
+		   and C.PROGRID = #{progrid}  
+    </select>    
+        
+	<!-- 계정 접속 창고 -->
+    <select id="selectCompanyUserWarehouseList" parameterType="map" resultType="java.util.HashMap">
+		select C.WAREKEY, C.WHNAMLC ,
+			   C.WAREKEY as combovl ,
+			   C.WHNAMLC as combonm 
+		  from SUSRMA S 
+		 inner join SROLGR A on S.COMPKEY = A.COMPKEY and S.ROLGKEY = A.ROLGKEY 
+		 inner join SROLWH B on A.COMPKEY = B.COMPKEY and A.ROLEKEY = B.ROLEKEY
+		 inner join MWARMA C on B.COMPKEY = C.COMPKEY and B.WAREKEY = C.WAREKEY
+		 where S.COMPKEY = #{compkey}
+		   and S.USERACT = #{useract}
+		   and B.WAREAVL = 'Y'
+		 order by C.WAREKEY		 
+    </select>
+        
+    <!-- *********************************************** -->
+    <!-- su1 사용자  -->
+    <!-- *********************************************** -->    
+    <!--syu1 : 사용자 List -->
+    <select id="selectCompanyUser" resultType="com.logistics.sy.domain.UserDTO"> 
+		select concat(SU.COMPKEY, SU.USERACT) as ROWKEY
+			 , SU.COMPKEY, SU.USERACT, SU.PASSWRD, SU.USERNAM, SU.ADDRESS
+  			 , SU.CITYCOD, SU.RSONKEY, SU.POSTCOD, SU.NATN2KY, SU.TELPHNM
+			 , SU.EMAILAD, SU.DEPARTM, SU.EMPLOID, SU.ACAPDOC
+			 , SU.USERTYP
+			 , SU.OWNERKY, MO.OWNERKY as OWNAMLC
+			 , SU.PTNRKEY, MP.PTNAMLC as PTNAMLC
+			 , SU.CUSTKEY, MC.CUNAMLC as CUNAMLC
+			 , SU.USERGR1, SU.USERGR2, SU.USERGR3
+			 , SU.LANGKEY, SU.DATEFMT, SU.TIMEFMT, SU.DECIFMT
+			 , date_format(SU.IDEXPDT, '%Y-%m-%d') as IDEXPDT
+			 , date_format(SU.PWEXPDT, '%Y-%m-%d') as PWEXPDT
+			 , SU.PWERCNT, SU.ALOCKED, SU.ALOCKMO, SU.UTIMZON, SU.ROLGKEY
+			 , SU.POLPRYN, SU.POLSVYN, SU.POLSMYN, SU.POLEMYN
+			 , date_format(SU.POLDATE, '%Y-%m-%d') as POLDATE, date_format(SU.POLTIME, '%H-%i-%s') as POLTIME
+			 , SU.APPROYN, SU.SOTAPYN
+			 , date_format(SU.SOTDATE, '%Y-%m-%d') as SOTDATE, date_format(SU.SOTTIME, '%H-%i-%s') as SOTTIME
+			 , SU.OWNAPYN, date_format(SU.OWNAPDT, '%Y-%m-%d') as OWNAPDT, date_format(SU.OWNAPTM, '%H-%i-%s') as OWNAPTM, fn_sy_usernam(SU.COMPKEY, SU.OWNAPID) as OWNAPID
+			 , SU.THEMETY
+			 , date_format(SU.CREDATE, '%Y-%m-%d') as CREDATE, date_format(SU.CRETIME, '%H-%i-%s') as CRETIME, fn_sy_usernam(SU.COMPKEY, SU.CREUSER) as CREUSER
+			 , date_format(SU.LMODATE, '%Y-%m-%d') as LMODATE, date_format(SU.LMOTIME, '%H-%i-%s') as LMOTIME, fn_sy_usernam(SU.COMPKEY, SU.LMOUSER) as LMOUSER
+			 , SU.INDIBZL, SU.INDIARC, SU.UPDTCHK
+		  from SUSRMA SU
+		  left join MOWRMA MO
+		    on SU.COMPKEY = MO.COMPKEY
+		   and SU.OWNERKY = MO.OWNERKY
+		  left join MPTNMA MP
+		    on SU.COMPKEY = MP.COMPKEY
+		   and SU.OWNERKY = MP.OWNERKY
+		   and SU.PTNRKEY = MP.PTNRKEY
+		  left join MCUSMA MC
+		    on SU.COMPKEY = MC.COMPKEY
+		   and SU.CUSTKEY = MC.CUSTKEY
+		   and SU.OWNERKY = MC.OWNERKY
+		 where SU.COMPKEY= #{userData.compkey}
+		 <if test="useract != null and  useract != ''">
+		   and upper(SU.USERACT) LIKE CONCAT('%', upper(#{useract}), '%') 
+		 </if>
+		 <if test="usernam != null and  usernam != ''">
+		   and upper(SU.USERNAM) LIKE CONCAT('%', upper(#{usernam}), '%')
+		 </if>
+		 <if test="usertyp != null and  usertyp != ''">
+		   and SU.USERTYP = #{usertyp}
+		 </if>
+		 <if test="telphnm != null and  telphnm != ''">
+		   and upper(SU.TELPHNM) LIKE CONCAT('%', upper(#{telphnm}), '%')
+		 </if>
+		 <if test="approyn != null and  approyn != ''">
+		   and SU.APPROYN = #{approyn}
+		 </if>
+		 <if test="sotapyn != null and  sotapyn != ''">
+		   and SU.SOTAPYN = #{sotapyn}
+		 </if>
+		 <if test="ownerky != null and  ownerky != ''">
+		   and SU.OWNERKY = #{ownerky}
+		 </if>
+		 <if test="custkey != null and  custkey != ''">
+		   and SU.CUSTKEY = #{custkey}
+		 </if>
+		 order by SU.COMPKEY, SU.USERACT
+    </select>
+
+    <!--syu1 : 사용자정보 수정 -->
+    <update id="updateUser" parameterType="com.logistics.sy.domain.UserDTO"> 
+		<foreach collection="list" item="item"  separator=";">
+		update SUSRMA
+		   set PASSWRD = #{item.passwrd}
+			 , USERNAM = #{item.usernam}
+			 , ADDRESS = #{item.address}
+			 , CITYCOD = #{item.citycod}
+			 , RSONKEY = #{item.rsonkey}
+			 , POSTCOD = #{item.postcod}
+			 , NATN2KY = #{item.natn2ky}
+			 , TELPHNM = #{item.telphnm}
+			 , EMAILAD = #{item.emailad}
+			 , DEPARTM = #{item.departm}
+			 , EMPLOID = #{item.emploid}
+			 , ACAPDOC = #{item.acapdoc}
+			 , USERTYP = #{item.usertyp}
+			 , OWNERKY = #{item.ownerky}
+			 , PTNRKEY = #{item.ptnrkey}
+			 , CUSTKEY = #{item.custkey}
+			 , USERGR1 = #{item.usergr1}
+			 , USERGR2 = #{item.usergr2}
+			 , USERGR3 = #{item.usergr3}
+			 , LANGKEY = #{item.langkey}
+			 , DATEFMT = #{item.datefmt}
+			 , TIMEFMT = #{item.timefmt}
+			 , UTIMZON = #{item.utimzon}
+			 , DECIFMT = #{item.decifmt}
+			 , IDEXPDT = replace(#{item.idexpdt},'-','')
+			 , PWEXPDT = replace(#{item.pwexpdt},'-','')
+			 , PWERCNT = #{item.pwercnt}
+			 , ALOCKED = #{item.alocked}
+			 , ALOCKMO = #{item.alockmo}
+			 , ROLGKEY = #{item.rolgkey}
+			 , APPROYN = #{item.approyn}
+			 , OWNAPYN = #{item.ownapyn}
+			 <if test='item.ownapyn == "Y"'>
+			 , OWNAPDT = to_char(NOW() ,'YYYYMMDD')
+			 , OWNAPTM = to_char(NOW() ,'hh24miss')
+			 , OWNAPID = #{userData.useract}
+			 </if>
+			 , THEMETY = #{item.themety}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		     , LMOTIME = to_char(NOW() ,'hh24miss')
+			 , LMOUSER = #{userData.useract}
+		 where COMPKEY = #{item.compkey}
+		   and USERACT = #{item.useract}
+		   and UPDTCHK = #{item.updtchk}
+		</foreach>
+    </update>    
+    
+    <!--syu1 : 사용자등록 -->
+    <insert id="insertUser"   parameterType="com.logistics.sy.domain.UserDTO"> 
+        insert 
+          into SUSRMA ( COMPKEY, USERACT, PASSWRD, USERNAM, ADDRESS, CITYCOD
+					  , RSONKEY, POSTCOD, NATN2KY, TELPHNM, EMAILAD, DEPARTM
+					  , EMPLOID, ACAPDOC, USERTYP, OWNERKY, PTNRKEY, CUSTKEY
+					  , USERGR1, USERGR2, USERGR3, LANGKEY, DATEFMT, TIMEFMT
+					  , DECIFMT, IDEXPDT, PWEXPDT, PWERCNT, ALOCKED, ALOCKMO
+					  , UTIMZON, ROLGKEY, POLPRYN, POLSVYN, POLSMYN, POLEMYN
+					  , POLDATE, POLTIME, APPROYN, SOTAPYN, SOTDATE, SOTTIME
+					  , OWNAPYN, OWNAPDT, OWNAPTM, OWNAPID, THEMETY
+					  , CREDATE, CRETIME, CREUSER
+					  , LMODATE, LMOTIME, LMOUSER)
+        values
+        <foreach collection="list" item="item"  separator=",">
+         	   ( #{item.compkey}, #{item.useract}, #{item.passwrd}, #{item.usernam}, #{item.address}, #{item.citycod}
+               , #{item.rsonkey}, #{item.postcod}, #{item.natn2ky}, #{item.telphnm}, #{item.emailad}, #{item.departm}
+               , #{item.emploid}, #{item.acapdoc}, #{item.usertyp}, #{item.ownerky}, #{item.ptnrkey}, #{item.custkey}
+               , #{item.usergr1}, #{item.usergr2}, #{item.usergr3}, #{item.langkey}, #{item.datefmt}, #{item.timefmt}
+               , #{item.decifmt}, replace(#{item.idexpdt},'-',''), replace(#{item.pwexpdt},'-',''), 0, #{item.alocked}, #{item.alockmo}
+               , #{item.utimzon}, #{item.rolgkey}, #{item.polpryn}, #{item.polsvyn}, #{item.polsmyn}, #{item.polemyn}
+               , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{item.approyn}, #{item.sotapyn}, #{item.sotdate}, #{item.sottime}
+               , #{item.ownapyn}, #{item.ownapdt}, #{item.ownaptm}, #{item.ownapid}, #{item.themety}
+               , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			   , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+		</foreach>
+    </insert>
+    
+    <insert id="insertOneUser"   parameterType="com.logistics.sy.domain.UserDTO"> 
+        insert 
+          into SUSRMA ( COMPKEY , USERACT , PASSWRD , USERNAM , 
+          				TELPHNM , EMAILAD , 
+				        POLPRYN , POLSVYN , POLSMYN , POLEMYN ,
+					    CREDATE , CRETIME , CREUSER ,
+					    LMODATE , LMOTIME , LMOUSER 
+					   )
+        values
+         	   ( #{compkey} , #{useract} , #{passwrd} , #{usernam} , 
+         	   	 #{telphnm} , #{emailad} ,
+         	   	 #{polpryn} , #{polsvyn} , #{polsmyn} , #{polemyn} ,
+                 to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{useract} ,
+			     to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{useract} )
+    </insert>
+    
+    <!-- *********************************************** -->
+    <!-- syu2 메뉴 -->
+    <!-- *********************************************** -->
+    <!--su2 : Menu Header List 조회 -->
+    <select id="selectHeaderMenu" resultType="com.logistics.sy.domain.UserMenuDTO">
+     	select concat(COMPKEY, MENUKEY) as ROWKEY
+			 , COMPKEY
+			 , MENUKEY
+			 , MENUNAM
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%Y-%m-%d') as CRETIME, fn_sy_usernam(COMPKEY,CREUSER) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%Y-%m-%d') as LMOTIME, fn_sy_usernam(COMPKEY,LMOUSER) as LMOUSER
+			 , INDIBZL, INDIARC, UPDTCHK
+		  from SMNUHD
+		 where 1=1  
+		   and COMPKEY = #{userData.compkey}
+		 <if test="menukey != null and  menukey != ''">
+		   and upper(MENUKEY) like concat('%', upper(#{menukey}), '%') 
+		 </if>
+		 <if test="menunam != null and  menunam != ''">
+		   and upper(MENUNAM) like concat('%', upper(#{menunam}), '%')
+		 </if>
+		 order by COMPKEY, MENUKEY
+    </select>
+    
+    <!--su2 : Menu Item List 조회 -->
+    <select id="selectItemMenu" resultType="com.logistics.sy.domain.UserMenuDTO">
+     	select concat(COMPKEY, MENUKEY, MENUIKY) as ROWKEY
+     		 , COMPKEY
+			 , MENUKEY
+			 , MENUIKY
+			 , MENUGBN
+			 , PROGRID
+			 , MENULKY
+			 , MENULVL
+			 , MENUNAM
+			 , MENUORD
+			 , MENUICO
+			 , OPENTYP
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%Y-%m-%d') as CRETIME, fn_sy_usernam(COMPKEY,CREUSER) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%Y-%m-%d') as LMOTIME, fn_sy_usernam(COMPKEY,LMOUSER) as LMOUSER
+			 , INDIBZL, INDIARC, UPDTCHK
+		  from SMNUIT
+		 where COMPKEY= #{compkey}
+		   and MENUKEY= #{menukey}
+		 order by COMPKEY, MENUKEY, MENULKY
+    </select>
+	
+	<!--syu2 : Menu Header 등록 -->
+    <insert id="insertHeaderMenu" parameterType="com.logistics.sy.domain.UserMenuDTO"> 
+		insert 
+		  into SMNUHD (COMPKEY, MENUKEY, MENUNAM, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER )
+		values ( #{compkey}, #{menukey}, #{menunam}
+		     , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{creuser}
+		     , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{lmouser} )
+    </insert>  
+    
+    <!--syu2 : Menu Header 수정 -->
+    <update id="updateHeaderMenu" parameterType="com.logistics.sy.domain.UserMenuDTO"> 
+		update SMNUHD
+		   set MENUNAM = #{menunam}
+		     , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		     , LMOTIME = to_char(NOW() ,'hh24miss')
+		     , LMOUSER = #{lmouser}
+		 where COMPKEY = #{compkey}
+		   and MENUKEY = #{menukey}
+		   and UPDTCHK = #{updtchk}
+    </update> 
+	
+    <!--syu2 : Menu Item List 수정 -->
+    <update id="updateItemMenu" parameterType="com.logistics.sy.domain.UserMenuDTO"> 
+		<foreach collection="list" item="item"  separator=";">
+		update SMNUIT    
+		   set MENUGBN = #{item.menugbn}
+			 , PROGRID = #{item.progrid}
+			 , MENULKY = #{item.menulky}
+			 , MENULVL = #{item.menulvl}
+			 , MENUNAM = #{item.menunam}
+			 , MENUORD = #{item.menuord}
+			 , MENUICO = #{item.menuico}
+			 , OPENTYP = #{item.opentyp}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		     , LMOTIME = to_char(NOW() ,'hh24miss')
+		     , LMOUSER = #{userData.useract}
+		 where COMPKEY = #{item.compkey}
+		   and MENUKEY = #{item.menukey}
+		   and MENUIKY = #{item.menuiky}
+		   and UPDTCHK = #{item.updtchk}
+		</foreach>
+    </update>    
+    
+    <!--syu2 : Menu Item List 등록 -->
+    <insert id="insertItemMenu" parameterType="com.logistics.sy.domain.UserMenuDTO"> 
+		insert 
+		  into SMNUIT (COMPKEY, MENUKEY, MENUIKY, MENUGBN, PROGRID, MENULKY, MENULVL, MENUNAM, MENUORD, MENUICO, OPENTYP, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER )
+		values 
+		<foreach collection="list" item="item"  separator=",">
+		( #{item.compkey}, #{item.menukey}, fn_sy_menuiky(), #{item.menugbn}, #{item.progrid}
+		, #{item.menulky}, #{item.menulvl}, #{item.menunam}, #{item.menuord}, #{item.menuico}, #{item.opentyp}
+		, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} ) 
+		</foreach> 
+    </insert>  
+    
+	<!--syu2 : Menu Header List 삭제 -->
+    <delete id="deleteHeaderMenu" parameterType="com.logistics.sy.domain.UserMenuDTO"> 
+		<foreach collection="list" item="item"  separator=";">
+		delete from SMNUHD  	                     
+		 where COMPKEY = #{item.compkey}   
+		   and MENUKEY = #{item.menukey}
+		</foreach>
+    </delete>  
+    
+    <!--syu2 : Menu Item List 삭제 -->
+    <delete id="deleteItemMenu" parameterType="com.logistics.sy.domain.UserMenuDTO"> 
+		<foreach collection="list" item="item"  separator=";">
+		delete from SMNUIT
+		 where COMPKEY = #{item.compkey}   
+		   and MENUKEY = #{item.menukey}
+		 <if test="item.menuiky != null and item.menuiky != ''">
+		   and MENUIKY = #{item.menuiky}
+		 </if>
+		</foreach>
+    </delete>
+    
+    <!-- syu2 : Menu Select Box -->
+    <select id="selectMenuBox" resultType="HashMap"> 
+		select MENUKEY as combovl
+			 , MENUNAM as combonm
+		  from SMNUHD
+	  	 where 1=1 
+	  	<if test='compkey != null and compkey != ""'>
+	  	   and COMPKEY = #{compkey}
+	  	</if> 
+	  	<if test='menukey != null and menukey != ""'>
+	  	   and MENUKEY = #{menukey} 
+	  	</if>
+	  	 group by MENUKEY, MENUNAM
+	 	 order by MENUKEY, MENUNAM
+ 	</select>
+    
+	
+	<!-- *********************************************** -->
+    <!-- syu3 롤-->
+    <!-- *********************************************** -->
+    <!--syu3 : Role Master List 조회 -->
+    <select id="selectRoleMaster" resultType="com.logistics.sy.domain.UserRoleHeaderDTO">
+		select concat(COMPKEY, ROLEKEY) as ROWKEY
+		     , COMPKEY, ROLEKEY, ROLENAM
+		     , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%Y-%m-%d') as CRETIME, fn_sy_usernam(COMPKEY,CREUSER) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%Y-%m-%d') as LMOTIME, fn_sy_usernam(COMPKEY,LMOUSER) as LMOUSER
+			 , INDIBZL, INDIARC, UPDTCHK
+		  from SROLHD
+		 where 1=1
+		   and COMPKEY = #{userData.compkey}
+		 <if test="rolekey != null and  rolekey != ''">
+		   and upper(ROLEKEY) like concat('%', upper(#{rolekey}), '%') 
+		 </if>
+		 <if test="rolenam != null and  rolenam != ''">
+		   and upper(ROLENAM) like concat('%', upper(#{rolenam}), '%')
+		 </if>
+		 order by COMPKEY, ROLEKEY  
+    </select>
+
+    <!--syu3 : Role Master 수정 -->
+    <update id="updateRoleMaste" parameterType="com.logistics.sy.domain.UserRoleHeaderDTO"> 
+		update SROLHD
+		   set ROLENAM	= #{rolenam} 
+		     , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		     , LMOTIME = to_char(NOW() ,'hh24miss')
+		     , LMOUSER = #{lmouser}   	                     
+		 where COMPKEY = #{compkey}
+		   and ROLEKEY = #{rolekey}
+		   and UPDTCHK = #{updtchk}
+    </update>    
+    
+    <!--syu3 : Role Master 등록 -->
+    <insert id="insertRoleMaste" parameterType="com.logistics.sy.domain.UserRoleHeaderDTO"> 
+		insert 
+		  into SROLHD (COMPKEY, ROLEKEY, ROLENAM, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER )
+		values (#{compkey}, upper(#{rolekey}), #{rolenam} 
+		     , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{creuser}
+		     , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{lmouser} ) 
+    </insert>  
+    
+	<!-- syu3 : Role Master 삭제 -->
+    <delete id="deleteRoleMaste" parameterType="com.logistics.sy.domain.UserRoleHeaderDTO"> 
+		delete from SROLHD  	                     
+		 where COMPKEY= #{compkey}   
+		   and ROLEKEY= #{rolekey}     
+    </delete>  
+    
+    <!-- syu3 : Role Select Box -->
+    <select id="selectRoleBox" resultType="HashMap"> 
+		select ROLEKEY as combovl
+		     , ROLENAM as combonm
+		  from SROLHD
+	  	 where 1=1 
+	  	<if test='compkey != null and compkey != ""'>
+	  	   and COMPKEY = #{compkey}
+	  	</if> 
+	  	<if test='rolekey != null and rolekey != ""'>
+	  	   and ROLEKEY = #{rolekey} 
+	  	</if>
+	  	 group by ROLEKEY, ROLENAM
+	 	 order by ROLEKEY, ROLENAM
+ 	</select>
+ 	
+         
+    <!--syu3 : Role Program List 조회 -->
+    <select id="selectRoleProgram" resultType="com.logistics.sy.domain.UserRoleProgramDTO">
+     	select concat(COMPKEY, ROLEKEY, PROGRID) as ROWKEY
+     		 , COMPKEY
+			 , ROLEKEY
+			 , PROGRID
+			 , POSACTV
+			 , GETACTV
+			 , PUTACTV
+			 , DELACTV
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%Y-%m-%d') as CRETIME, fn_sy_usernam(COMPKEY,CREUSER) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%Y-%m-%d') as LMOTIME, fn_sy_usernam(COMPKEY,LMOUSER) as LMOUSER
+			 , INDIBZL, INDIARC, UPDTCHK
+  	      from SROLPG 
+ 	     where COMPKEY = #{compkey}
+ 	       and ROLEKEY = upper(#{rolekey})
+         order by COMPKEY, ROLEKEY, PROGRID
+    </select>
+
+    <!--syu3 : Role Program List 수정 -->
+    <update id="updateRoleProgram" parameterType="com.logistics.sy.domain.UserRoleProgramDTO"> 
+		<foreach collection="list" item="item"  separator=";">
+		update SROLPG
+		   set POSACTV = #{item.posactv}
+			 , GETACTV = #{item.getactv}
+			 , PUTACTV = #{item.putactv}
+			 , DELACTV = #{item.delactv}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		     , LMOTIME = to_char(NOW() ,'hh24miss')
+		     , LMOUSER = #{userData.useract}
+		 where COMPKEY = #{item.compkey}
+		   and ROLEKEY = #{item.rolekey}
+		   and PROGRID = #{item.progrid}
+		   and UPDTCHK = #{item.updtchk}
+		</foreach>
+    </update>    
+    
+    <!--syu3 : Role Program List 등록 -->
+    <insert id="insertRoleProgram" parameterType="com.logistics.sy.domain.UserRoleProgramDTO"> 
+		insert 
+		  into SROLPG (COMPKEY, ROLEKEY, PROGRID, POSACTV, GETACTV, PUTACTV, DELACTV, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER)
+		values 
+		<foreach collection="list" item="item"  separator=",">
+			 ( #{item.compkey}, upper(#{item.rolekey}), LOWER(#{item.progrid}), #{item.posactv}, #{item.getactv}, #{item.putactv}, #{item.delactv}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		     , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+		</foreach>
+    </insert>  
+    
+	<!--syu3 : Role Program List 삭제 -->
+    <delete id="deleteRoleProgram" parameterType="com.logistics.sy.domain.UserRoleProgramDTO"> 
+		<foreach collection="list" item="item"  separator=";">
+		delete from SROLPG  	                     
+		 where COMPKEY= #{item.compkey}
+		   and ROLEKEY= #{item.rolekey}
+		   and PROGRID= #{item.progrid}
+		</foreach>
+    </delete>
+    
+    <!--syu3 : Role Program ALL 삭제 -->
+    <delete id="deleteALLRoleProgram" parameterType="com.logistics.sy.domain.UserRoleHeaderDTO"> 
+		delete from SROLPG
+		 where COMPKEY= #{compkey}
+		   and ROLEKEY= #{rolekey}
+    </delete>
+    
+
+    <!--syu3 : Role Warehouse List 조회 -->
+    <select id="selectRoleWarehouse" resultType="com.logistics.sy.domain.UserRoleWarehouseDTO">
+     	select concat(SR.COMPKEY, SR.ROLEKEY, SR.WAREKEY) as ROWKEY
+     		 , SR.COMPKEY
+     	     , SR.ROLEKEY
+     	     , SR.WAREKEY, MW.WHNAMLC as WHNAMLC
+     	     , SR.WAREAVL
+     	     , date_format(SR.CREDATE, '%Y-%m-%d') AS CREDATE, date_format(SR.CRETIME, '%H-%i-%s') as CRETIME, fn_sy_usernam(SR.COMPKEY, SR.CREUSER) as CREUSER
+			 , date_format(SR.LMODATE, '%Y-%m-%d') AS LMODATE, date_format(SR.LMOTIME, '%H-%i-%s') as LMOTIME, fn_sy_usernam(SR.COMPKEY, SR.LMOUSER) as LMOUSER
+			 , SR.INDIBZL, SR.INDIARC, SR.UPDTCHK
+  	      from SROLWH SR
+  	     inner join MWARMA MW
+  	        on SR.COMPKEY = MW.COMPKEY
+  	       and SR.WAREKEY = MW.WAREKEY
+ 	     where SR.COMPKEY = #{compkey}
+ 	       and SR.ROLEKEY = upper(#{rolekey})
+         order by SR.COMPKEY, SR.ROLEKEY, SR.WAREKEY
+    </select>
+
+    <!--syu3 : Role Warehouse List 수정 -->
+    <update id="updateRoleWarehouse" parameterType="com.logistics.sy.domain.UserRoleWarehouseDTO"> 
+		<foreach collection="list" item="item"  separator=";">
+		update SROLWH
+		   set WAREAVL = #{item.wareavl}  
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		     , LMOTIME = to_char(NOW() ,'hh24miss')
+		     , LMOUSER = #{userData.useract}
+		 where COMPKEY = #{item.compkey}
+		   and ROLEKEY = #{item.rolekey}
+		   and WAREKEY = #{item.warekey}
+		   and UPDTCHK = #{item.updtchk}
+		</foreach>
+    </update>    
+    
+    <!--syu3 : Role Warehouse List 등록 -->
+    <insert id="insertRoleWarehouse" parameterType="com.logistics.sy.domain.UserRoleWarehouseDTO"> 
+		insert 
+		  into SROLWH (COMPKEY, ROLEKEY, WAREKEY, WAREAVL, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER)
+		values 
+		<foreach collection="list" item="item"  separator=",">
+		     ( #{item.compkey}, upper(#{item.rolekey}), upper(#{item.warekey}), #{item.wareavl} 
+		     , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		     , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+		</foreach>
+    </insert>  
+    
+	<!--syu3 : Role Warehouse List 삭제 -->
+    <delete id="deleteRoleWarehouse" parameterType="com.logistics.sy.domain.UserRoleWarehouseDTO"> 
+		<foreach collection="list" item="item"  separator=";">
+		delete from SROLWH  	                     
+		 where COMPKEY= #{item.compkey}   
+		   and ROLEKEY= #{item.rolekey}
+		   and WAREKEY= #{item.warekey}
+		</foreach>
+    </delete>
+    
+	<!--syu3 : Role Warehouse ALL 삭제 -->
+    <delete id="deleteALLRoleWarehouse" parameterType="com.logistics.sy.domain.UserRoleHeaderDTO"> 
+		delete from SROLWH  	                     
+		 where COMPKEY= #{compkey}   
+		   and ROLEKEY= #{rolekey}
+    </delete>
+    
+    <!-- *********************************************** -->
+    <!-- syu4 Role Group -->
+    <!-- *********************************************** -->
+    <!-- syu4 : Role Group List 조회 -->
+    <select id="selectGroup" resultType="com.logistics.sy.domain.RoleGroupVo">
+     	SELECT concat(COMPKEY , ROLGKEY) as ROWKEY
+			 , COMPKEY
+			 , ROLGKEY
+			 , ROLGNAM
+			 , ROLEKEY
+			 , MENUKEY
+			 , date_format(CREDATE, '%Y-%m-%d') as CREDATE, date_format(CRETIME, '%Y-%m-%d') as CRETIME, fn_sy_usernam(COMPKEY,CREUSER) as CREUSER
+			 , date_format(LMODATE, '%Y-%m-%d') as LMODATE, date_format(LMOTIME, '%Y-%m-%d') as LMOTIME, fn_sy_usernam(COMPKEY,LMOUSER) as LMOUSER
+			 , INDIBZL, INDIARC, UPDTCHK
+		  FROM SROLGR
+		 WHERE 1=1
+		   and COMPKEY= #{userData.compkey}
+		 <if test="rolgkey != null and  rolgkey != ''">
+		   AND upper(ROLGKEY) LIKE CONCAT('%', upper(#{rolgkey}), '%') 
+		 </if>
+		 <if test="rolgnam != null and  rolgnam != ''">
+		   AND upper(ROLGNAM) LIKE CONCAT('%', upper(#{rolgnam}), '%')
+		 </if>
+		 ORDER BY COMPKEY, ROLGKEY
+    </select>
+    
+    <!--syu4 : Role Group List 삭제 -->
+    <delete id="deleteGroup" parameterType="com.logistics.sy.domain.RoleGroupVo"> 
+		<foreach collection="list" item="item"  separator=";">
+		delete from SROLGR  	                     
+		 where COMPKEY= #{item.compkey}   
+		   and ROLGKEY= #{item.rolgkey}
+		</foreach>
+    </delete>
+    
+    <!--syu4 : Role Group List 수정 -->
+    <update id="updateGroup" parameterType="com.logistics.sy.domain.RoleGroupVo"> 
+		<foreach collection="list" item="item"  separator=";">
+		update SROLGR
+		   set ROLGNAM = #{item.rolgnam}
+		   	 , ROLEKEY = #{item.rolekey}
+			 , MENUKEY = #{item.menukey}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+		     , LMOTIME = to_char(NOW() ,'hh24miss')
+		     , LMOUSER = #{userData.useract}
+		 where COMPKEY = #{item.compkey}
+		   and ROLGKEY = #{item.rolgkey}
+		   and UPDTCHK = #{item.updtchk}
+		</foreach>
+    </update>
+    
+    <!--syu4 : Role Group List 등록 -->
+    <insert id="insertGroup" parameterType="com.logistics.sy.domain.RoleGroupVo"> 
+		insert 
+		  into SROLGR (COMPKEY, ROLGKEY, ROLGNAM, ROLEKEY, MENUKEY, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER)
+		values 
+		<foreach collection="list" item="item"  separator=",">
+		     ( #{item.compkey}, upper(#{item.rolgkey}), #{item.rolgnam}, #{item.rolekey}, #{item.menukey} 
+		     , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		     , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+		</foreach>
+    </insert>
+    
+    <!-- syu4 : Group Select Box -->
+    <select id="selectGroupBox" resultType="HashMap"> 
+		select ROLGKEY as combovl
+		     , ROLGNAM as combonm
+		  from SROLGR
+	  	 where 1=1 
+	  	<if test='compkey != null and compkey != ""'>
+	  	   and COMPKEY = #{compkey}
+	  	</if> 
+	  	<if test='rolgkey != null and rolgkey != ""'>
+	  	   and ROLGKEY = #{rolgkey} 
+	  	</if>
+	  	 group by ROLGKEY, ROLGNAM
+	 	 order by ROLGKEY, ROLGNAM
+ 	</select>
+	
+
+	<!-- *********************************************** -->
+    <!-- 사용자 정보 조회 -->
+    <!-- *********************************************** -->
+	 <select id="selectUserList" resultType="map"> 
+		select A.USERACT as useract , A.PASSWRD as passwrd 			
+	     	 , A.USERNAM as usernam 			
+		     , A.ADDRESS as address 			
+		     , A.TELPHNM as telphnm , A.DEPARTM as departm 			
+		     , A.USERTYP as usertyp 		
+		     , A.EMAILAD as emailad
+		     , (select COMCDTX from MCODEM M where A.COMPKEY=M.COMPKEY and  M.COMCDKY='USERTYP' and A.USERTYP= M.COMCDVL)  as usertyptx   			
+		     , A.OWNERKY as ownerky		
+		     , A.PTNRKEY as ptnrkey		
+		     , A.CUSTKEY as custkey		
+		     , A.IDEXPDT as idexpdt
+		     , A.PWEXPDT as pwexpdt
+		     <!-- , STR_TO_DATE(A.IDEXPDT , '%Y%m%d') as IDEXPDT 		 -->	
+		     <!--  , STR_TO_DATE(A.PWEXPDT , '%Y%m%d') as PWEXPDT     -->			
+		     , A.PWERCNT as pwercnt 			
+		     , A.ALOCKED as alocked , A.ALOCKMO	as alockmo	
+		     , A.FAVORYN as favoryn
+		     , A.CREDATE as credate , A.CRETIME as cretime , A.CREUSER as creuser
+		     , A.LMODATE as lmodate , A.LMOTIME as lmotime , A.LMOUSER as lmouser			
+		from SUSRMA A	
+		 where A.COMPKEY= #{compkey}			
+		  and A.USERACT= #{useract}
+    </select>  
+    
+    <select id="selectOwnerUserList" resultType="map">
+	    select MO.COMPKEY as compkey , MO.OWNERKY as ownerky , MO.OWNAMLC as ownamlc , MO.OWNAMKO as ownamko , MO.OWNAMEN as ownamen													
+	         , MO.OWADDR1 as owaddr1 , MO.OWADDR2 as owaddr2 , MO.OWADDR3 as owaddr3													
+	         , MO.OWNELAT as ownelat , MO.OWNELON as ownelon 				 											
+	         , MO.OWTELN1 as owteln1 , MO.OWTELN2 as owteln2 , MO.OWTELN3 as owteln3													
+	         , MO.OWREPNM as owrepnm , MO.OWREPTL as owreptl , MO.OWREPEM as owrepem 													
+	         , MO.OWMANNM as owmannm , MO.OWMANTL as owmantl , MO.OWMANEM as owmanem 													
+	         , MO.CREDATE as credate , MO.CRETIME as cretime , MO.CREUSER as creuser
+	         , MO.LMODATE as lmodate , MO.LMOTIME as lmotime , MO.LMOUSER as lmouser													
+		from MOWRMA	MO inner join SUSRMA SU ON MO.COMPKEY = SU.COMPKEY AND MO.OWNERKY = SU.OWNERKY
+		where MO.COMPKEY= #{compkey}
+		  and SU.USERACT = #{useract}													
+		  and MO.OWNERKY = SU.OWNERKY	
+    </select>  
+    
+    <select id="selectVendorUserList" resultType="map">
+	     select MP.COMPKEY as compkey , MP.PTNRKEY as ptnrkey, MP.PTDELYN as ptdelyn						
+		      , MP.PTNRTYP as ptnrtyp , MP.PTNAMLC as ptnamlc , MP.PTNAMKO as ptnamko , MP.PTNAMEN as ptnamen 						
+		      , MP.PTADDR1 as ptaddr1 , MP.PTADDR2 as ptaddr2 , MP.PTADDR3 as ptaddr3						
+		      , MP.PTNRLAT as ptnrlat , MP.PTNRLON as ptnrlon 			 	 	 		
+		      , MP.PTTELN1 as ptteln1 , MP.PTTELN2 as ptteln2 , MP.PTTELN3 as ptteln3						
+		      , MP.PTREPNM as ptrepnm , MP.PTREPTL as ptreptl , MP.PTREPEM as ptrepem						
+		      , MP.PTMANNM as ptmannm , MP.PTMANTL as ptmantl , MP.PTMANEM as ptmanem						
+		      , MP.CREDATE as credate , MP.CRETIME as cretime , MP.CREUSER as creuser 
+		      , MP.LMODATE as lmodate , MP.LMOTIME as lmotime , MP.LMOUSER as lmouser						
+		from MPTNMA MP inner join SUSRMA SU	ON MP.COMPKEY = SU.COMPKEY AND MP.PTNRKEY = SU.PTNRKEY		
+		where MP.COMPKEY= #{compkey}	
+		 and SU.USERACT = #{useract}
+  		 and MP.PTNRKEY=SU.PTNRKEY	
+    </select>  
+    
+    <select id="selectCustomerUserList" resultType="map">
+	   select MC.COMPKEY as compkey , MC.CUSTKEY as custkey																											
+			, MC.OWNERKY as ownerky
+			, (select MO.OWNAMLC from MOWRMA MO where MO.COMPKEY = MC.COMPKEY and MO.OWNERKY = MC.OWNERKY) as ownamlc																										
+			, MC.CUSTPKY as custpky , (select MCUS.CUNAMLC from MCUSMA MCUS where MCUS.COMPKEY = MC.COMPKEY and MCUS.CUSTKEY = MC.CUSTPKY) as custpnm     																										
+		    , MC.CUNAMLC as cunamlc ,  MC.CUNAMKO as cunamko , MC.CUNAMEN as cunamen																											
+		    , MC.CUADDR1 as cuaddr1 ,  MC.CUADDR2 as cuaddr2 , MC.CUADDR3 as cuaddr3																											
+		    , MC.CUSTLAT as custlat ,  MC.CUSTLON as custlon 			 	 																									
+		    , MC.CUTELN1 as cuteln1 ,  MC.CUTELN2 as cuteln2 , MC.CUTELN3 as cuteln3																											
+		    , MC.CUREPNM as curepnm ,  MC.CUREPTL as cureptl , MC.CUREPEM as curepem																											
+		    , MC.CUMANNM as cumannm ,  MC.CUMANTL as cumantl , MC.CUMANEM as cumanem																											
+		    , MC.SUNDAVL as sundavl ,  MC.MONDAVL as mondavl , MC.TUEDAVL as tuedavl
+		    , MC.WEDDAVL as weddavl ,  MC.THUDAVL as thudavl , MC.FRIDAVL as fridavl
+		    , MC.SATDAVL as satdavl ,  MC.NATHAVL as nathavl 																											
+		    , MC.DLVRQTM as dlvrqtm 			 	 		 			 	 																					
+		    , MC.ROUTEKY as routeky 			 	 		 			 	 																					
+		    , MC.UNLODMO as unlodmo ,  MC.CUSPECD as cuspecd , MC.CUSPERM as cusperm																											
+		    , MC.CUQRCOD as cuqrcod ,  MC.DEPBANK as depbank , MC.DEPACNM as depacnm
+		    , MC.INVFOOT as invfoot ,  MC.INVHEAD as invhead 			 	 																									
+		    , MC.CREDATE as credate ,  MC.CRETIME as cretime , MC.CREUSER as creuser
+		    , MC.LMODATE as lmodate ,  MC.LMOTIME as lmotime , MC.LMOUSER as lmouser		
+		from MCUSMA MC inner join SUSRMA SU	ON MC.COMPKEY = SU.COMPKEY AND MC.CUSTKEY = SU.CUSTKEY		
+		where MC.COMPKEY= #{compkey}	
+		 and SU.USERACT = #{useract}	
+  		 and MC.CUSTKEY=SU.CUSTKEY	
+    </select>                
+   
+    <update id="updateUserList" parameterType="com.logistics.sy.domain.UserVo">
+	   update SUSRMA A 
+	     set
+	     <if test="passwrd != null and passwrd !=''">
+	      	A.PASSWRD = #{passwrd},	
+	      </if> 	
+     	   A.USERNAM = #{usernam}			
+	      , A.ADDRESS = #{address}			
+	      , A.TELPHNM = #{telphnm}
+	      , A.DEPARTM = #{departm}
+	      , A.EMAILAD = #{emailad}
+	      , A.FAVORYN = #{favoryn}
+	      , A.LMODATE = to_char(NOW(), 'YYYYMMDD')
+	      , A.LMOTIME = to_char(NOW(), 'hh24miss')
+	      , A.LMOUSER = #{useract}		
+		 where A.COMPKEY= #{compkey}			
+		  and A.USERACT= #{useract}	
+    </update>
+    
+    <update id="updateOwnerList" parameterType="com.logistics.md.domain.MowrmaDTO">
+	   update MOWRMA A
+	     set A.OWNAMLC = #{ownamlc}
+	       , A.OWNAMKO = #{ownamko}
+	       , A.OWNAMEN=	 #{ownamen}												
+	       , A.OWADDR1 = #{owaddr1}
+	       , A.OWADDR2 = #{owaddr2}
+	       , A.OWADDR3=	 #{owaddr3}												
+	       , A.OWTELN1 = #{owteln1}
+	       , A.OWTELN2 = #{owteln2}
+	       , A.OWTELN3=	 #{owteln3}												
+	       , A.OWREPNM = #{owrepnm}
+	       , A.OWREPTL = #{owreptl}
+	       , A.OWREPEM = #{owrepem}													
+	       , A.OWMANNM = #{owmannm}
+	       , A.OWMANTL = #{owmantl}
+	       , A.OWMANEM = #{owmanem}		
+		where A.COMPKEY = #{compkey}
+		  and A.OWNERKY = #{ownerky}	
+    </update>
+    
+    <update id="updateVenderList" parameterType="com.logistics.md.domain.MptnmaVO">
+	    update MPTNMA A
+	     set A.PTNAMLC = #{ptnamlc}
+	       , A.PTNAMKO = #{ptnamko}
+	       , A.PTNAMEN = #{ptnamen}						
+	       , A.PTADDR1 = #{ptaddr1}
+	       , A.PTADDR2 = #{ptaddr2}
+	       , A.PTADDR3 = #{ptaddr3}						
+	       , A.PTTELN1 = #{ptteln1}
+	       , A.PTTELN2 = #{ptteln2}
+	       , A.PTTELN3 = #{ptteln3}						
+	       , A.PTREPNM = #{ptrepnm}
+	       , A.PTREPTL = #{ptreptl}
+	       , A.PTREPEM = #{ptrepem}						
+	       , A.PTMANNM = #{ptmannm}
+	       , A.PTMANTL = #{ptmantl}
+	       , A.PTMANEM = #{ptmanem}		
+		where A.COMPKEY= #{compkey}	
+		 and A.PTNRKEY = #{ptnrkey}
+    </update>
+    
+    <update id="updateCustomerList" parameterType="com.logistics.md.domain.McusmaVO">
+	    update MCUSMA A
+	     set A.CUNAMLC = #{cunamlc}
+	     , A.CUNAMKO = #{cunamko}
+	     , A.CUNAMEN = #{cunamen}			 																								
+	     , A.CUADDR1 = #{cuaddr1}
+	     , A.CUADDR2 = #{cuaddr2}
+	     , A.CUADDR3 = #{cuaddr3}																										
+	     , A.CUTELN1 = #{cuteln1}
+	     , A.CUTELN2 = #{cuteln2}
+	     , A.CUTELN3 = #{cuteln3}																										
+	     , A.CUREPNM = #{curepnm}
+	     , A.CUREPTL = #{cureptl}
+	     , A.CUREPEM = #{curepem}																										
+	     , A.CUMANNM = #{cumannm}
+	     , A.CUMANTL = #{cumantl}
+	     , A.CUMANEM = #{cumanem}																										
+	     , A.SUNDAVL = #{sundavl}
+	     , A.MONDAVL = #{mondavl}
+	     , A.TUEDAVL = #{tuedavl}
+	     , A.WEDDAVL = #{weddavl}
+	     , A.THUDAVL = #{thudavl}
+	     , A.FRIDAVL = #{fridavl}
+	     , A.SATDAVL = #{satdavl}
+	     , A.NATHAVL = #{nathavl}																										
+	     , A.DLVRQTM = #{dlvrqtm}
+	     , A.CUSPERM = #{cusperm}																										
+	     , A.CUQRCOD = #{cuqrcod}
+	     , A.DEPBANK = #{depbank}
+	     , A.DEPACNM = #{depacnm}
+	     , A.INVFOOT = #{invfoot}
+	     , A.INVHEAD = #{invhead}
+		where A.COMPKEY= #{compkey}	
+		 and A.CUSTKEY = #{custkey}
+    </update> 
+    
+    <select id="findUserPwd" resultType="string"> 
+		select PASSWRD			
+		from SUSRMA 	
+		 where COMPKEY= #{compkey}			
+		  and  USERACT= #{useract}
+    </select>
+    
+    <update id="updateChangePwd" parameterType="com.logistics.sy.domain.UserVo">
+    	update SUSRMA 
+   		   set PASSWRD = #{passwrd}
+    	where  COMPKEY = #{compkey}
+    	  and USERACT = #{useract}
+    </update>
+    
+    <!-- sign Up 사용자 등록 -->
+    <insert id="insertUserBySignUp" parameterType="com.logistics.sy.domain.UserDTO"> 
+        INSERT 
+          INTO SUSRMA ( COMPKEY, USERACT, PASSWRD, USERNAM, ADDRESS, CITYCOD
+					  , RSONKEY, POSTCOD, NATN2KY, TELPHNM, EMAILAD, DEPARTM
+					  , EMPLOID, ACAPDOC, USERTYP, OWNERKY, PTNRKEY, CUSTKEY
+					  , USERGR1, USERGR2, USERGR3, LANGKEY, DATEFMT, TIMEFMT
+					  , DECIFMT, IDEXPDT, PWEXPDT, PWERCNT, ALOCKED, ALOCKMO, UTIMZON
+					  , CREDATE, CRETIME, CREUSER
+					  , LMODATE, LMOTIME, LMOUSER)
+        VALUES
+         	   ( #{compkey}, #{useract}, #{passwrd}, #{usernam}, #{address}, #{citycod}
+               , #{rsonkey}, #{postcod}, #{natn2ky}, #{telphnm}, #{emailad}, #{departm}
+               , #{emploid}, #{acapdoc}, #{usertyp}, #{ownerky}, #{ptnrkey}, #{custkey}
+               , #{usergr1}, #{usergr2}, #{usergr3}, #{langkey}, #{datefmt}, #{timefmt}
+               , #{decifmt}, replace(#{idexpdt},'-',''), replace(#{pwexpdt},'-',''), #{pwercnt}, #{alocked}, #{alockmo}, #{utimzon}
+               , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{creuser}
+			   , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{lmouser} )
+    </insert>
+    
+    
+    <update id="updateUserBySingOut" parameterType="com.logistics.sy.domain.UserVo">
+    	update SUSRMA 
+    		set SOTAPYN = 'Y'
+			 ,	SOTDATE = to_char(now(), 'YYYYMMDD')
+			 ,	SOTTIME = to_char(now(), 'hh24miss')
+    	where COMPKEY = #{compkey}
+    	 and USERACT = #{useract}
+    	 and USERNAM = #{usernam}
+    </update>
+    
+    <!-- 사용자 로그인 정보 저장(로그인 시도 이력 정보) -->
+	<insert id="insertLoginUser" parameterType="HashMap">
+		insert 
+		  into SLOGHI ( COMPKEY, LOGINSQ
+		              , USERACT, WAREKEY
+		  			  , LOGINIP, SECCHUA, SECCHMB, NAVPLAT, SECCHPF, HACCEPT, NAVVERS, LOGINSF, CREUSER ) 
+		values (#{compkey}, fn_sy_loginsq()
+		      , #{useract}, #{warekey}
+		      , #{loginip}, #{secchua}, #{secchmb}, #{navplat}, #{secchpf}, #{haccept}, #{navvers}, #{loginsf}, #{useract}
+		) 
+ 	</insert>
+ 	
+	<!-- 사용자 프로그램 실행 이력정보 저장 -->
+	<insert id="insertUserProgram" parameterType="HashMap"> 
+		insert 
+		  into SUPAHI (COMPKEY, USRPGSQ, USERACT, PROGRID, MENUNAM, THEMETY, CREUSER)
+		values (#{compkey}, fn_sy_usrpgsq(), #{useract}, #{progrid}, #{menunam}, #{themety}, #{useract} )
+
+ 	</insert>
+ 	
+ 	<!-- 사용자 Grid Setting Layout 조회 -->
+ 	<select id="selectGridSettingLayout" resultType="com.logistics.sy.domain.GridSettingLayoutDTO"> 
+		select PROGRID, PGRIDID, NUBRCEL, HOVERMD, FREZCOL, FREZROW, COLBODR, ROWBODR, STRPROW, GHEIGHT
+		  from SGRIDH
+		 where 1=1
+		   and COMPKEY = #{userData.compkey}
+		   and USERACT = #{userData.useract}
+		   and PROGRID = #{progrid}
+		   and PGRIDID = #{pgridid}
+    </select>
+ 	
+ 	<!-- 사용자 Grid Column Layout 조회 -->
+ 	<select id="selectGridColumnLayout" resultType="com.logistics.sy.domain.GridColumnLayoutDTO"> 
+		select PROGRID, PGRIDID, DATAIDX, SORTNUM, PHIDDEN, PQALIGN, DATATYP, PQWIDTH
+		  from SGRIDL 
+		 where 1=1
+		   and COMPKEY = #{userData.compkey}
+		   and USERACT = #{userData.useract}
+		   and PROGRID = #{progrid}
+		   and PGRIDID = #{pgridid}
+		 order by SORTNUM asc
+    </select>
+    
+    <!-- 사용자 Grid Setting Layout 저장 -->
+    <insert id="mergeSettingLayout" parameterType="com.logistics.sy.domain.GridSettingLayoutDTO">
+	   insert 
+	     into SGRIDH (
+		      COMPKEY, USERACT, PROGRID, PGRIDID, NUBRCEL, HOVERMD
+		    , FREZCOL, FREZROW, COLBODR, ROWBODR, STRPROW, GHEIGHT
+		    , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER) 
+	   values (  
+	   		  #{compkey}, #{useract}, #{progrid}, #{pgridid}, #{nubrcel}, #{hovermd}
+	  		, #{frezcol}, #{frezrow}, #{colbodr}, #{rowbodr}, #{strprow}, #{gheight}
+	  		, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{useract} )
+    	ON DUPLICATE KEY UPDATE
+    		  NUBRCEL = values(NUBRCEL), HOVERMD = values(HOVERMD), FREZCOL = values(FREZCOL)
+    	    , FREZROW = values(FREZROW), COLBODR = values(COLBODR), ROWBODR = values(ROWBODR)
+    	    , STRPROW = values(STRPROW), GHEIGHT = values(GHEIGHT)
+    		, LMODATE = values(LMODATE), LMOTIME = values(LMOTIME), LMOUSER = values(LMOUSER)
+    </insert>
+    
+    <!-- 사용자 Grid Column Layout 저장 -->
+    <insert id="mergeColumnLayout" parameterType="com.logistics.sy.domain.GridColumnLayoutDTO">
+	   insert 
+	     into SGRIDL (
+		       COMPKEY, USERACT, PROGRID, PGRIDID, DATAIDX
+		     , SORTNUM, PHIDDEN, PQALIGN, DATATYP, PQWIDTH
+		     , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER) 
+	   values 
+			<foreach collection="list" item="item"  separator=",">
+	  		(  #{userData.compkey}, #{userData.useract}, #{progrid}, #{pgridid}, #{item.dataidx}
+	  		 , #{item.sortnum}, #{item.phidden}, #{item.pqalign}, #{item.datatyp}, #{item.pqwidth}
+	  		 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+    		</foreach>
+    	ON DUPLICATE KEY UPDATE 
+    		  SORTNUM = values(SORTNUM), PHIDDEN = values(PHIDDEN), PQALIGN = values(PQALIGN)
+    	    , DATATYP = values(DATATYP), PQWIDTH = values(PQWIDTH)
+    		, LMODATE = values(LMODATE), LMOTIME = values(LMOTIME), LMOUSER = values(LMOUSER)
+    </insert>
+    
+    <!-- 사용자 Grid Column Layout 삭제 -->
+    <delete id="deleteColumnLayout" parameterType="com.logistics.sy.domain.GridColumnLayoutDTO">
+	   delete 
+	     from SGRIDL
+	    where COMPKEY = #{userData.compkey}
+	      and USERACT = #{userData.useract}
+		  and PROGRID = #{progrid}
+		  and PGRIDID = #{pgridid}
+    </delete>
+    
+    <!-- 사용자 Grid Setting Layout 삭제 -->
+    <delete id="deleteSettingLayout" parameterType="com.logistics.sy.domain.GridSettingLayoutDTO">
+	   delete 
+	     from SGRIDH
+	    where COMPKEY = #{userData.compkey}
+	      and USERACT = #{userData.useract}
+		  and PROGRID = #{progrid}
+		  and PGRIDID = #{pgridid}
+    </delete>
+    
+    <select id="findDesigner" resultType="hashMap"> 
+		select USERNAM as combonm , USERACT as combovl		
+		from SUSRMA 	
+		 where COMPKEY= #{userInfo.compkey}			
+		  and  USERGR1 != 'N'
+		  <if test="userInfo.ownerky != null and userInfo.ownerky !=''">
+		  and  OWNERKY = #{userInfo.ownerky}
+		  </if>
+    </select>
+</mapper>
+ 
+
+ 
+

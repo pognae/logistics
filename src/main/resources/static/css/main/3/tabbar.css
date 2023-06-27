@@ -1,0 +1,120 @@
+@charset "UTF-8";
+
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+ 
+
+/*tab*/
+
+.tabs-container{
+	width: 100%;
+	margin-top: 60px;
+	margin-bottom: 05px;
+	border-radius: 8px;
+	background-color: #ffffff; 
+	-webkit-box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.15);
+	-moz-box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.15);
+	box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.15);
+	overflow: hidden;
+	position: relative; 
+	padding-right: 91px; 
+	padding-left: 64px;
+}
+.tabs-container .tab-prev{
+	width: 30px; 
+	height: 30px; 
+	border: none; 
+	border-radius: 50%; 
+	position: absolute; 
+	right: 84px; /* right: 48px;  20221211 */ 
+	top: 7px; 
+	background: #e8f0f6; 
+	color: #2b506a;
+	cursor: pointer; 
+}
+.tabs-container .tab-close{
+	width: 30px; 
+	height: 30px; 
+	border: none; 
+	border-radius: 50%; 
+	position: absolute; 
+	right: 48px; 
+	top: 7px; 
+	background: #e8f0f6; 
+	color: #2b506a;
+	cursor: pointer; 
+}
+.tabs-container .tab-next{
+	width: 30px; 
+	height: 30px; 
+	border: none; 
+	border-radius: 50%; 
+	position: absolute; 
+	right: 10px; 
+	top: 7px; 
+	background: #e8f0f6; 
+	color: #2b506a;
+	cursor: pointer; 
+}
+.tabs-container .tab-prev.disabled,
+.tabs-container .tab-next.disabled{
+	background: #edf0f5; 
+	cursor: auto;
+	pointer-events: none;
+}
+
+.tabs-container .tab-prev.disabled i,
+.tabs-container .tab-next.disabled i{
+	color: #c2c7d5 !important;
+}
+.tabs-container ul{
+	height: 45px; 
+	display: flex; 
+	flex-wrap: nowrap;
+	
+	
+}
+.tabs-container ul li{
+	border-right: 1px solid #edeff2;
+	background: #fdfdfd; 
+	flex-shrink: 0;
+	padding: 0 18px;
+}
+.tabs-container ul li a{
+	line-height: 45px; 
+	color: #9e9ea7; 
+	transition: .2s; 
+	font-size: .938rem;
+}
+.tabs-container ul li a:hover{
+	text-decoration: none; 
+	font-weight: inheit; 
+	color: #0087e8; 
+}
+.tabs-container ul li.default{
+	background: #ffffff;
+	width:200px; /* ksw */
+}
+.tabs-container ul li.current,
+.tabs-container ul li:hover{
+	background: #ffffff; 
+}
+.tabs-container ul li.current a{
+	color: #0087e8;
+}
+.tabs-container ul li.tab-home{
+	position: absolute; 
+	left: 0; top: 0; 
+	height: 45px; 
+	line-height: 45px;
+	padding: 0 23px;
+}
+.tabs-container ul li.tab-home a{
+	width: 63px; 
+	text-align: center; 
+}
+#tabs li a.remove {margin-left:22px;  float:right;}
+#tabs { margin:0; padding:0; list-style:none; overflow:hidden; }
+ 

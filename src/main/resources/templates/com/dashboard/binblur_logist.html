@@ -1,0 +1,406 @@
+ <html lagn="ko" xmlns:th="http://www.thymeleaf.org">
+ 		<div th:fragment="fragments-dashboard"   >
+		<!--  mainConten 시작 -->
+ 
+ 			<!--  차트 스타일 시작 -->
+			<link rel="stylesheet" href="/css/main/echart.css">
+			<!--  차트 스타일 종료 -->   
+
+ 			<!--  Dashboard 시작 -->   
+				<div id="content" class="main-content">
+					<div class="content-header main-content-header">
+						<div class="header-left">
+							<div class="page-title"> 기준일</div>
+							<span>2022.07.25 13:00 ~ 2022.07.26 13:00</span>
+						</div>
+						<div class="header-right">
+							<form action="">
+								<select class="select-control">
+									<option>창고선택</option>
+								</select>
+								<button class="default-btn"><i class="fa-solid fa-arrows-rotate"></i></button>
+								<button class="default-btn"><i class="fa-solid fa-print"></i></button>						
+							</form>
+						</div>
+					</div>
+					<!-- Tab content Home -->
+					<div id="Home_content" class="main-content">
+						<div class="main-row first-row type-row">
+							<div class="main-card notice-slide">
+								<div class="card-inner">
+									<div id="carouselNotice" class="carousel slide" data-ride="carousel">
+										<ol class="carousel-indicators">
+										  <li data-target="#carouselNotice" data-slide-to="0" class="active"></li>
+										  <li data-target="#carouselNotice" data-slide-to="1"></li>
+										  <li data-target="#carouselNotice" data-slide-to="2"></li>
+										</ol>
+										<div class="carousel-inner">
+										  <a href="#" class="carousel-item active">
+											<span class="notice-badge">공지</span>
+											<p class="notice-title">일부 페이지 접속 장애 안내</p>
+											<span class="notice-date">2022.09.24</span>
+										  </a>
+										  <a href="#" class="carousel-item">
+											<span class="notice-badge">공지</span>
+											<p class="notice-title">일부 페이지 접속 장애 안내</p>
+											<span class="notice-date">2022.09.24</span>
+										  </a>
+										  <a href="#" class="carousel-item">
+											<span class="notice-badge">공지</span>
+											<p class="notice-title">일부 페이지 접속 장애 안내</p>
+											<span class="notice-date">2022.09.24</span>
+										  </a>
+										</div>
+									  </div>
+								</div>
+							</div>
+							<div class="main-card type1">
+								<div class="card-inner">
+									<h2 class="title">입고현황</h2>
+									<button class="card-refresh"><i class="fa-solid fa-rotate-right"></i></button>
+									<div class="card-row mb-15">
+										<i class="fa-regular fa-file-lines"></i>
+										<span class="type-bold1"><b>1500</b>/2000</span>
+									</div>
+									<div class="type-card blue hor">
+										<div><b>9</b><span>과입 장 수</span></div>
+										<div><b>1</b><span>부족 장 수</span></div>
+									</div>
+								</div>
+							</div>
+							<div class="main-card type2">
+								<div class="card-inner">
+									<h2 class="title">포장현황</h2>
+									<button class="card-refresh"><i class="fa-solid fa-rotate-right"></i></button>
+									
+									<div class="type-border hor">
+										<div>
+											<b>50</b>
+											<div class="rate down">
+												<span class="percent">74%</span>
+											</div>
+											<span>일반</span>
+										</div>
+										<div>
+											<b>50</b>
+											<div class="rate down">
+												<span class="percent">74%</span>
+											</div>
+											<span>일반</span>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="main-card type3">
+								<div class="card-inner">
+									<span class="title">매출현황</span>
+									<button class="card-refresh"><i class="fa-solid fa-rotate-right"></i></button>
+									<div class="card-row mb-20">
+										<span class="money-icon">￦</span>
+										<b class="type-bold1 red">80,621,000</b>
+									</div>
+									<div class="type-border ver">
+										<div class="card-row">
+											<span>전일</span>
+											<span class="price">55,520,000</span>
+										</div>
+										<div class="card-row">
+											<span>전월</span>
+											<span class="price">123,10,000</span>
+										</div>
+										<div class="card-row">
+											<span>당월</span>
+											<span class="price red">325,520,000</span>
+										</div>
+									</div>
+									
+								</div>
+							</div>
+							<div class="main-card type3">
+								<div class="card-inner">
+									<h3 class="title">매장별 매출현황</h3>
+									<button class="card-refresh"><i class="fa-solid fa-rotate-right"></i></button>
+									<div class="type-border ver">
+										<div class="card-row">
+											<span>프릴몬드</span>
+											<span class="price">55,520,000</span>
+										</div>
+										<div class="card-row">
+											<span>파스텔디어</span>
+											<span class="price">123,10,000</span>
+										</div>
+										<div class="card-row">
+											<span>삐삐앤코</span>
+											<span class="price">55,520,000</span>
+										</div>
+										<div class="card-row">
+											<span>시엔느</span>
+											<span class="price">123,10,000</span>
+										</div>
+										<div class="card-row">
+											<span>당월</span>
+											<span class="price">123,10,000</span>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="main-card type5">
+								<div class="card-inner">
+									<h3 class="title">미수현황</h3>
+									<button class="card-refresh"><i class="fa-solid fa-rotate-right"></i></button>
+									<div class="type-border ver">
+										<div class="card-row">
+											<span>총 미수금</span>
+											<b class="price">55,520,000</b>
+										</div>
+										<div class="card-row">
+											<span>기한초과 미수금</span>
+											<b class="price blue">123,10,000</b>
+										</div>
+									</div>
+								</div>
+							</div>
+						
+						</div>
+						<script>
+							$(document).ready(function(){
+								$('.carousel').carousel()
+
+							})
+						</script>
+						<div class="main-row second-row">
+							<div class="main-card">
+								<div class="main-card-header">
+									<h2 class="main-card-title">매출 정보</h2>
+									<button class="card-refresh"><i class="fa-solid fa-rotate-right"></i></button>
+								</div>
+								<div class="card-inner">
+									<div class="card-inner-container">
+										<div class="inner-header">
+											<h3>총매출액(최근 7일)</h3>
+											<div class="card-tab">
+												<a href="#panel1" class="card-tab-button active" onClick="cardTabActive(event)">일별</a>
+												<a href="#panel2" class="card-tab-button" onClick="cardTabActive(event)">월별</a>
+											</div>
+										</div>
+										<!--tab1-->
+										<div id="panel1" class="card-tab-panel" style="display: flex;">
+											<div class="main-chart-2">
+												<img src="/img/ex/ex1.png" alt="그리 이미지1" style="width:100%;">
+											</div>
+										</div>
+										<!--// tab1-->
+										<!--tab2-->
+										<div id="panel2" class="card-tab-panel">
+											<div class="main-chart-2">
+												<img src="/img/ex/ex1.png" alt="그리 이미지1" style="width:100%;">
+											</div>
+										
+										</div>
+										<!-- //tab2-->
+									</div>
+								</div>
+							</div>
+							<div class="main-card">
+								<div class="main-card-header">
+									<h2 class="main-card-title">Best / Worst</h2>
+									<button class="card-refresh"><i class="fa-solid fa-rotate-right"></i></button>
+								</div>
+								<div class="card-inner">
+									<div class="card-inner-container">
+										<div class="card-flex-row">
+											<div>
+												<h3>주간상품 Best 10</h3>
+												<div class="main-chart-2" style="padding-right: 10px;">
+													<div id="binblur_chart1" class="chart-container" style="width:100%;"></div>
+												</div>
+											</div>
+											<div>
+												<h3>주간상품 Worst 10</h3>
+												<div class="main-chart-2" style="padding-left: 10px;">
+													<div id="binblur_chart2" class="chart-container" style="width:100%;"></div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="main-row">
+							<div class="main-card no-header">
+								<div class="card-inner">
+									<div class="card-inner-container">
+										<div class="inner-header">
+											<h3>샘플 현황</h3>
+											<div class="card-tab">
+												<a href="#panel3" class="card-tab-button active" onClick="cardTabActive(event)">일별</a>
+												<a href="#panel4" class="card-tab-button" onClick="cardTabActive(event)">월별</a>
+											</div>
+										</div>
+										<!--tab1-->
+										<div id="panel3" class="card-tab-panel" style="display: flex;">
+											<div class="main-chart-2">
+												<img src="/img/ex/ex11.png" alt="그리 이미지1" style="width:100%;">
+											</div>
+											<div class="main-table">
+												<table>
+													<thead>
+														<tr>
+															<th>일자</th>
+															<th>업체수</th>
+															<th>수량</th>
+														</tr>
+													</thead>
+													<tbody>
+														<tr>
+															<td>22-08-01</td>
+															<td>00</td>
+															<td>20</td>
+														</tr>
+														<tr>
+															<td>22-08-01</td>
+															<td>00</td>
+															<td>20</td>
+														</tr>
+														<tr>
+															<td>22-08-01</td>
+															<td>0</td>
+															<td>20</td>
+														</tr>
+														<tr>
+															<td>22-08-01</td>
+															<td>0</td>
+															<td>99</td>
+														</tr>
+														<tr>
+															<td>22-08-01</td>
+															<td>0</td>
+															<td>88</td>
+														</tr>
+														<tr>
+															<td>22-08-01</td>
+															<td>0</td>
+															<td>2</td>
+														</tr>
+													</tbody>
+												</table>
+											</div>
+										</div>
+										<!--// tab1-->
+										<!--tab2-->
+										<div id="panel4" class="card-tab-panel">
+											<div class="main-chart-2">
+												<img src="/img/ex/ex8.png" alt="그리 이미지1" style="width:100%;">
+											</div>
+										
+										</div>
+										<!-- //tab2-->
+									</div>
+								</div>
+							</div>
+							<div class="main-card no-header">
+								<div class="card-inner">
+									<div class="card-inner-container">
+										<div class="inner-header">
+											<h3>미송·미출 현황</h3>
+											<div class="card-tab">
+												<a href="#panel5" class="card-tab-button active" onClick="cardTabActive(event)">일별</a>
+												<a href="#panel6" class="card-tab-button" onClick="cardTabActive(event)">월별</a>
+											</div>
+										</div>
+										<!--tab1-->
+										<div id="panel5" class="card-tab-panel" style="display: flex;">
+											<div class="main-chart-2">
+												<img src="/img/ex/ex11.png" alt="그리 이미지1" style="width:100%;">
+											</div>
+											<div class="main-table">
+												<table>
+													<thead>
+														<tr>
+															<th>일자</th>
+															<th>업체수</th>
+															<th>수량</th>
+														</tr>
+													</thead>
+													<tbody>
+														<tr>
+															<td>22-08-01</td>
+															<td>00</td>
+															<td>20</td>
+														</tr>
+														<tr>
+															<td>22-08-01</td>
+															<td>00</td>
+															<td>20</td>
+														</tr>
+														<tr>
+															<td>22-08-01</td>
+															<td>0</td>
+															<td>20</td>
+														</tr>
+														<tr>
+															<td>22-08-01</td>
+															<td>0</td>
+															<td>99</td>
+														</tr>
+														<tr>
+															<td>22-08-01</td>
+															<td>0</td>
+															<td>88</td>
+														</tr>
+														<tr>
+															<td>22-08-01</td>
+															<td>0</td>
+															<td>2</td>
+														</tr>
+													</tbody>
+												</table>
+											</div>
+										</div>
+										<!--// tab1-->
+										<!--tab2-->
+										<div id="panel6" class="card-tab-panel">
+											<div class="main-chart-2">
+												<img src="/img/ex/ex8.png" alt="그리 이미지1" style="width:100%;">
+											</div>
+										
+										</div>
+										<!-- //tab2-->
+									</div>
+								</div>
+							</div>
+						</div>
+					
+					</div>
+				</div>
+					 
+					 
+				
+				<!--  차트 스크립트 시작 -->
+				<script src="/vender/echarts/echarts5.4.0/echarts.min.js"></script>
+				<script src="/js/main/dashboard_binblur.js"></script>
+				<script >
+				function cardTabActive(e){
+					var activeTab = $(e.target).attr('href');
+					var container = $(e.target).closest('.card-inner');
+
+					container.find('.card-tab-button').removeClass('active');
+					$(e.target).addClass('active');
+
+					container.find('.card-tab-panel').hide();
+					$(activeTab).css('display','flex');
+					
+					e.preventDefault() 
+				}
+							
+				setChartWb1('binblur_chart1');
+				setChartWb2('binblur_chart2');
+				setChart03('binblur_chart4');
+				</script>
+		 		<!--  차트 스크립트 종료 -->
+		 		
+ 			<!--  Dashboard 시작 -->
+ 							 
+		 <!--  mainConten 종료 -->	 
+		</div>
+</html> 

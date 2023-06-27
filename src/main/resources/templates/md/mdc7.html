@@ -1,0 +1,261 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">  			
+	    		<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+			<div class="header-right">
+				<button type="button" class="btn default-btn" id="mdc7_save"   th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+		  		<button type="button" class="btn default-btn" id="mdc7_search" th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+				<button type="button" class="btn main-btn"><i class="fa-solid fa-arrows-rotate"></i></button>
+				<button type="button" class="btn main-btn"><i class="fa-solid fa-print"></i></button>	
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}" th:pprogrid="${gprogrid}" onclick="bookmarkclick(this);"><i class="fa-solid fa-star"></i></button>
+			</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdc7_comcdvl" class="col-md-5 col-xl-2 col-form-label">[[#{md.mcodem.comcdvl}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mcodem.comcdvl')}" id="mdc7_comcdvl"/>
+					</div>
+					<label for="mdc7_comkytx" class="col-md-5 col-xl-2 col-form-label">[[#{md.mcodem.comkytx}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control" th:placeholder="${#messages.msg('md.mcodem.comkytx')}" id="mdc7_comkytx"/>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="content-inner">
+			<div class="grid-item grid-1">
+		 		<div class="grid-container">
+		 			<div id="mdc7_grid"></div>
+		 		</div>
+			</div>
+		</div>
+	</div>
+
+<script>
+$(function(){
+	//============================================================	 
+	//검색 화면 이벤트
+	//============================================================
+	$('#mdc7_search').click(function() {
+		var grid = pq.grid("#mdc7_grid");
+		grid.showLoading();
+		var aul = new AjaxUtil_Order("/md/mdc7List.do", { comcdvl : $("#mdc7_comcdvl").val(), comkytx : $("#mdc7_comkytx").val() }, "GET");
+		aul.setCallbackSuccess(function (data){
+			grid.hideLoading();
+			if(data.list.length == 0){
+				alert("[[#{ms.getDataZero}]]");
+			}
+			grid.option( "dataModel", {data: data.list , recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		});
+		aul.send();
+	});
+	
+	$("#mdc7_save").click(function () {
+		var grid = pq.grid("#mdc7_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		var gridChange = grid.getChanges({all:true});
+		
+		if(gridCheck.length > 0){
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+			for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].comcdky){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "comcdky" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].comcdvl){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "comcdvl" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].comkytx){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "comkytx" } );
+	    	  		return false;
+	    	  	}
+				if(!gridCheck[i].comcdtx){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+	    	  		grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "comcdtx" } );
+	    	  		return false;
+				}
+				if(!gridCheck[i].comcdor){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+	    	  		grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "comcdor" } );
+	    	  		return false;
+				}
+	    	}
+	    	
+			//============================================================	 
+	    	//체크된 데이터 충복 체크
+	    	//============================================================
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){
+						if(gridCheck[i].comcdky === grid.getData()[j].comcdky && gridCheck[i].comcdvl === grid.getData()[j].comcdvl){
+			      			alert((grid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+	    		
+			//updateList 체크 데이터 정제
+			for(z=0; z<gridChange.updateList.length; z++){
+				if(gridChange.updateList[z].state != true){
+					gridChange.updateList.splice(z, 1);
+					gridChange.oldList.splice(z, 1);
+				}
+			}
+			
+			//addList 체크 데이터 정제
+			for(x=0; x<gridChange.addList.length; x++){
+				if(gridChange.addList[x].state != true){
+					gridChange.addList.splice(x, 1);
+				}
+			}
+	        
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { data : gridChange, comcdvl : $("#mdc7_comcdvl").val(), comkytx : $("#mdc7_comkytx").val() };
+			    grid.showLoading();
+				var aul = new AjaxUtil_Order("/md/mdc7Save.do", data);
+				aul.setCallbackSuccess(function (data){
+					grid.hideLoading();
+					grid.option( "dataModel", { data: data.list, recIndx: "rowkey" } );
+			   		grid.refreshDataAndView();
+			        alert("[[#{ms.saveSuccess}]]");
+				});
+			    aul.send();
+			}
+	    }else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});
+	
+	var colModel = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+            type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+             cb: { all: false, header: true }
+     	},
+		{ title: "[[#{md.mcodem.rowkey}]]",  dataType: "string", dataIndx: "rowkey",  hidden: true, editable:false },
+		{ title: "[[#{md.mcodem.compkey}]]", dataType: "string", dataIndx: "compkey", hidden: true, editable:false },
+		{ title: "[[#{md.mcodem.comcdky}]]", dataType: "string", dataIndx: "comcdky",	//Common code Key
+			styleHead: { "background":"[[#{grid.styleHead01}]]" },
+			render: function (ui) {
+      			if(ui.cellData){
+      				ui.rowData.comcdky = ui.cellData.toUpperCase();
+      			}
+			},
+			validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mcodem.comcdvl}]]", dataType: "string", dataIndx: "comcdvl",	//Common code value
+			styleHead: { "background":"[[#{grid.styleHead01}]]" },
+			render: function (ui) {
+      			if(ui.cellData){
+      				ui.rowData.comcdvl = ui.cellData.toUpperCase();
+      			}
+			},
+			validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		
+		{ title: "[[#{md.mcodem.comkytx}]]", dataType: "string", dataIndx: "comkytx",	//commcn code key Text
+			styleHead: { "background":"[[#{grid.styleHead01}]]" },
+			validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		
+		{ title: "[[#{md.mcodem.comcdtx}]]", dataType: "string", dataIndx: "comcdtx",	//Common code value Text
+			styleHead: { "background":"[[#{grid.styleHead01}]]" },
+			validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mcodem.comcdor}]]", dataType: "integer", dataIndx: "comcdor",	//Code 표시 순서
+			styleHead: { "background":"[[#{grid.styleHead01}]]" },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mcodem.comcdsy}]]", dataIndx: "comcdsy",		//Code 시스템 전용
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+            cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {
+            	var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mcodem.cdcate1}]]", dataType: "string", dataIndx: "cdcate1",	//Code 분류1
+			styleHead: { "background":"[[#{grid.styleHead02}]]" },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{md.mcodem.cdcate2}]]", dataType: "string", dataIndx: "cdcate2",	//Code 분류2
+			styleHead: { "background":"[[#{grid.styleHead02}]]" },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{md.mcodem.cdcate3}]]", dataType: "string", dataIndx: "cdcate3",	//Code 분류3
+			styleHead: { "background":"[[#{grid.styleHead02}]]" },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{md.mcodem.cdattr1}]]", dataType: "string", dataIndx: "cdattr1",	//Code Attribute1
+			styleHead: { "background":"[[#{grid.styleHead02}]]" },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{md.mcodem.cdattr2}]]", dataType: "string", dataIndx: "cdattr2",	//Code Attribute2
+			styleHead: { "background":"[[#{grid.styleHead02}]]" },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{md.mcodem.cdattr3}]]", dataType: "string", dataIndx: "cdattr3",	//Code Attribute3
+			styleHead: { "background":"[[#{grid.styleHead02}]]" },
+			validations : [{ type: 'minLen', value: 0 }, { type: 'maxLen', value: 50, msg: "[[#{ms.validations.maxLenLength(50)}]]" }]
+		},
+		{ title: "[[#{md.mcodem.codelyn}]]", dataIndx: "codelyn",		//삭제YN(Y=삭제)
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+            cb: { all: false, header: true, check: "Y", uncheck: "N" },
+			render: function (ui) {
+            	var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+			}
+		},
+		{ title: "[[#{md.mcodem.credate}]]", dataType: "string", dataIndx: "credate",  editable: false },
+		{ title: "[[#{md.mcodem.cretime}]]", dataType: "string", dataIndx: "cretime",  editable: false },
+		{ title: "[[#{md.mcodem.creuser}]]", dataType: "string", dataIndx: "creuser",  editable: false },
+		{ title: "[[#{md.mcodem.lmodate}]]", dataType: "string", dataIndx: "lmodate",  editable: false },
+		{ title: "[[#{md.mcodem.lmotime}]]", dataType: "string", dataIndx: "lmotime",  editable: false },
+		{ title: "[[#{md.mcodem.lmouser}]]", dataType: "string", dataIndx: "lmouser",  editable: false },
+	];
+	
+	var gul = new GridUtil(colModel, '[[${gprogrid}]]', 'mdc7_grid');
+	gul.setFind();
+	gul.setReset();
+	
+	gul.setAdd(function(evt, ui){
+		var rowData = { state : true, compkey: "[[${session.compkey}]]" , comcdsy : "N", codelyn : "N" };
+   		var rowIndx = this.addRow({ rowData: rowData, checkEditable: false });
+   		this.goToPage({ rowIndx: rowIndx });
+   		this.editFirstCellInRow({ rowIndx: rowIndx });
+    });
+	
+	gul.setChange(function (evt, ui) {
+	    if(ui.source === 'edit' || ui.source === 'paste' || ui.source === 'checkbox'){
+	    	for(i=0; i<ui.updateList.length; i++){
+	    		this.updateRow( {
+           			rowIndx : ui.updateList[i].rowIndx,
+            		newRow : { state : true },
+            		checkEditable: false
+            	});
+	    	}
+	    }
+	});
+
+	gul.open();
+	
+});
+
+</script>
+
+</div>
+</html>

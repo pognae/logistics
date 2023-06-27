@@ -1,0 +1,186 @@
+.pqgrid1{
+	height:400px;
+	width:100%;
+	font-size:12px;
+	margin:20px;
+}
+
+.pqgrid_header1{
+	height:200px;
+	width:100%;
+	font-size:12px;	
+}
+
+.pqgrid_detail1{
+	height:calc(100% - 200px);
+	width:100%;
+	font-size:12px;	
+}
+
+#pgmContent{
+	height:90vh;
+	width:100%;
+	border: solid;
+}
+
+div.pq-theme{
+	border-color: transparent !important; 
+}
+ 
+
+/*
+* 2022.09.30 추가
+*/
+
+.pq-toolbar select,
+.pq-toolbar input{
+  border: 1px solid #dee3e9 !important; 
+  border-radius: 4px !important;
+  height: 26px !important;
+  font-size: 14px !important; 
+  color: #6e6d7a !important; 
+  padding: 0 10px !important;
+}
+
+.pq-search-btn{
+  padding: 0 10px !important;
+  height: 26px !important;
+  border-radius: 4px !important;
+  color: #ffffff !important; 
+  font-size: 13px !important; 
+  background: #0070c0 !important;
+  transition: .2s !important; 
+  border: 0 !important;
+  cursor: pointer !important;
+}
+
+.pq-action-btn{
+	
+}
+
+.ui-icon-download-f,
+.ui-icon-refresh-f,
+.ui-icon-trash-f,
+.ui-icon-add-f{
+  font-family: "Font Awesome 6 Free" !important;
+	font-weight: 900;
+	background: none !important;
+	border: none !important; 
+	text-indent: 0 !important;
+	width: 16px !important; 
+	height: 16px !important; 
+	display: block;
+  text-align: center;
+  margin-right: 5px;
+}
+
+/*
+툴바 버튼 아이콘 CSS
+*/
+.ui-icon-download-f::before{
+  content: '\f019';
+  color: #0070c0;
+  font-size: 12px;
+  line-height: 16px;
+  margin-right: 2px;
+}
+.ui-icon-add-f::before{
+  content: '\2b';
+  color: #0070c0;
+  font-size: 13px;
+  line-height: 18px;
+  margin-right: 2px;
+}
+.ui-icon-refresh-f::before{
+  content: '\f021';
+  color: #0070c0;
+  font-size: 13px;
+  line-height: 18px;
+  margin-right: 2px;
+}
+.ui-icon-trash-f::before{
+  content: '\f019';
+  color: #0070c0;
+  font-size: 13px;
+  line-height: 18px;
+  margin-right: 2px;
+}
+
+.ui-icon-arrow-4-diag,
+.ui-icon-circle-triangle-n,
+.ui-icon-circle-triangle-s{
+	font-family: "Font Awesome 6 Free" !important;
+	font-weight: 900;
+	background: none !important;
+	border: none !important; 
+	text-indent: 0 !important;
+	width: 24px !important; 
+	height: 24px !important; 
+	display: block;
+}
+.ui-icon-arrow-4-diag::before{
+	content: '\f31e';
+	line-height: 24px; 
+}
+.ui-icon-circle-triangle-s::before{
+	content: '\f078';
+	line-height: 24px; 
+}
+.ui-icon-circle-triangle-n::before{
+	content: '\f077';
+	line-height: 24px; 
+}
+
+.pq-slider-icon {
+    position: absolute;
+    z-index: 4;
+    right: 24px !important;
+    transform: translateY(50%);
+    top: 0; 
+    display: none;
+}
+.pq-slider-icon .pq-ui-button{
+	display: inline-block;
+	width: 24px; 
+	height: 24px;
+	margin-left: 15px !important; 
+	border: none !important;
+}
+.ui-icon-arrow-4-diag,
+.ui-icon-circle-triangle-n,
+.ui-icon-circle-triangle-s{
+	font-family: "Font Awesome 6 Free" !important;
+	font-weight: 900;
+	background: none !important;
+	border: none !important; 
+	text-indent: 0 !important;
+	width: 24px !important; 
+	height: 24px !important; 
+	display: block;
+}
+.ui-icon-arrow-4-diag::before{
+	content: '\f31e';
+	line-height: 24px; 
+}
+.ui-icon-circle-triangle-s::before{
+	content: '\f078';
+	line-height: 24px; 
+}
+.ui-icon-circle-triangle-n::before{
+	content: '\f077';
+	line-height: 24px; 
+}
+div.pq-pager{
+	height: 60px !important; 
+	background: #ffffff;
+}
+
+div.pq-pager table,
+div.pq-pager table tr,
+div.pq-pager table tr td{
+	height: 44px;
+	vertical-align: middle; 
+}
+div.pq-pager table tr td span.pq-separator{
+	border: 0 !important; 
+}

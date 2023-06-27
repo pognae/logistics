@@ -1,0 +1,558 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.logistics.md.mapper.BoardMapper">
+
+	<insert id="insertBoard" parameterType="com.logistics.md.domain.BoardDTO">
+		insert into MBOARD (
+			 boidseq , botitle , boconte , viewcnt , 
+			 noticyn , deletyn ,
+			 credate , cretime , creuser
+			 lmodate , lmotime , lmouser
+			 deldate , deltime , deluser 
+		)values ( 
+			  FC_MD_BOIDSEQ() , #{botitle} , #{boconte} , #{viewcnt}
+			, #{noticyn} , #{deletyn}
+			, to_char(now(),'yyyymmdd') , to_char(now(),'hh24miss') , #{creuser}
+			, #{lmodate} , #{lmotime} , #{lmouser}
+			, #{deldate} , #{deltime} , #{deluser}
+		)
+	</insert>
+
+	<select id="selectBoardDetail" resultType="com.logistics.md.domain.BoardDTO">
+		select
+			  compkey , boidseq , botitle , boconte , viewcnt , noticyn , deletyn
+			, date_format(CREDATE, '%Y-%m-%d') as CREDATE , date_format(CRETIME, '%Y-%m-%d') as CRETIME , creuser
+			, date_format(LMODATE, '%Y-%m-%d') as LMODATE , date_format(LMOTIME, '%Y-%m-%d') as LMOTIME , lmouser
+			, date_format(deldate, '%Y-%m-%d') as deldate , date_format(deltime, '%H-%i-%s') as deltime , deluser 
+		from
+			MBOARD
+		where 1=1
+		 and COMPKEY = #{compkey}
+		 and DELETYN = 'N'
+		 and BOIDSEQ = #{boidseq}
+	</select>
+
+	<update id="updateBoard" parameterType="com.logistics.md.domain.BoardDTO">
+		update MBOARD
+		 set   VIEWCNT = viewcnt + 1
+		 	 , BOTITLE = #{botitle}
+		 	 , BOCONTE = #{boconte}
+		 	 , CREUSER = #{creuser}
+		 	 , NOTICYN = #{noticyn} 
+		 	 , LMODATE = to_char(now(),'yyyymmdd')
+		where 1=1
+		 and COMPKEY = #{compkey}
+		 and BOIDSEQ = #{boidseq}
+	</update>
+
+	<update id="deleteBoard" parameterType="long">
+		update MBOARD
+		   SET DELETYN = 'Y'
+			 , DELDATE = to_char(now(),'yyyymmdd')
+		 where 1=1 
+		  and COMPKEY = #{compkey} 
+		  and BOIDSEQ = #{boidseq}
+	</update>
+
+	<select id="selectBoardList" parameterType="com.logistics.md.domain.BoardDTO" resultType="com.logistics.md.domain.BoardDTO">
+		select
+		   boidseq , botitle , boconte , viewcnt , noticyn , deletyn ,
+		   date_format(CREDATE, '%Y-%m-%d') as CREDATE , date_format(CRETIME, '%Y-%m-%d') as CRETIME , fn_sy_usernam_test(compkey , creuser) as creuser ,
+		   lmodate as lmodate , lmotime as lmotime , fn_sy_usernam_test(compkey , lmouser) as lmouser  ,
+		   date_format(deldate, '%Y-%m-%d') as deldate , date_format(deltime, '%H-%i-%s') as deltime , deluser  
+		  from MBOARD
+		 where 1=1
+		  and COMPKEY = #{compkey} 
+		  and DELETYN = 'N'
+		 order by deletyn ASC , boidseq 
+	</select>
+
+	<select id="selectBoardTotalCount" parameterType="com.logistics.md.domain.BoardDTO" resultType="int">
+		select COUNT(*)
+		  from mboard
+		 where COMPKEY = #{compkey} , DELETYN = 'N'
+	</select>
+	
+	<select id="getBoardListCount" resultType="int">
+	select count(*) 
+		from MBOARD
+		 where COMPKEY = #{compkey}
+		  and  DELETYN = 'N'
+		  <if test=' botitle != null and botitle != "" '>
+			and BOTITLE like concat('%' , #{botitle}, '%')
+		  </if>
+		  <if test=' creuser != null and creuser != "" '>
+			and CREUSER like concat('%' , #{creuser}, '%')
+		   </if>  
+	</select>
+	
+	<select id="getBoardList" resultType="com.logistics.md.domain.MboardVO">
+	  	select 
+	  		COMPKEY , BOIDSEQ , BOTITLE , BOCONTE , VIEWCNT , NOTICYN , DELETYN , ATTFNM1 , ATTFNM2 , ATTFNM3 ,
+	 		TIMESTAMPDIFF(DAY, a.CREDATE, to_char(now(), 'yyyymmdd')) as newCnt ,
+		 	date_format(CREDATE, '%Y-%m-%d') as CREDATE , date_format(CRETIME, '%Y-%m-%d') as CRETIME , fn_sy_usernam_test(COMPKEY , CREUSER) as creuser , 
+		 	LMODATE as lmodate , LMOTIME as lmotime , fn_sy_usernam_test(COMPKEY , LMOUSER) as lmouser ,
+		 	date_format(deldate, '%Y-%m-%d') as deldate, date_format(deltime, '%H-%i-%s') as deltime , DELUSER , UPDTCHK ,
+	     	(select COUNT(1) from MBODRF c where a.COMPKEY = c.COMPKEY  and a.BOIDSEQ = c.BOIDSEQ and c.DELETYN = 'N' ) as refcnt
+	  	from MBOARD a
+		   where a.COMPKEY = #{compkey}
+		 	and  a.DELETYN = 'N'
+		 <if test=' boidseq != null and boidseq != "" '>
+ 			and  a.BOIDSEQ = #{boidseq}
+ 			</if>
+		 <if test=' botitle != null and botitle != "" '>
+		  	and  a.BOTITLE like concat('%' , #{botitle}, '%')
+		 </if>
+		   <if test=' creuser != null and creuser != "" '>
+		  	and  fn_sy_usernam_test(a.COMPKEY ,a.CREUSER) like concat('%' , #{creuser}, '%')
+		 </if>
+		 order by credate desc , cretime desc , boidseq desc
+	</select>
+
+	
+	<insert id="saveBoard" parameterType="hashMap">
+		insert 
+		 into MBOARD( COMPKEY , BOIDSEQ , BOTITLE , BOCONTE , VIEWCNT , NOTICYN , DELETYN ,
+		 			  ATTFNM1 , ATTFNM2 , ATTFNM3 , ORGFNM1 , ORGFNM2 , ORGFNM3 , 
+				      CREDATE , CRETIME , CREUSER )
+		values
+		 	(
+			 	#{compkey} , fn_md_boidseq() , #{botitle} , #{boconte}, '0', #{noticyn}, 'N',
+			    #{attfnm1} , #{attfnm2} , #{attfnm3} , #{orgfnm1} , #{orgfnm2} , #{orgfnm3} ,
+			    to_char(now(), 'yyyymmdd'), to_char(now(), 'hh24miss') , #{creuser} 
+		 	)
+	</insert>
+	
+	<update id="updateBoardViewCnt" parameterType="com.logistics.md.domain.MboardVO">
+		update MBOARD
+		 set  VIEWCNT = VIEWCNT + 1
+		where COMPKEY = #{compkey}
+		 and  BOIDSEQ = #{boidseq}
+	</update>
+	
+	<select id="getBoardDetail" resultType="com.logistics.md.domain.MboardVO">
+		select
+			A.COMPKEY , A.BOIDSEQ , BOTITLE , BOCONTE , VIEWCNT , NOTICYN , DELETYN , ATTFNM1 , ATTFNM2 , ATTFNM3 , ORGFNM1 , ORGFNM2 , ORGFNM3 ,
+		    date_format(A.CREDATE, '%Y-%m-%d') as credate , date_format(A.CRETIME, '%H-%i-%s') as cretime ,fn_sy_usernam_test(A.COMPKEY , A.CREUSER) as creuser , 
+		    date_format(A.LMODATE, '%Y-%m-%d') as lmodate , date_format(A.LMOTIME, '%H-%i-%s') as lmotime , A.UPDTCHK , 
+		    CREUSER as writer ,
+		    (select  COUNT(1) from MBODRF c where A.COMPKEY =c.COMPKEY and A.BOIDSEQ = c.BOIDSEQ) as refcnt
+		from MBOARD A
+		where A.COMPKEY = #{compkey}
+		 and  A.BOIDSEQ = #{boidseq}
+		 and  A.DELETYN = 'N'
+	</select>
+	
+	<select id="getBoardRefDetail" resultType="com.logistics.md.domain.MbodrfVO">
+		select 
+			COMPKEY , BOIDSEQ , BREFSEQ , REFCONT
+		  , date_format(CREDATE, '%Y-%m-%d') as CREDATE , date_format(CRETIME, '%Y-%m-%d') as CRETIME , fn_sy_usernam_test(COMPKEY , CREUSER) as creuser 
+		  , date_format(LMODATE, '%Y-%m-%d') as LMODATE , date_format(LMOTIME, '%Y-%m-%d') as LMOTIME , LMOUSER , UPDTCHK
+		 from MBODRF 
+		where COMPKEY = #{compkey}
+		 and DELETYN = 'N'
+		 and BOIDSEQ = #{boidseq}
+	</select>
+	
+	
+	<update id="saveBoardDetail" parameterType="hashMap">
+		update MBOARD 
+		 set   LMOUSER = #{lmouser}
+		  	,  LMODATE = to_char(now() , 'YYYYMMDD')
+		  	,  LMOTIME = to_char(now() , 'hh24miss')
+		   	,  BOTITLE = #{botitle}
+		   	,  BOCONTE = #{boconte}
+		   	,  NOTICYN = #{noticyn}
+		   	<if test="attfnm1 != null and attfnm1 != ''">
+		   	,  ATTFNM1 = #{attfnm1}
+		   	</if>
+		   	<if test="attfnm2 != null and attfnm2 != ''">
+		    ,  ATTFNM2 = #{attfnm2}
+		    </if>
+		    <if test="attfnm3 != null and attfnm3 != ''">
+		    ,  ATTFNM3 = #{attfnm3}
+		    </if>
+		    <if test="orgfnm1 != null and orgfnm1 != ''">
+		    ,  ORGFNM1 = #{orgfnm1}
+		    </if>
+		    <if test="orgfnm2 != null and orgfnm2 != ''">
+		    ,  ORGFNM2 = #{orgfnm2}
+		    </if>
+		    <if test="orgfnm3 != null and orgfnm3 != ''">
+		    ,  ORGFNM3 = #{orgfnm3}
+		    </if>
+		where  COMPKEY = #{compkey}
+		 and   BOIDSEQ = #{boidseq}
+	</update>
+	
+	<update id="saveBoardRefDetail" parameterType="com.logistics.md.domain.MbodrfVO">
+		update MBODRF
+		 set  LMOUSER = #{useract}
+		 	, LMODATE = to_char(now() , 'YYYYMMDD')
+		  	, LMOTIME = to_char(now() , 'hh24miss')
+		  	, REFCONT  = #{refcont}
+		 where COMPKEY = #{compkey}
+		  and  BOIDSEQ = #{boidseq}
+	</update>
+	
+	<insert id="insertBoardRef" parameterType="hashMap">
+		insert into MBODRF (
+			COMPKEY , BOIDSEQ , BREFSEQ , REFCONT, 
+			CREDATE , CRETIME , CREUSER 
+		) values ( 
+			 #{compkey}, #{boidseq} , fn_md_brefseq() , #{refcont}, 
+			 to_char(now(), 'YYYYMMDD') , to_char(now(), 'hh24miss') , #{creuser} 
+		)
+	</insert>
+	
+	<update id="deleteBoardDetail" parameterType="hashMap">
+		update MBOARD
+		 set  DELETYN = 'Y'
+		  	, DELDATE = to_char(now(),'yyyymmdd')
+		  	, DELTIME = to_char(now(),'hh24miss')
+		  	, DELUSER = #{deluser}
+		where COMPKEY = #{compkey}
+		 and  BOIDSEQ = #{boidseq}
+	</update>
+	
+	<update id="deleteBoardRef" parameterType="hashMap">
+		update MBODRF
+		 set   DELETYN = 'Y'
+		    ,  DELDATE = to_char(now(), 'yyyymmdd')
+		    ,  DELTIME = to_char(now(), 'hh24miss')
+		    ,  DELUSER = #{deluser}
+		 where COMPKEY = #{compkey}
+		  and  CREUSER = #{creuser}
+		  and  REFCONT = #{refcont}
+		  and  BOIDSEQ = #{boidseq}
+	</update>
+	
+	<select id="getMdb2List" resultType="com.logistics.md.domain.McommtVO">
+		select
+			MCM.COMPKEY as compkey, MCM.COMMSEQ as commseq , MCM.COMCATE as comcate , MCM.COMTYPE as comtype , MCM.COPENYN as copenyn , 
+			MCM.QUTITLE as qutitle, MCM.QUCONTE as quconte , MCM.VIEWCNT as viewcnt ,
+			to_char(now(), 'yyyymmdd') - MCM.CREDATE as newCnt ,
+			date_format(MCM.CREDATE, '%Y-%m-%d') as credate , date_format(MCM.CRETIME, '%H-%i-%s') as cretime , fn_sy_usernam_test(MCM.COMPKEY , MCM.CREUSER) as creuser,
+			MCM.LMODATE as lmodate , MCM.LMOTIME as lmotime , fn_sy_usernam_test(MCM.COMPKEY , MCM.LMOUSER) as lmouser,
+			MCM.INDIBZL as indibzl , MCM.INDIARC as indiarc , MCM.UPDTCHK as updtchk , MCM.CREUSER as writer ,
+			(select COUNT(1) from MCOMRF MCR where MCM.COMPKEY = MCR.COMPKEY  and MCM.COMMSEQ = MCR.COMMSEQ and MCR.DELETYN ='N' ) as refcnt 
+		from MCOMMT MCM
+		where 1=1
+		 and MCM.COMPKEY = #{compkey}
+		 and MCM.DELETYN = 'N'
+		<if test="qutitle != null and qutitle !=''">
+		 and MCM.QUTITLE like concat('%' , #{qutitle} , '%') 
+		</if>
+		<if test="creuser != null and creuser !=''">
+		 and fn_sy_usernam_test(MCM.COMPKEY , MCM.CREUSER) like concat('%' , #{creuser} , '%')
+		</if>
+		<if test="comcate != null and comcate !=''">
+		 and MCM.COMCATE = #{comcate} 
+		</if>
+		<if test="comtype != null and comtype !=''">
+		 and MCM.COMTYPE = #{comtype}
+		</if>
+		<choose>
+			<when test='orderby.equals("NEW")'>
+		 		order by COMMSEQ desc
+		 	</when>
+		 	<when test='orderby.equals("VIEWCNT")'>
+		 		order by VIEWCNT desc
+		 	</when>
+		 	<otherwise>
+		 		order by COMMSEQ desc
+		 	</otherwise>
+		</choose>
+	</select>
+	
+	
+	<select id="getMdb2QnADetailList" resultType="com.logistics.md.domain.McommtVO">
+		select
+			MCM.COMPKEY as compkey, MCM.COMMSEQ as commseq , MCM.COMCATE as comcate , MCM.COMTYPE as comtype , MCM.COPENYN as copenyn , 
+			MCM.QUTITLE as qutitle, MCM.QUCONTE as quconte , MCM.VIEWCNT as viewcnt ,
+			to_char(now(), 'yyyymmdd') - MCM.CREDATE as newCnt ,
+			date_format(MCM.CREDATE, '%Y-%m-%d') as credate , date_format(MCM.CRETIME, '%H-%i-%s') as cretime , MCM.CREUSER as creuser,
+			MCM.LMODATE as lmodate , MCM.LMOTIME as lmotime , MCM.LMOUSER as lmouser ,
+			MCM.INDIBZL as indibzl , MCM.INDIARC as indiarc , MCM.UPDTCHK as updtchk ,  
+			(select COUNT(1) from MCOMRF MCR where MCM.COMPKEY = MCR.COMPKEY  and MCM.COMMSEQ = MCR.COMMSEQ) as rfcnt 
+		from MCOMMT MCM
+		where 1=1
+		 and MCM.COMPKEY = #{compkey}
+		 and MCM.DELETYN = 'N'
+		 and MCM.COMCATE = #{comcate} 
+		<if test="comtype != null and comtype !=''">
+		 and MCM.COMTYPE = #{comtype}
+		</if>
+		<if test="qutitle != null and qutitle !=''">
+		 and MCM.QUTITLE = #{qutitle} 
+		</if>
+		<if test="creuser != null and creuser !=''">
+		 and MCM.CREUSER = #{creuser} 
+		 </if>
+		 <if test="commseq != null and commseq !=''">
+		 and MCM.COMMSEQ = #{commseq} 
+		 </if>
+	</select>
+	
+	
+	<select id="getListCount" resultType="int">
+		select count(*) 
+		from MCOMMT
+		 where COMPKEY = #{compkey}
+		 and DELETYN = 'N'
+	     <if test="comcate != null and comcate !=''">
+		 and COMCATE = #{comcate} 
+		</if>
+		<if test="comtype != null and comtype !=''">
+		 and COMTYPE = #{comtype}
+		</if>
+		<if test="qutitle != null and qutitle !=''">
+		 and QUTITLE like concat('%' , #{qutitle} , '%') 
+		</if>
+		<if test="quconte != null and quconte !=''">
+		 and QUCONTE like concat('%' , #{quconte} , '%')
+		</if>
+		<if test="creuser != null and creuser !=''">
+		 and CREUSER like concat('%' , #{creuser} , '%')
+		</if>
+	</select>
+	
+	<select id="getQnAdetail" resultType="com.logistics.md.domain.McommtVO">
+		select
+			MCM.COMPKEY as compkey, MCM.COMMSEQ as commseq , MCM.COMCATE as comcate , MCM.COMTYPE as comtype , MCM.COPENYN as copenyn , 
+			MCM.QUTITLE as qutitle, MCM.QUCONTE as quconte , MCM.VIEWCNT as viewcnt ,
+			date_format(MCM.CREDATE, '%Y-%m-%d') as credate , date_format(MCM.CRETIME, '%H-%i-%s') as cretime , fn_sy_usernam_test(MCM.COMPKEY, MCM.CREUSER) as creuser,
+			MCM.LMODATE as lmodate , MCM.LMOTIME as lmotime , MCM.LMOUSER as lmouser, MCM.CREUSER as writer ,
+			(select  COUNT(1) from MCOMRF MCR where MCM.COMPKEY = MCR.COMPKEY  and MCM.COMMSEQ = MCR.COMMSEQ  ) as refcnt
+		from MCOMMT MCM
+		 WHERE 1=1
+			and MCM.COMPKEY = #{compkey}
+			and MCM.DELETYN = 'N'
+			and MCM.COMMSEQ = #{commseq}
+			<if test="creuser != null and creuser != ''">
+		    and MCM.CREUSER like concat('%' , #{creuser} , '%')
+		  </if>
+		  <if test="quconte != null and quconte != ''">
+		    and MCM.QUCONTE like concat('%' , #{quconte} , '%')
+		  </if>
+		  <if test="qutitle != null and qutitle !=''">
+		    and MCM.QUTITLE like concat('%' , #{qutitle} , '%') 
+		  </if>
+	</select>
+	
+	
+	<select id="getMdb2AnswerList" resultType="com.logistics.md.domain.McomrfVO">
+		select
+			MCR.COMPKEY as compkey, MCR.COMMSEQ as commseq , MCR.COEFSEQ as coefseq , MCR.REFCONT as refcont , 
+			date_format(MCR.CREDATE, '%Y-%m-%d') as credate , date_format(MCR.CRETIME, '%H-%i-%s') as cretime , fn_sy_usernam_test(MCR.COMPKEY, MCR.CREUSER) as creuser , 
+			MCR.LMODATE as lmodate , MCR.LMOTIME as lmotime , MCR.LMOUSER as lmouser 
+		from MCOMRF MCR
+		 WHERE 1=1
+			and MCR.COMPKEY = #{compkey}
+			and MCR.COMMSEQ = #{commseq}
+	</select>
+	
+	
+	<update id="updateQnAViewCnt" parameterType="com.logistics.md.domain.McommtVO">
+		update MCOMMT
+		 set  VIEWCNT = VIEWCNT + 1
+		where COMPKEY = #{compkey}
+		 and  COMMSEQ = #{commseq}
+	</update>
+	
+	
+	<select id="QnAListSortByNew" resultType="com.logistics.md.domain.McommtVO">
+		select * from (
+	          select ROW_NUMBER() OVER( ORDER by COMPKEY, COMMSEQ desc ) as ROWKEY
+			  	   , list.* 
+			  from  (
+						select
+							MCM.COMPKEY as compkey, MCM.COMMSEQ as commseq , MCM.COMCATE as comcate , MCM.COMTYPE as comtype , MCM.COPENYN as copenyn , 
+							MCM.QUTITLE as qutitle, MCM.QUCONTE as quconte , MCM.VIEWCNT as viewcnt ,
+							TIMESTAMPDIFF(DAY, MCM.CREDATE, to_char(now(), 'yyyymmdd'))  as newCnt ,
+							date_format(MCM.CREDATE, '%Y-%m-%d') as credate , date_format(MCM.CRETIME, '%H-%i-%s') as cretime , fn_sy_usernam_test(MCM.COMPKEY, MCM.CREUSER) as creuser,
+							MCM.LMODATE as lmodate , MCM.LMOTIME as lmotime , MCM.LMOUSER as lmouser,
+							MCM.INDIBZL as indibzl , MCM.INDIARC as indiarc , MCM.UPDTCHK as updtchk,
+							(select  COUNT(1) from MCOMRF MCR where MCM.COMPKEY = MCR.COMPKEY  and MCM.COMMSEQ = MCR.COMMSEQ  ) as refcnt 
+						from MCOMMT MCM
+						where 1=1
+						 and MCM.COMPKEY = #{compkey}
+						 and MCM.DELETYN = 'N'
+						 <if test="comcate != null and comcate !=''">
+						 and MCM.COMCATE = #{comcate} 
+						</if>
+						<if test="comtype != null and comtype !=''">
+						 and MCM.COMTYPE = #{comtype}
+						</if>
+						<if test="qutitle != null and qutitle !=''">
+						 and MCM.QUTITLE like concat('%' , #{qutitle} , '%') 
+						</if>
+						<if test="quconte != null and quconte !=''">
+						 and MCM.QUCONTE like concat('%' , #{quconte} , '%')
+						</if>
+						<if test="creuser != null and creuser !=''">
+						 and MCM.CREUSER like concat('%' , #{creuser} , '%')
+						</if>
+					) list
+		 )outlist
+		 <![CDATA[ where ROWKEY > #{startRowNumber} and ROWKEY <= #{endRowNumber} ]]>	
+		 order by COMMSEQ DESC
+	</select>
+	
+	<select id="QnAListSortByViewCnt" resultType="com.logistics.md.domain.McommtVO">
+		select * from (
+	          select ROW_NUMBER() OVER( ORDER by COMPKEY, COMMSEQ desc ) as ROWKEY
+			  	   , list.* 
+			  from  (
+						select
+							MCM.COMPKEY as compkey, MCM.COMMSEQ as commseq , MCM.COMCATE as comcate , MCM.COMTYPE as comtype , MCM.COPENYN as copenyn , 
+							MCM.QUTITLE as qutitle, MCM.QUCONTE as quconte , MCM.VIEWCNT as viewcnt ,
+							TIMESTAMPDIFF(DAY, MCM.CREDATE, to_char(now(), 'yyyymmdd')) as newCnt ,
+							date_format(MCM.CREDATE, '%Y-%m-%d') as credate , date_format(MCM.CRETIME, '%H-%i-%s') as cretime , fn_sy_usernam_test(MCM.COMPKEY, MCM.CREUSER) as creuser,
+							MCM.LMODATE as lmodate , MCM.LMOTIME as lmotime , MCM.LMOUSER as lmouser,
+							MCM.INDIBZL as indibzl , MCM.INDIARC as indiarc , MCM.UPDTCHK as updtchk,
+							(select  COUNT(1) from MCOMRF MCR where MCM.COMPKEY = MCR.COMPKEY  and MCM.COMMSEQ = MCR.COMMSEQ  ) as refcnt 	
+						 from MCOMMT MCM
+						where 1=1
+						 and MCM.COMPKEY = #{compkey}
+						 and MCM.DELETYN = 'N'
+						 <if test="comcate != null and comcate !=''">
+						 and MCM.COMCATE = #{comcate} 
+						</if>
+						<if test="comtype != null and comtype !=''">
+						 and MCM.COMTYPE = #{comtype}
+						</if>
+						<if test="qutitle != null and qutitle !=''">
+						 and MCM.QUTITLE like concat('%' , #{qutitle} , '%') 
+						</if>
+						<if test="quconte != null and quconte !=''">
+						 and MCM.QUCONTE like concat('%' , #{quconte} , '%')
+						</if>
+						<if test="creuser != null and creuser !=''">
+						 and MCM.CREUSER like concat('%' , #{creuser} , '%')
+						</if>
+					) list
+		 )outlist
+		 <![CDATA[ where ROWKEY > #{startRowNumber} and ROWKEY <= #{endRowNumber} ]]>	 
+		 order by #{viewcnt} desc
+	</select>
+	
+	
+	<select id="getFAQdetail" resultType="com.logistics.md.domain.McommtVO">
+		select
+			MCM.QUCONTE as quconte 
+		from MCOMMT MCM
+		 WHERE 1=1
+			and MCM.COMPKEY = #{compkey}
+			and MCM.DELETYN = 'N'
+			and MCM.COMMSEQ = #{commseq}
+		  <if test="creuser != null and creuser != ''">
+		    and MCM.CREUSER like concat('%' , #{creuser} , '%')
+		  </if>
+		  <if test="quconte != null and quconte != ''">
+		    and MCM.QUCONTE like concat('%' , #{quconte} , '%')
+		  </if>
+		  <if test="qutitle != null and qutitle !=''">
+		    and MCM.QUTITLE like concat('%' , #{qutitle} , '%') 
+		  </if>
+	</select>
+	
+	<insert id="insertMCommt" parameterType="hashMap">
+		insert into MCOMMT (
+			compkey , commseq , comcate , comtype ,
+			copenyn , qutitle , quconte , 
+			credate , cretime , creuser 
+		) values ( 
+			#{compkey} , FN_MD_COMMSEQ() , #{comcate} , #{comtype} ,
+			#{copenyn} , #{qutitle} , #{quconte} ,
+			to_char(now(),'yyyymmdd') , to_char(now(),'hh24miss') , #{creuser} 	
+		)
+	</insert>
+	
+	<insert id="insertMComrf" parameterType="hashMap">
+		insert into MCOMRF (
+			COMPKEY , COMMSEQ , COEFSEQ , 
+			REFCONT , CREDATE , CRETIME , CREUSER 
+		) values ( 
+			#{compkey} , #{commseq} , FN_MD_COEFSEQ() , 
+			#{refcont} , to_char(now(),'yyyymmdd') , to_char(now(),'hh24miss') , #{creuser} 	
+		)
+	</insert>
+	
+	<update id="updateMCommtByFAQ" parameterType="hashMap">
+		update MCOMMT
+		 set   QUCONTE = #{quconte}
+		  ,    LMODATE = to_char(now() , 'yyyymmdd')
+		  ,    LMOTIME = to_char(now() , 'hh24miss')
+		where 1=1
+		 and COMPKEY = #{compkey}
+		 and COMMSEQ = #{commseq} 
+		 and COMCATE = #{comcate} 
+	</update>
+	
+	<update id="updateMCommtByQnA" parameterType="hashMap">
+		update MCOMMT
+		  set QUTITLE = #{qutitle} ,
+		  	  QUCONTE = #{quconte} ,
+		      COPENYN = #{copenyn} ,
+		      LMODATE = to_char(now() , 'yyyymmdd') ,
+		      LMOTIME = to_char(now() , 'hh24miss')
+		 where 1=1
+		  and COMPKEY = #{compkey}
+		  and COMMSEQ = #{commseq} 
+		  and COMCATE = #{comcate}
+	</update>
+	
+	<update id="updateCopenynChk" parameterType="hashMap">
+		update MCOMMT
+		 set   COPENYN = #{copenyn}
+		where 1=1
+		 and COMPKEY = #{compkey}
+		 and COMMSEQ = #{commseq} 
+		 and COMCATE = #{comcate} 
+	</update>
+	
+	
+	<update id="deleteMcommt" parameterType="hashMap">
+		update MCOMMT
+		 set   DELETYN = 'Y'
+		  ,    DELDATE = to_char(now() , 'yyyymmdd')
+		  ,    DELTIME = to_char(now() , 'hh24miss')
+		  ,    DELUSER = #{deluser}
+		where 1=1
+		 and COMPKEY = #{compkey}
+		 and COMMSEQ = #{commseq} 
+		 and COMCATE = #{comcate}
+	</update>
+	
+	<update id="deleteMcomrf" parameterType="hashMap">
+		update MCOMRF
+		 set   DELETYN = 'Y'
+		  ,    DELDATE = to_char(now() , 'yyyymmdd')
+		  ,    DELTIME = to_char(now() , 'hh24miss')
+		  ,    DELUSER = #{deluser}
+		 where 1=1
+		  and COMPKEY = #{compkey}
+		  and COMMSEQ = #{commseq}
+	</update>
+	
+	
+	<!-- binblur 빈블러 로그인시 메인화면 게시판 조회 로직 -->
+	<select id="getBoardMainList" resultType="hashMap">
+		 select BOTITLE as botitle , date_format(CREDATE, '%Y-%m-%d') as CREDATE , BOIDSEQ as boidseq 
+		  from MBOARD 
+		   where COMPKEY = #{compkey}
+		 	and  DELETYN = 'N'
+<!-- 		and  NOTICYN = 'Y' -->
+	      order by  boidseq desc
+	    <choose> 
+	    	<when test='datatype.equals("BINBLUR")'> 
+		  		limit 1
+		  	</when>
+		  	<when test='datatype.equals("ALL")'>
+		  		limit 3
+		  	</when>
+		</choose>  
+	</select>
+</mapper>

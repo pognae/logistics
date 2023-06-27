@@ -1,0 +1,688 @@
+ <html lagn="ko" xmlns:th="http://www.thymeleaf.org">
+ 		<div th:fragment="fragments-dashboard"   >
+		<!--  mainConten 시작 -->
+
+ 			<!--  차트 스타일 시작 -->
+			<link rel="stylesheet" href="/css/main/echart.css">
+			<!--  차트 스타일 종료 -->   
+			
+
+ 			<!--  Dashboard 시작 -->  
+				<div id="content" class="main-content">
+					<div class="content-header main-content-header">
+						<div class="header-left">
+							<div class="page-title"> 기준일</div>
+							<span id="dash_owner_posdate"></span>
+						</div>
+						<div class="header-right">
+							<form action="">
+								<select class="select-control" id="dash_owner_warekey">
+									<option value="WH01">WH01</option>
+								</select>
+								<button class="default-btn"><i class="fa-solid fa-arrows-rotate"></i></button>				
+							</form>
+						</div>
+					</div>
+					<!-- Tab content Home -->
+					<div id="Home_content" class="main-content">
+						<div class="main-row first-row type-row">
+							<div class="main-card notice-slide">
+								<div class="card-inner">
+									<div id="carouselNotice" class="carousel slide" data-ride="carousel">
+										<ol class="carousel-indicators">
+										  <li data-target="#carouselNotice" data-slide-to="0" class="active"></li>
+										  <li data-target="#carouselNotice" data-slide-to="1"></li>
+										  <li data-target="#carouselNotice" data-slide-to="2"></li>
+										</ol>
+										<div class="carousel-inner">
+										</div>
+									  </div>
+								</div>
+							</div>
+							<div class="main-card type1">
+								<div class="card-inner">
+									<h2 class="title">입고현황</h2>
+									<button class="card-refresh" data-datatype="INBOUND"><i class="fa-solid fa-rotate-right"></i></button>
+									<div class="card-row mb-15">
+										<i class="fa-regular fa-file-lines"></i>
+										<span class="type-bold1">
+											<b id="dash_owner_inbound_wtmpqty">0</b>/
+											<i id="dash_owner_inbound_wrhsqty">0</i>
+										</span>
+									</div>
+									<div class="type-card blue hor">
+										<div><b id="dash_owner_inbound_wrofqty">0</b><span>과입 장 수</span></div>
+										<div><b id="dash_owner_inbound_wrstqty">0</b><span>부족 장 수</span></div>
+									</div>
+								</div>
+							</div>
+							<div class="main-card type2">
+								<div class="card-inner">
+									<h2 class="title">포장현황</h2>
+									<button class="card-refresh" data-datatype="PACK"><i class="fa-solid fa-rotate-right"></i></button>
+									
+									<div class="type-border hor">
+										<div>
+											<b id="dash_owner_pack_paknqty">0</b>
+											<div class="rate down">
+												<span class="percent" id="dash_owner_pack_paknper">0%</span>
+											</div>
+											<span>일반(DC)</span>
+										</div>
+										<div>
+											<b id="dash_owner_pack_paksqty">0</b>
+											<div class="rate down">
+												<span class="percent" id="dash_owner_pack_paksper">0%</span>
+											</div>
+											<span>오더(TC)</span> 
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="main-card type3">
+								<div class="card-inner">
+									<span class="title">매출현황</span>
+									<button class="card-refresh" data-datatype="SALES"><i class="fa-solid fa-rotate-right"></i></button>
+									<div class="card-row mb-20">
+										<span class="money-icon">￦</span>
+										<b class="type-bold1 red" id="dash_owner_sales_ndsales">0</b>
+									</div>
+									<div class="type-border ver">
+										<div class="card-row">
+											<span>전일</span>
+											<span class="price" id="dash_owner_sales_ydsales">0</span>
+										</div>
+										<div class="card-row">
+											<span>전월</span>
+											<span class="price" id="dash_owner_sales_ymsales">0</span>
+										</div>
+										<div class="card-row">
+											<span>당월</span>
+											<span class="price red" id="dash_owner_sales_nmsales">0</span>
+										</div>
+									</div>
+									
+								</div>
+							</div>
+							<div class="main-card type3">
+								<div class="card-inner">
+									<h3 class="title">매장별 매출현황</h3>
+									<button class="card-refresh" data-datatype="STORE"><i class="fa-solid fa-rotate-right"></i></button>
+									<div class="type-border ver" id="dash_owner_store_list">
+										<div class="card-row">
+											<span>프릴몬드</span>
+											<span class="price">0</span>
+										</div>
+										<div class="card-row">
+											<span>파스텔디어</span>
+											<span class="price">0</span>
+										</div>
+										<div class="card-row">
+											<span>삐삐앤코</span>
+											<span class="price">0</span>
+										</div>
+										<div class="card-row">
+											<span>시엔느</span>
+											<span class="price">0</span>
+										</div>
+										<div class="card-row">
+											<span>당월</span>
+											<span class="price">0</span>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="main-card type5">
+								<div class="card-inner">
+									<h3 class="title">미수현황</h3>
+									<button class="card-refresh" data-datatype="ACCREABLE"><i class="fa-solid fa-rotate-right"></i></button>
+									<div class="type-border ver">
+										<div class="card-row">
+											<span>총 미수금</span>
+											<b class="price" id="dash_owner_accre_tacrtbl">0</b>
+										</div>
+										<div class="card-row">
+											<span>관리고객 미수금</span>
+											<b class="price blue" id="dash_owner_accre_oacrtbl">0</b>
+										</div>
+									</div>
+								</div>
+							</div>
+						
+						</div>
+<!-- 						<script>
+							$(document).ready(function(){
+								$('.carousel').carousel()
+
+							})
+						</script> -->
+						<div class="main-row second-row">
+							<div class="main-card">
+								<div class="main-card-header">
+									<h2 class="main-card-title">매출 정보</h2>
+									<button class="card-refresh" data-datatype="SALESINFO"><i class="fa-solid fa-rotate-right"></i></button>
+								</div>
+								<div class="card-inner">
+									<div class="card-inner-container">
+										<div class="inner-header">
+											<h3>총매출액</h3>
+											<div class="card-tab">
+												<a href="#panel1" class="card-tab-button active" onClick="cardTabActive(event)">일별</a>
+												<a href="#panel2" class="card-tab-button"        onClick="cardTabActive(event)">월별</a>
+											</div>
+										</div>
+										<!--tab1-->
+										<div id="panel1" class="card-tab-panel" style="display: flex;">
+											<div class="main-chart-2">
+												<div id="owner_chart1" class="chart-container"></div>
+											</div>
+										</div>
+										<!--// tab1-->
+										<!--tab2-->
+										<div id="panel2" class="card-tab-panel">
+											<div class="main-chart-2">
+												<div id="owner_chart2" class="chart-container"></div>
+											</div> 
+										</div>
+										<!-- //tab2-->
+									</div>
+								</div>
+							</div>
+							<div class="main-card">
+								<div class="main-card-header">
+									<h2 class="main-card-title">Best / Worst</h2>
+									<button class="card-refresh" data-datatype="WEEKLYSKU"><i class="fa-solid fa-rotate-right"></i></button>
+								</div>
+								<div class="card-inner">
+								
+									<div class="card-inner-container">
+										<div class="inner-header">
+											<h3>총매출액</h3>
+											<div class="card-tab">
+												<a href="#panel7" class="card-tab-button active" onClick="cardTabActive(event)">Best 10</a>
+												<a href="#panel8" class="card-tab-button"        onClick="cardTabActive(event)">Worst 10</a>
+											</div>
+										</div>
+										<!--tab1-->
+										<div id="panel7" class="card-tab-panel" style="display: flex;">
+											<div class="main-chart-2">
+												<div id="owner_chart3" class="chart-container"></div>
+											</div>
+										</div>
+										<!--// tab1-->
+										<!--tab2-->
+										<div id="panel8" class="card-tab-panel">
+											<div class="main-chart-2">
+												<div id="owner_chart4" class="chart-container"></div>
+											</div> 
+										</div>
+										<!-- //tab2-->
+									</div>								
+								
+								
+<!-- 									<div class="card-inner-container">
+										<div class="card-flex-row">
+											<div>
+												<h3>주간상품 Best 10</h3>
+												<div class="main-chart-2" style="padding-right: 0px;">
+													<div id="owner_chart3" class="chart-container"  ></div>
+												</div>
+											</div>
+											<div>
+												<h3>주간상품 Worst 10</h3>
+												<div class="main-chart-2" style="padding-left: 0px;">
+													<div id="owner_chart4" class="chart-container"  ></div>
+												</div>
+											</div>
+										</div>
+									</div> -->
+									
+								</div>
+							</div>
+						</div>
+						<div class="main-row">
+							<div class="main-card no-header">
+								<div class="card-inner">
+									<div class="card-inner-container">
+										<div class="inner-header">
+											<h3>샘플 현황</h3>
+											<div class="card-tab">
+												<a href="#panel3" class="card-tab-button active" onClick="cardTabActive(event)">일별</a>
+												<a href="#panel4" class="card-tab-button"        onClick="cardTabActive(event)">월별</a>
+											</div>
+										</div>
+										<!--tab1-->
+										<div id="panel3" class="card-tab-panel" style="display: flex;">
+											<div class="main-chart-2">
+												<div id="owner_chart5" class="chart-container"  ></div>
+											</div>
+											<div class="main-table">
+												<table>
+													<thead>
+														<tr>
+															<th>일자</th>
+															<th>업체수</th>
+															<th>수량</th>
+														</tr>
+													</thead>
+													<tbody id="owner_chart5_table">
+														<tr>
+															<td>23-01-01</td>
+															<td>00</td>
+															<td>00</td>
+														</tr>
+													</tbody>
+												</table>
+											</div>
+										</div>
+										<!--// tab1-->
+										<!--tab2-->
+										<div id="panel4" class="card-tab-panel">
+											<div class="main-chart-2">
+												<div id="owner_chart6" class="chart-container"  ></div>
+											</div> 
+										</div>
+										<!-- //tab2-->
+									</div>
+								</div>
+							</div>
+							<div class="main-card no-header">
+								<div class="card-inner">
+									<div class="card-inner-container">
+										<div class="inner-header">
+											<h3>미송 현황</h3>
+											<div class="card-tab">
+												<a href="#panel5" class="card-tab-button active" onClick="cardTabActive(event)">일별</a>
+												<a href="#panel6" class="card-tab-button"        onClick="cardTabActive(event)">월별</a>
+											</div>
+										</div>
+										<!--tab1-->
+										<div id="panel5" class="card-tab-panel" style="display: flex;">
+											<div class="main-chart-2">
+												<div id="owner_chart7" class="chart-container"  ></div>
+											</div>
+											<div class="main-table">
+												<table>
+													<thead>
+														<tr>
+															<th>일자</th>
+															<th>업체수</th>
+															<th>수량</th>
+														</tr>
+													</thead>
+													<tbody id="owner_chart7_table">
+														<tr>
+															<td>23-01-01</td>
+															<td>00</td>
+															<td>00</td>
+														</tr>
+													</tbody>
+												</table>
+											</div>
+										</div>
+										<!--// tab1-->
+										<!--tab2-->
+										<div id="panel6" class="card-tab-panel">
+											<div class="main-chart-2">
+												<div id="owner_chart8" class="chart-container"  ></div>
+											</div>
+										</div>
+										<!-- //tab2-->
+									</div>
+								</div>
+							</div>
+						</div>
+					
+					</div>
+				</div>
+					 
+					 
+				
+				<!--  차트 스크립트 시작 -->
+	<script src="/vender/echarts/echarts5.4.0/echarts.min.js"></script>
+	<script src="/js/main/dashboard_binblur.js?ver1.0"></script>
+	<script>
+	var pageId = "dash_owner";
+	var initInfoData 	= null;
+	var initChartData 	= null;
+
+	/***********************
+	 * 카드형 통계
+	 ***********************/ 
+	callData();
+	
+	$(".card-refresh").click(function(){
+		var datatype = $(this).data("datatype");
+		callData(datatype);
+	});
+	
+	$(".carousel-inner").on("click", "span", function(e){
+		$(".mdb11_insertModal").children().remove();
+		var param = { boidseq :e.target.id };
+		var url = "/main/modalLoad?gprogurl=/com/modal/mdb11.html";
+		var urlParameters = Object.entries(param).map(e => e.join('=')).join('&');
+		var tURL = url+"&"+urlParameters;
+		$(".mdb11_insertModal" + e.target.id).load(tURL);
+	});
+	
+	function callData(datatype){
+		datatype = datatype != undefined || datatype != null ? datatype : "ALL";
+		
+		var compkey = "[[${session.compkey}]]";
+		var ownerky = "[[${session.ownerky}]]" != "" ? "[[${session.ownerky}]]" : " ";
+			var dashParam = {
+			compkey : compkey,
+			ownerky : ownerky,
+			warekey : $("#dash_owner_warekey").val(),
+			datatype : datatype 
+		};
+		var dashBoard = new AjaxUtil_Order("/main/DashBoardOwnerList.do", dashParam , "GET");
+		dashBoard.setCallbackSuccess(function(rData){
+			setInitInfoData(rData);
+			setInitChartData(rData);
+			refreshInfoArea(datatype);
+			refreshChartArea(datatype);
+			setBoardData(rData);
+		});
+		dashBoard.send();
+	}
+	
+	function setInitInfoData(rData){
+		initInfoData = rData.infoItem;
+		$("#dash_owner_posdate").text(initInfoData.OWNER_POSDATE);
+	}
+	
+	function setInitChartData(rData){
+		initChartData = rData.infoItem;
+	}
+	
+	function initInboundData(){
+		var wtmpqty = initInfoData.OWNER_CARD_1_RSData[0].WTMPQTY;
+		var wrhsqty = initInfoData.OWNER_CARD_1_RSData[0].WRHSQTY;
+		var	wrofqty = initInfoData.OWNER_CARD_1_RSData[0].WROFQTY;
+		var	wrstqty = initInfoData.OWNER_CARD_1_RSData[0].WRSTQTY;
+		
+		$("#"+pageId+"_inbound_wtmpqty").text(wtmpqty);
+		$("#"+pageId+"_inbound_wrhsqty").text(wrhsqty);
+		$("#"+pageId+"_inbound_wrofqty").text(wrofqty);
+		$("#"+pageId+"_inbound_wrstqty").text(wrstqty);
+	}
+	
+	function initPackData(){
+		var paknqty = initInfoData.OWNER_CARD_1_RSData[0].PAKNQTY;
+		var paknper = initInfoData.OWNER_CARD_1_RSData[0].PAKNPER;
+		var	paksqty = initInfoData.OWNER_CARD_1_RSData[0].PAKSQTY;
+		var	paksper = initInfoData.OWNER_CARD_1_RSData[0].PAKSPER;
+		
+		$("#"+pageId+"_pack_paknqty").text(paknqty);
+		$("#"+pageId+"_pack_paknper").text(paknper+"%");
+		$("#"+pageId+"_pack_paksqty").text(paksqty);
+		$("#"+pageId+"_pack_paksper").text(paksper+"%");
+	}
+	
+	function initSalesData(){
+		var ndsales = initInfoData.OWNER_CARD_1_RSData[0].NDSALES;
+		var ydsales = initInfoData.OWNER_CARD_1_RSData[0].YDSALES;
+		var	ymsales = initInfoData.OWNER_CARD_1_RSData[0].YMSALES;
+		var	nmsales = initInfoData.OWNER_CARD_1_RSData[0].NMSALES;
+		
+		$("#"+pageId+"_sales_ndsales").text(comma(ndsales));
+		$("#"+pageId+"_sales_ydsales").text(comma(ydsales));
+		$("#"+pageId+"_sales_ymsales").text(comma(ymsales));
+		$("#"+pageId+"_sales_nmsales").text(comma(nmsales));
+	}
+	
+	function initAccReceivableData(){
+		var tacrtbl = initInfoData.OWNER_CARD_1_RSData[0].TACRTBL;
+		var oacrtbl = initInfoData.OWNER_CARD_1_RSData[0].OACRTBL;
+		
+		$("#"+pageId+"_accre_tacrtbl").text(comma(tacrtbl));
+		$("#"+pageId+"_accre_oacrtbl").text(comma(oacrtbl));
+	}
+	
+	function initStoreData(){
+		var listData = initInfoData.OWNER_CARD_2_RSData;
+		
+		var listDom = $("#"+pageId+"_store_list");
+		
+		if(listData != undefined && listData != null){
+			listDom.children().remove();
+			for(var i=0; i<listData.length; i++){
+				var divDom = $("<div></div>",{
+					"class" : "card-row"
+				});
+				var spanDom = $("<span></span>",{
+					"text" : listData[i].STORNAM
+				});
+				var spanPriceDom = $("<span></span>",{
+					"class" : "price",
+					"text" : comma(listData[i].STOSALE)
+				});
+				divDom.append(spanDom, spanPriceDom);
+				listDom.append(divDom);
+			}
+		}
+		
+	}
+	
+	function refreshInfoArea(datatype){
+		switch(datatype){
+			case "ALL":
+				initInboundData();
+				initPackData();
+				initSalesData();
+				initAccReceivableData();
+				initStoreData();
+			break;
+			
+			case "INBOUND":
+				initInboundData();
+			break;
+			
+			case "PACK":
+				initPackData();
+			break;
+			
+			case "SALES":
+				initSalesData();
+			break;
+			
+			case "ACCREABLE":
+				initAccReceivableData();
+			break;
+			
+			case "STORE":
+				initStoreData();
+			break;
+		}
+	}
+	
+	function refreshChartArea(datatype){
+		switch(datatype){
+			case "ALL":
+				initGraphChartData();
+			break;
+			
+			case "SALESINFO":
+				initGraphChartTHB1();
+				initGraphChartTHB2();
+			break;
+			
+			case "WEEKLYSKU":
+				initGraphChartTWB1();
+				initGraphChartTWB2();
+			break;
+			
+			case "SAMPLE":
+				initGraphChartSampleChart1();
+				initGraphChartSampleChart1Table();
+				initGraphChartSampleChart2();
+			break;
+			
+			case "NSHIPPING":
+				initGraphChartNshippingChart1();
+				initGraphChartNshippingChart1Table()
+				initGraphChartNshippingChart2();
+			break;
+		}
+	}
+	
+	function cardTabActive(e){
+		var activeTab = $(e.target).attr('href');
+		var container = $(e.target).closest('.card-inner');
+
+		container.find('.card-tab-button').removeClass('active');
+		$(e.target).addClass('active');
+
+		container.find('.card-tab-panel').hide();
+		$(activeTab).css('display','flex');
+		
+		
+        $("[_echarts_instance_]").each(function(){
+            window.echarts.getInstanceById($(this).attr('_echarts_instance_')).resize();
+        });
+		
+		e.preventDefault() 
+	}
+	
+	function initGraphChartData(){
+		initGraphChartTHB1();
+		initGraphChartTHB2();
+		initGraphChartTWB1();
+		initGraphChartTWB2();
+		initGraphChartSampleChart1();
+		initGraphChartSampleChart1Table();
+		initGraphChartSampleChart2();
+		initGraphChartNshippingChart1();
+		initGraphChartNshippingChart1Table();
+		initGraphChartNshippingChart2();
+	}
+	
+	function initGraphChartTHB1(){
+		setCharthb1('owner_chart1', initChartData.OWNER_CHART1_XLData, initChartData.OWNER_CHART1_RSData);
+	}
+	
+	function initGraphChartTHB2(){
+		setCharthb1('owner_chart2', initChartData.OWNER_CHART2_XLData, initChartData.OWNER_CHART2_RSData);
+	}
+	
+	function initGraphChartTWB1(){
+		setChartWb1('owner_chart3', initChartData.OWNER_CHART3_XLData, initChartData.OWNER_CHART3_RSData);
+	}
+	
+	function initGraphChartTWB2(){
+		setChartWb1('owner_chart4', initChartData.OWNER_CHART4_XLData, initChartData.OWNER_CHART4_RSData);
+	}
+	
+	function initGraphChartSampleChart1(){
+		setChartl11('owner_chart5', initChartData.OWNER_CHART5_XLData, initChartData.OWNER_CHART5_RSData);
+	}
+	
+	function initGraphChartSampleChart1Table(){
+		var data = initChartData.OWNER_CHART5_TABLE_RSData;
+		
+		var tableDom = $("#owner_chart5_table");
+		tableDom.children().remove();
+		
+		if(data.length > 0){
+			for(var i=0; i<data.length; i++){
+				var trDom = $("<tr></tr>");
+				var tdCdateDom = $("<td></td>",{
+					"text" : data[i].cdate
+				});
+				var tdVendcntDom = $("<td></td>",{
+					"text" : data[i].vendcnt
+				});
+				var tdSampcntDom = $("<td></td>",{
+					"text" : data[i].sampcnt
+				});
+				
+				trDom.append(tdCdateDom, tdVendcntDom, tdSampcntDom);
+				tableDom.append(trDom);
+			}
+		}
+	}
+	
+	function initGraphChartSampleChart2(){
+		setChartl12('owner_chart6', initChartData.OWNER_CHART6_XLData, initChartData.OWNER_CHART6_RSData);
+	}
+	
+	function initGraphChartNshippingChart1(){
+		setChartl11('owner_chart7', initChartData.OWNER_CHART7_XLData, initChartData.OWNER_CHART7_RSData);
+	}
+	
+	function initGraphChartNshippingChart1Table(){
+		var data = initChartData.OWNER_CHART7_TABLE_RSData;
+		
+		var tableDom = $("#owner_chart7_table");
+		tableDom.children().remove();
+		
+		if(data.length > 0){
+			for(var i=0; i<data.length; i++){
+				var trDom = $("<tr></tr>");
+				var tdCdateDom = $("<td></td>",{
+					"text" : data[i].cdate
+				});
+				var tdVendcntDom = $("<td></td>",{
+					"text" : data[i].vendcnt
+				});
+				var tdSampcntDom = $("<td></td>",{
+					"text" : data[i].sampcnt
+				});
+				
+				trDom.append(tdCdateDom, tdVendcntDom, tdSampcntDom);
+				tableDom.append(trDom);
+			}
+		}
+	}
+	
+	function initGraphChartNshippingChart2(){
+		setChartl12('owner_chart8', initChartData.OWNER_CHART8_XLData, initChartData.OWNER_CHART8_RSData);
+	}
+	
+	function setBoardData(param){
+		var list = param.boardData;
+		var cardDom = $('.carousel-inner');
+		$(list).each(function(i){
+			var aTag;
+
+			var modalDom = $("<div></div>", {
+				class : "mdb11_insertModal" + list[i].boidseq
+			});
+			
+			if(cardDom.children().length == 0){
+				aTag = $("<a></a>" , {
+					class : "carousel-item active"
+				});
+			}else{
+				aTag = $("<a></a>" , {
+					class : "carousel-item"
+				});
+			}
+			var badgeTag = $("<span></span>" , {
+				class : "notice-badge" ,
+				text  : "공지"
+			});
+			
+			var pTag = $("<span></span>" , {
+				class : "notice-title" ,
+				text  : list[i].botitle ,
+				id    : list[i].boidseq
+			});
+			
+			var dateTag = $("<span></span>" , {
+				class : "notice-date" ,
+				text  : list[i].credate ,
+				id    : list[i].boidseq
+			});
+			
+			aTag.append(badgeTag , pTag , dateTag);
+			cardDom.append(modalDom , aTag);
+		});
+	}
+	</script>
+	 		<!--  차트 스크립트 종료 -->
+			<!--  Dashboard end -->
+	 <!--  mainConten 종료 -->	 
+	</div>
+</html> 

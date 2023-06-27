@@ -1,0 +1,307 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainContent" class="tab-content">
+	<form method="post" id="frmmdo1" onsubmit="return false;">  
+	<div class="tab-inner">
+		<div class="content-header">
+			<div class="header-left">
+				<div class="page-title">
+					<h1 th:text="${gnatitle}"></h1>
+				</div>
+	  		</div>
+	  		<div class="header-right">
+	  			<button type="button" class="btn default-btn" id="mdo1_save"    th:if="${userRole.getPosactv() == 'Y'}"><i class="fa-regular fa-circle-check"></i><span>[[#{bt.save}]]</span></button>
+		  		<button type="button" class="btn default-btn" id="mdo1_search"  th:if="${userRole.getGetactv() == 'Y'}"><i class="fa-solid fa-magnifying-glass"></i><span>[[#{bt.search}]]</span></button>
+<!-- 		  		<button type="button" class="btn default-btn" id="mdo1_add"     th:if="${userRole.getPutactv() == 'Y'}"><i class="fa-regular fa-plus"></i><span>[[#{bt.add}]]</span></button> -->
+		  		<button type="button" class="btn default-btn" id="mdo1_delete"  th:if="${userRole.getDelactv() == 'Y'}"><i class="fa-regular fa-trash-can"></i><span>[[#{bt.delete}]]</span></button>
+				<button type="button" th:class="'btn bookmark-btn '+ ${session.bookmark.get(gprogrid)=='Y' ? 'active' : ' '}"  th:pprogrid="${gprogrid}"  onclick="bookmarkclick(this );"><i class="fa-solid fa-star"></i></button>
+	  		</div>
+		</div>
+		<div class="search-wrap main-search-wrap">
+			<div class="search-form">
+				<div class="form-group row col">
+					<label for="mdo1_compkey" class="col-md-5 col-xl-2 col-form-label">[[#{md.mcomma.compkey}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control"  th:placeholder="${#messages.msg('md.mcomma.compkey')}" id="mdo1_compkey" name="mdo1_compkey" />
+					</div>
+					<label for="mdo1_conamlc" class="col-md-5 col-xl-2 col-form-label">[[#{md.mcomma.conamlc}]]</label>
+					<div class="col-md-7 col-xl-4">
+						<input type="text" class="form-control"  th:placeholder="${#messages.msg('md.mcomma.conamlc')}" id="mdo1_conamlc" name="mdo1_conamlc" />
+					</div>
+				</div>
+		 	</div>
+		 </div>
+		 <div class="content-inner">
+		 	<div class="grid-item grid-1">
+		 		<div class="grid-container">
+		 			<div id="mdo1_grid"></div>
+		 		</div>
+		 	</div>
+		 </div>
+	</div>
+	</form>
+<script>
+$(function(){
+	//============================================================	
+	//검색 화면 이벤트  
+	//============================================================
+	$("#mdo1_delete").click(function () {
+		alert("삭제 예제 버튼 입니다. 추후 삭제 바랍니다.");
+	});
+	
+	$("#mdo1_add").click(function () {
+		alert("추가 예제 버튼 입니다. 추후 삭제 바랍니다.");
+	})
+		
+	$("#mdo1_search").click(function () {
+		var grid = pq.grid("#mdo1_grid");
+		grid.showLoading();
+		var aul = new AjaxUtil_Order("/md/CompanySearch.do", { compkey : $('#mdo1_compkey').val(), conamlc : $('#mdo1_conamlc').val() }, "GET");
+		aul.setCallbackSuccess(function (data){
+			console.log(data)
+			if(data.commaList.length == 0){
+				alert("[[#{ms.getDataZero}]]");
+			}
+			grid.option( "dataModel", { data: data.commaList, recIndx: "rowkey" } );
+			grid.refreshDataAndView();
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		});
+		aul.send();
+		
+	});
+	
+	$("#mdo1_save").click(function () {
+		var grid = pq.grid("#mdo1_grid"), gridCheck = grid.Checkbox('state').getCheckedNodes();
+		
+		if(gridCheck.length > 0){
+			//============================================================	 
+	    	//체크 데이터 중 필수 값 체크
+	    	//============================================================
+			for(i=0; i< gridCheck.length; i++){
+	    	  	if(!gridCheck[i].compkey){
+					alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "compkey" } );
+	    	  		return false;
+	    	  	}
+	    	  	if(!gridCheck[i].conamlc){
+	    	  		alert((gridCheck[i].pq_ri + 1) + " Row " + "[[#{ms.requiredValue}]]");	//필수입력 값을 입력해주세요.
+					grid.editCell( { rowIndx: gridCheck[i].pq_ri, dataIndx: "conamlc" } );
+	    	  		return false;
+	    	  	}
+			}
+			//============================================================	 
+	    	//체크된 데이터 충복 체크
+	    	//============================================================	
+			for(i=0; i<gridCheck.length; i++){
+				for(j=0; j < grid.getData().length; j++){
+					if(gridCheck[i].pq_ri != grid.getData()[j].pq_ri){
+						if(gridCheck[i].compkey === grid.getData()[j].compkey){
+			      			alert((grid.getData()[j].pq_ri + 1) + "[[#{ms.rowDataDuplication}]]");	
+							return false;
+						}
+					}
+				}
+			}
+			
+			var result = confirm("[[#{ms.checksave}]]");
+			if(result == true){
+				var data = { data : gridCheck, compkey : $('#mdo1_compkey').val(), conamlc : $('#mdo1_conamlc').val() };
+			    grid.showLoading();
+				var aul = new AjaxUtil_Order("/md/mdo1Save.do", data);
+				aul.setCallbackSuccess(function (data){
+					grid.option( "dataModel", { data: data.commaList, recIndx: "rowkey" } );
+				   	grid.refreshDataAndView();
+				   	alert("[[#{ms.saveSuccess}]]");
+				});
+				aul.setComplete(function(data){
+					grid.hideLoading();
+				});
+			    aul.send();
+			}
+		}else{
+			alert("[[#{ms.choiceRowZero}]]");
+		}
+	});	
+	
+	
+	var mdo1_gridCM = [
+		{ title: "", dataType: 'bool', dataIndx: "state", align: "center",
+			type: 'checkbox', cls: 'ui-state-default', sortable: false, editor: false,
+            cb: { all: false, header: true }
+     	},
+		{ title: "rowkey", dataType: "string", dataIndx: "rowkey", hidden: true, editable: false},
+		{ title: "[[#{md.mcomma.compkey}]]", dataType: "string", dataIndx: "compkey",
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			render: function (ui) {
+    			if(ui.cellData){
+    				ui.rowData.compkey = ui.cellData.toUpperCase();
+    			}
+            },
+			editable: function (ui) {
+				return editable = (ui.rowData.rowkey) ? false : true;
+    		},
+    		validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.codelyn}]]", dataType: "string", dataIndx: "codelyn",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			align: "center", type: 'checkbox', editor: false,
+            cb: { all: false, header: true, check: "Y", uncheck: "N" },
+            render: function (ui) {
+                var cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+            }
+		},
+		{ title: "[[#{md.mcomma.conamlc}]]", dataType: "string", dataIndx: "conamlc",
+			styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			validations: [{ type: 'minLen', value: 1, msg: "[[#{ms.validations.minLenLength(1)}]]" },{ type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.conamko}]]", dataType: "string", dataIndx: "conamko",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.conamen}]]", dataType: "string", dataIndx: "conamen",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.coaddr1}]]", dataType: "string", dataIndx: "coaddr1",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.coaddr2}]]", dataType: "string", dataIndx: "coaddr2",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.coaddr3}]]", dataType: "string", dataIndx: "coaddr3",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.complat}]]", dataType: "float", dataIndx: "complat", format: "###,###,###,###,###.0000000000", hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+		},
+		{ title: "[[#{md.mcomma.complon}]]", dataType: "float", dataIndx: "complon", format: '###,###,###,###,###.0000000000', hidden: true,
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+		},
+		{ title: "[[#{md.mcomma.cociynm}]]", dataType: "string", dataIndx: "cociynm", 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.coregnm}]]", dataType: "string", dataIndx: "coregnm",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 100, msg: "[[#{ms.validations.maxLenLength(100)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.coteln1}]]", dataType: "string", dataIndx: "coteln1", 
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.coteln2}]]", dataType: "string", dataIndx: "coteln2",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.coteln3}]]", dataType: "string", dataIndx: "coteln3",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.cotaxcd}]]", dataType: "string", dataIndx: "cotaxcd",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.coposbx}]]", dataType: "string", dataIndx: "coposbx",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.coposcd}]]", dataType: "string", dataIndx: "coposcd",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 10, msg: "[[#{ms.validations.maxLenLength(10)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.corepnm}]]", dataType: "string", dataIndx: "corepnm",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.coreptl}]]", dataType: "string", dataIndx: "coreptl",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.corepem}]]", dataType: "string", dataIndx: "corepem",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.comannm}]]", dataType: "string", dataIndx: "comannm",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.comantl}]]", dataType: "string", dataIndx: "comantl",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 20, msg: "[[#{ms.validations.maxLenLength(20)}]]" }]
+		},  
+		{ title: "[[#{md.mcomma.comanem}]]", dataType: "string", dataIndx: "comanem",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'minLen', value: 0, warn: true }, { type: 'maxLen', value: 60, msg: "[[#{ms.validations.maxLenLength(60)}]]" }]
+		},  
+		{ title: "[[#{md.mcomma.cotmzon}]]", dataType: "integer", dataIndx: "cotmzon", format: "#,###",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			validations : [{ type: 'gte', value: 0 }, { type: 'lte', value: 1000000000, msg: "[[#{ms.validations.maxLenLength(9)}]]" }]
+		},
+		{ title: "[[#{md.mcomma.credate}]]", dataType: "string", dataIndx: "credate",  editable: false },  
+		{ title: "[[#{md.mcomma.cretime}]]", dataType: "string", dataIndx: "cretime",  editable: false },  
+		{ title: "[[#{md.mcomma.creuser}]]", dataType: "string", dataIndx: "creuser",  editable: false },  
+		{ title: "[[#{md.mcomma.lmodate}]]", dataType: "string", dataIndx: "lmodate",  editable: false },
+		{ title: "[[#{md.mcomma.lmotime}]]", dataType: "string", dataIndx: "lmotime",  editable: false },
+		{ title: "[[#{md.mcomma.lmouser}]]", dataType: "string", dataIndx: "lmouser",  editable: false }
+	];
+	
+    var mdo1_grid = new GridUtil(mdo1_gridCM, '[[${gprogrid}]]', 'mdo1_grid');
+    mdo1_grid.setFind();
+    mdo1_grid.setReset(); 
+    
+    mdo1_grid.setAdd(function(evt, ui){
+    	var rowIndx = this.addRow({ rowData: { state : true, codelyn : "N"  }, checkEditable: false });
+    	this.goToPage({ rowIndx: rowIndx });
+    	this.editCell({ rowIndx : rowIndx , dataIndx : "compkey"});
+    });
+    
+    mdo1_grid.setChange(function (evt, ui) {
+    	if(ui.source === 'edit'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : {state : true},
+        		    checkEditable: false
+        		});
+    		}
+    	}else if(ui.source === 'paste'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			var newRow = {state : true};
+    			if(ui.updateList[i].newRow.hasOwnProperty('compkey') && ui.updateList[i].oldRow.hasOwnProperty('compkey')){
+    				newRow.compkey = ui.updateList[i].newRow.compkey.toUpperCase();
+    			}
+    			this.updateRow( {
+        			rowIndx : ui.updateList[i].rowIndx,
+        		    newRow : newRow,
+        		    checkEditable: false
+        		});
+    		}
+    		for(i=0; i<ui.addList.length; i++){
+    			ui.addList[i].newRow.state = true;
+    			ui.addList[i].newRow.codelyn = ui.addList[i].newRow.codelyn ? ui.addList[i].newRow.codelyn : "N";
+    		}
+    	}else if(ui.source === 'checkbox'){
+    		for(i=0; i<ui.updateList.length; i++){
+    			if(ui.updateList[i].newRow.hasOwnProperty('codelyn')){
+    				this.updateRow( {
+            			rowIndx : ui.updateList[i].rowIndx,
+            		    newRow : { state : true },
+            		    checkEditable: false
+            		});
+    			}
+    		}
+    	}
+    });
+	
+    mdo1_grid.open();
+	    
+});
+
+</script>
+
+</div>
+</html>

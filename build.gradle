@@ -1,0 +1,55 @@
+plugins {
+	id 'org.springframework.boot' version '2.6.3'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+	id 'war'
+}
+
+bootWar {
+	archiveBaseName = 'logistics'
+	archiveFileName = 'logistics.war'
+	archiveVersion	= "1.0.0"
+}
+
+group = 'com.logistics'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'//security 스프링 시큐리티를 사용하기 위해 추가
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.2.2'
+	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'//security 뷰 단에서 현재 로그인된 사용자의 정보를 가져오기 위해 추가, 타임리프 시큐리티 태그sec
+	implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'//로그 
+	implementation 'com.google.code.gson:gson:2.8.6'//자바객체를 -> JSON으로, JSON을 -> 자바객체로도 쉽게 표현 및 변환
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	implementation group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: '2.4.1'
+	// https://mvnrepository.com/artifact/com.github.pagehelper/pagehelper-spring-boot-starter
+	implementation group: 'com.github.pagehelper', name: 'pagehelper-spring-boot-starter', version: '1.4.2'
+	compileOnly 'org.projectlombok:lombok'	
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	//runtimeOnly 'com.oracle.database.jdbc:ojdbc8'//oracle db 
+	//runtimeOnly 'org.postgresql:postgresql'//db
+	//runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	//testImplementation 'org.springframework.security:spring-security-test'//security
+}
+tasks.named('test') {
+	useJUnitPlatform()
+}
